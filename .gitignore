@@ -1,0 +1,8 @@
+# Ignore specific directories
+data/raw_data/
+data/graph_data/
+.venv/
+
+# Ignore all CSV files (case-insensitive)
+*.csv
+*.[Cc][Ss][Vv]
