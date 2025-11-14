@@ -29,7 +29,11 @@ class PreprocessWrapper:
     def get_mimic_data(self):
         return self.mimic.get_data()
     
+    def write_mimic_processed_data(self, path):
+        self.mimic.get_data().to_csv(path, index=False)
+    
 if __name__ == "__main__":
     mimic_data = pd.read_csv(r"./data/raw_data/mimic_processed.csv", header=0)
     print(mimic_data.shape)
     preprocess_wrapper = PreprocessWrapper(mimic_data, print_logs=True)
+    preprocess_wrapper.write_mimic_processed_data(r"./data/preprocessed_data/mimic_processed.csv")
