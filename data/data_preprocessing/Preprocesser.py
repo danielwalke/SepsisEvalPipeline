@@ -32,6 +32,9 @@ class Preprocesser:
         self.pre_processed_data.loc[control_filter, "Label"] = "Control"
         self.pre_processed_data.loc[sepsis_filter, "Label"] = "Sepsis"
 
+        self.pre_processed_data[SEX_COLUMN_NAME] = self.pre_processed_data[SEX_COLUMN_NAME].astype("category")
+        self.pre_processed_data[SEX_CATEGORY_COLUMN_NAME] = self.pre_processed_data[SEX_COLUMN_NAME].cat.codes
+
         self.control_data = self.pre_processed_data.loc[control_filter]
         self.sepsis_data = self.pre_processed_data.loc[sepsis_filter]
         self.resample_data() 
