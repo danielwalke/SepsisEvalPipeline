@@ -1,8 +1,8 @@
-\# Sepsis Evaluation pieline
+# Sepsis Evaluation pieline
 
 
 
-\## 1. Dataset creation 
+## 1. Dataset creation 
 
 -> Usage of R scripts from Gibbs et al.
 
@@ -10,13 +10,13 @@
 
 
 
-\## 2. Database Import and Evaluation
+## 2. Database Import and Evaluation
 
 -> Database benchmarking across SQLite, Neo4j, PostgreSQL and MySQL
 
 
 
-\## 3. Most accurate predictions with GNNs
+## 3. Most accurate predictions with GNNs
 
 -> Edges are all you Need to handle variable-length time-series 
 
@@ -24,7 +24,7 @@
 
 
 
-\## 4. GraphAware Evaluation
+## 4. GraphAware Evaluation
 
 -> Custom trained models
 
@@ -32,7 +32,9 @@
 
 
 
-\##5. SBC-SHAP use pretrained models and web aplication to get results
+##5. SBC-SHAP use pretrained models and web aplication to get results
 
 -> Just pass CSV as Input and check results if not good enough add new MIMC trained models in web app?
 
+### TODO
+Docker setup

@@ -2,6 +2,7 @@
 data/raw_data/
 data/graph_data/
 .venv/
+tests/
 
 # Ignore all CSV files (case-insensitive)
 *.csv
