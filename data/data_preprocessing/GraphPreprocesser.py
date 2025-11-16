@@ -3,6 +3,8 @@ from tqdm import tqdm
 import torch
 import numpy as np
 
+from constants.feature_names import FEATURES
+
 class GraphPreprocesser:
     def __init__(self, data):
         self.data = data
@@ -56,6 +58,30 @@ class GraphPreprocesser:
         print(f"Edge index saved to {edge_idx_path}")
         print(f"Edge weight saved to {edge_weight_path}")
 
+    def get_pos_encoding(self, seq_len, d = len(FEATURES), n=10000):
+        P = np.zeros((seq_len, d))
+        for k in range(seq_len):
+            for i in np.arange(int(d/2)):
+                denominator = np.power(n, 2*i/d)
+                P[k, 2*i] = np.sin(k/denominator)
+                P[k, 2*i+1] = np.cos(k/denominator)
+        return P
+    
+    def get_pos_encodings(self):
+        dataset = self.data.copy()
+        dataset = dataset.reset_index(drop=True)
+        pos_encodings = None
+        for Id, group in tqdm(dataset.groupby("Id")):
+            encoding = self.get_pos_encoding(group.shape[0])
+            pos_encodings = encoding if pos_encodings is None else np.concatenate((pos_encodings, encoding), axis=0)
+        return pos_encodings
+    
+    def write_pos_encodings(self, path):
+        pos_encodings = self.get_pos_encodings()
+        pos_encodings = torch.tensor(pos_encodings, dtype=torch.float)
+        torch.save(pos_encodings, path)
+        print(f"Positional encodings saved to {path}")
+
 if __name__ == "__main__":
     mimic_preprocessed_data = pd.read_csv(r"./data/preprocessed_data/mimic_processed.csv", header=0)    
     graph_preprocesser = GraphPreprocesser(mimic_preprocessed_data) 
@@ -63,3 +89,28 @@ if __name__ == "__main__":
     graph_preprocesser.data.to_csv(r"./data/graph_data/mimic_sorted_processed.csv", index=False)
     graph_preprocesser.write_edges(r"./data/graph_data/mimic_edge_index.pt",
                                    r"./data/graph_data/mimic_edge_weight.pt")
+    graph_preprocesser.write_pos_encodings(r"./data/graph_data/mimic_pos_encodings.pt")
+    
+    sbc_preprocessed_data = pd.read_csv(r"./data/preprocessed_data/sbc_processed.csv", header=0)
+    graph_preprocesser = GraphPreprocesser(sbc_preprocessed_data)
+    graph_preprocesser.sort_data()
+    graph_preprocesser.data.to_csv(r"./data/graph_data/sbc_sorted_processed.csv", index=False)
+    graph_preprocesser.write_edges(r"./data/graph_data/sbc_edge_index.pt",
+                                   r"./data/graph_data/sbc_edge_weight.pt")
+    graph_preprocesser.write_pos_encodings(r"./data/graph_data/sbc_pos_encodings.pt")
+    
+    sbc_validation_data = pd.read_csv(r"./data/preprocessed_data/sbc_processed_validation.csv", header=0)
+    graph_preprocesser = GraphPreprocesser(sbc_validation_data)
+    graph_preprocesser.sort_data()
+    graph_preprocesser.data.to_csv(r"./data/graph_data/sbc_validation_sorted_processed.csv", index=False)
+    graph_preprocesser.write_edges(r"./data/graph_data/sbc_validation_edge_index.pt",
+                                   r"./data/graph_data/sbc_validation_edge_weight.pt")
+    graph_preprocesser.write_pos_encodings(r"./data/graph_data/sbc_validation_pos_encodings.pt")
+    
+    sbc_ext_validation_data = pd.read_csv(r"./data/preprocessed_data/sbc_processed_ext_validation.csv", header=0)
+    graph_preprocesser = GraphPreprocesser(sbc_ext_validation_data)
+    graph_preprocesser.sort_data()
+    graph_preprocesser.data.to_csv(r"./data/graph_data/sbc_ext_validation_sorted_processed.csv", index=False)
+    graph_preprocesser.write_edges(r"./data/graph_data/sbc_ext_validation_edge_index.pt",
+                                   r"./data/graph_data/sbc_ext_validation_edge_weight.pt")
+    graph_preprocesser.write_pos_encodings(r"./data/graph_data/sbc_ext_validation_pos_encodings.pt")

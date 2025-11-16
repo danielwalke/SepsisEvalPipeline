@@ -59,4 +59,5 @@ if __name__ == "__main__":
     
     test_probas = rf.predict_proba(X_test)[:, 1]
     test_auc = roc_auc_score(y_test, test_probas)
-    print(f"Test AUC: {test_auc:.4f}")
+    print(f"Test AUC: {test_auc:.4f}") #{'bootstrap': False, 'max_depth': 10, 'min_samples_leaf': 1, 'min_samples_split': 2, 'n_estimators': 50} 
+    # 0.8026

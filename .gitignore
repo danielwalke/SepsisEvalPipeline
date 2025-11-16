@@ -3,6 +3,7 @@ data/raw_data/
 data/graph_data/
 .venv/
 tests/
+gt_edge_index/
 
 # Ignore all CSV files (case-insensitive)
 *.csv

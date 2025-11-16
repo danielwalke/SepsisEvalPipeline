@@ -13,15 +13,15 @@ class GNN(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim, heads=4):
         super(GNN, self).__init__()
         self.conv1 = GATv2Conv(input_dim, hidden_dim, edge_dim=1, concat=True, heads=heads)
-        self.conv2 = GATv2Conv(hidden_dim * heads, hidden_dim, edge_dim=1, concat=True, heads=heads)
-        self.conv3 = GATv2Conv(hidden_dim * heads, output_dim, edge_dim=1, heads=heads, concat=False)
+        self.conv2 = GATv2Conv(hidden_dim * heads, output_dim, edge_dim=1, concat=False, heads=heads)
+        # self.conv3 = GATv2Conv(hidden_dim * heads, output_dim, edge_dim=1, heads=heads, concat=False)
 
     def forward(self, x, edge_index, edge_weight):
         x = self.conv1(x, edge_index, edge_weight)
         x = F.elu(x)
         x = self.conv2(x, edge_index, edge_weight)
-        x = F.elu(x)
-        x = self.conv3(x, edge_index, edge_weight)
+        # x = F.elu(x)
+        # x = self.conv3(x, edge_index, edge_weight)
         return x
     
 def train(model, data, optimizer, criterion, device):
@@ -58,7 +58,7 @@ if __name__ == "__main__":
     test_mask = torch.tensor(test_mask.values, dtype=torch.bool)
 
     model = GNN(input_dim=len(FEATURES), hidden_dim=32, output_dim=1, heads=2)
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=0)
+    optimizer = torch.optim.Adam(model.parameters(), lr=5e-3, weight_decay=0)
     ## TODO weighted loss
     train_labels = labels[train_mask.numpy()]
     pos_weight = (len(train_labels) - train_labels.sum()) / train_labels.sum()
@@ -91,4 +91,4 @@ if __name__ == "__main__":
         if epoch % 10 == 0:
             print(f"Epoch {epoch}, Loss: {loss:.4f}, Val AUC: {val_auc:.4f}")
     auc = evaluate(model, graph, device)
-    print(f"Test AUC: {auc:.4f}")
+    print(f"Test AUC: {auc:.4f}") # 0.8389
