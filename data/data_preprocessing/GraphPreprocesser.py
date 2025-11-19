@@ -2,7 +2,7 @@ import pandas as pd
 from tqdm import tqdm
 import torch
 import numpy as np
-
+from sklearn.model_selection import train_test_split
 from constants.feature_names import FEATURES
 
 class GraphPreprocesser:
@@ -86,11 +86,21 @@ if __name__ == "__main__":
     mimic_preprocessed_data = pd.read_csv(r"./data/preprocessed_data/mimic_processed.csv", header=0)    
     graph_preprocesser = GraphPreprocesser(mimic_preprocessed_data) 
     graph_preprocesser.sort_data()
+    train_ids, test_ids = train_test_split(graph_preprocesser.data["Id"].unique(), test_size=0.2, random_state=42)
+    test_data = graph_preprocesser.data[graph_preprocesser.data["Id"].isin(test_ids)].copy()
+    graph_preprocesser.data = graph_preprocesser.data[graph_preprocesser.data["Id"].isin(train_ids)]
+    graph_preprocesser.sort_data()
     graph_preprocesser.data.to_csv(r"./data/graph_data/mimic_sorted_processed.csv", index=False)
     graph_preprocesser.write_edges(r"./data/graph_data/mimic_edge_index.pt",
                                    r"./data/graph_data/mimic_edge_weight.pt")
     graph_preprocesser.write_pos_encodings(r"./data/graph_data/mimic_pos_encodings.pt")
-    
+    graph_preprocesser.data = test_data
+    graph_preprocesser.sort_data()
+    graph_preprocesser.data.to_csv(r"./data/graph_data/mimic_test_sorted_processed.csv", index=False)
+    graph_preprocesser.write_edges(r"./data/graph_data/mimic_test_edge_index.pt",
+                                   r"./data/graph_data/mimic_test_edge_weight.pt")
+    graph_preprocesser.write_pos_encodings(r"./data/graph_data/mimic_test_pos_encodings.pt")
+
     sbc_preprocessed_data = pd.read_csv(r"./data/preprocessed_data/sbc_processed.csv", header=0)
     graph_preprocesser = GraphPreprocesser(sbc_preprocessed_data)
     graph_preprocesser.sort_data()

@@ -39,7 +39,7 @@ class HyperparamTuner:
             'lr': hyperopt.hp.loguniform('lr', -7, -3),
             'hidden_dim': hyperopt.hp.quniform('hidden_dim', 64, 256, 16),
             'heads': hyperopt.hp.quniform('heads', 2, 8, 1),
-            'dropout': hyperopt.hp.uniform('dropout', 0.0, 0.5)
+            'dropout': hyperopt.hp.quniform('dropout', 0.0, 0.5, 0.05)
         }
         best_params = fmin(self.objective, space, algo=tpe.suggest, max_evals=self.max_evals, verbose = False)
         return best_params
