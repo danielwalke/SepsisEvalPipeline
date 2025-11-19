@@ -3,6 +3,7 @@ from gnn_evaluation.model.ModelWrapper import ModelWrapperClassifications
 from sklearn.metrics import roc_auc_score
 from gnn_evaluation.graphloader.Sbc_Graphloader import GraphLoaderSBC
 from gnn_evaluation.utils.SeedInitialization import initialize_seed
+from gnn_evaluation.tuner.HyperparamTuner import HyperparamTuner
 import torch
 from torch.nn import functional as F
 
@@ -19,15 +20,18 @@ if __name__ == "__main__":
     sbc_graphloader = GraphLoaderSBC()
     sbc_graphloader.initialize(BATCH_SIZE)
 
-    model = Model(in_dim=sbc_graphloader.train_graph.num_features, hidden_dim=HIDDEN_DIM, edge_dim=1, out_dim=1, heads=HEADS, dropout=DROPOUT, non_lin=F.relu)
-    model = model.to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+    hyperparam_tuner = HyperparamTuner(sbc_graphloader, device, max_evals=50)
+    best_params = hyperparam_tuner.tune()
+    print("Best Hyperparameters:", best_params)
 
+    model = Model(in_dim=sbc_graphloader.train_graph.num_features, hidden_dim=int(best_params['hidden_dim']), edge_dim=1, out_dim=1, heads=int(best_params['heads']), dropout=best_params['dropout'], non_lin=F.relu)
+    model = model.to(device)
+    optimizer = torch.optim.Adam(model.parameters(), lr=best_params['lr'])
     train_labels = sbc_graphloader.train_graph.y[sbc_graphloader.train_graph.train_mask]
     pos_weight = (train_labels == 0).sum() / (train_labels == 1).sum()
     criterion = torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor([pos_weight], dtype=torch.float, device=device))
         
-    model_wrapper = ModelWrapperClassifications(model=model, model_name="GAT_SBC", epochs=2, patience=5, pred_proba_based_metric=True, minimize_metric=False, eval_metric=roc_auc_score)
+    model_wrapper = ModelWrapperClassifications(model=model, model_name="GAT_SBC", epochs=5000, patience=5, pred_proba_based_metric=True, minimize_metric=False, eval_metric=roc_auc_score)
     model_wrapper.train(sbc_graphloader.train_loader, sbc_graphloader.val_loader, optimizer, criterion, device)
     test_auc = model_wrapper.evaluate(sbc_graphloader.test_loader, device)
     print(f"Test AUC: {test_auc:.4f}")
