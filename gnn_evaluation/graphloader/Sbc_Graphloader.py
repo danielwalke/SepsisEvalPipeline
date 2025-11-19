@@ -6,6 +6,7 @@ from torch_geometric.data import Data
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from constants.feature_names import FEATURES
+from gnn_evaluation.utils.SeedInitialization import seed_worker
 
 class GraphLoaderSBC:
     def __init__(self):
@@ -83,6 +84,8 @@ class GraphLoaderSBC:
     
     def initialize(self, batch_size):
         self.initialize_graphs()
-        self.train_loader = NeighborLoader(self.train_graph, num_neighbors=[-1] * 2, batch_size=batch_size, input_nodes=self.train_graph.train_mask)
-        self.val_loader = NeighborLoader(self.train_graph, num_neighbors=[-1] * 2, batch_size=batch_size, input_nodes=self.train_graph.test_mask)
-        self.test_loader = NeighborLoader(self.test_graph, num_neighbors=[-1] * 2, batch_size=batch_size, input_nodes=self.test_graph.test_mask)
+        g = torch.Generator()
+        g.manual_seed(42)
+        self.train_loader = NeighborLoader(self.train_graph, num_neighbors=[-1] * 2, batch_size=batch_size, input_nodes=self.train_graph.train_mask, generator=g, worker_init_fn=seed_worker)
+        self.val_loader = NeighborLoader(self.train_graph, num_neighbors=[-1] * 2, batch_size=batch_size, input_nodes=self.train_graph.test_mask, generator=g, worker_init_fn=seed_worker)
+        self.test_loader = NeighborLoader(self.test_graph, num_neighbors=[-1] * 2, batch_size=batch_size, input_nodes=self.test_graph.test_mask, generator=g, worker_init_fn=seed_worker)
