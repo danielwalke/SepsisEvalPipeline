@@ -11,7 +11,8 @@ class Model(nn.Module):
         self.non_lin = non_lin
         self.dropout = dropout
 
-    def forward(self, x, edge_index, edge_weight):
+    def forward(self, x, edge_index, **kwargs):
+        edge_weight = kwargs.get('edge_weight', None)
         x = self.conv1(x, edge_index, edge_weight)
         x = self.norm1(x)
         x = self.non_lin(x)

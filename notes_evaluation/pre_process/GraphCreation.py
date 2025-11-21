@@ -63,6 +63,7 @@ class GraphCreation:
         all_files = os.listdir(path)        
         for json_file in tqdm.tqdm(all_files):
             if not json_file.endswith(".json"): continue
+            
 
             with open(os.path.join(path, json_file), 'r') as f:
                 note_data = json.load(f)
@@ -70,12 +71,18 @@ class GraphCreation:
                 hadm_id = note_data.get("hadm_id", "unknown")
                 row_id = note_data.get("row_id", "unknown")
                 text = note_data.get("text", "")
+                if len(text.strip()) == 0: continue
+                if os.path.exists(os.path.join(self.out_dir, f"graph_hadm_{hadm_id}_row_{row_id}.pt")): continue
                 
                 paragraphs = self.identify_paragraphs(text)
+
+                if len(paragraphs) == 0: continue
                 nodes = []
                 edge_index = []
                 whole_note_embedding = self.embed_text(text)
                 nodes.append(whole_note_embedding)
+                
+                
                 for paragraph_tuple in paragraphs:
                     header, paragraph_text = paragraph_tuple
                     combined_paragraph = header + paragraph_text

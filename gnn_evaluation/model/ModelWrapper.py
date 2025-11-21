@@ -39,8 +39,13 @@ class ModelWrapperClassifications:
         for data in data_loader:
             data = data.to(device)
             optimizer.zero_grad()
-            out = self.model(data.x, data.edge_index, data.edge_attr)[data.train_mask]
-            loss = criterion(out, data.y[data.train_mask])
+            out = self.model(data.x, data.edge_index, edge_weight=data.edge_attr, batch = data.batch)
+            if hasattr(data, 'train_mask'):
+                out = out[data.train_mask]
+                gt = data.y[data.train_mask]
+            else:
+                gt = data.y
+            loss = criterion(out, gt.float())
             loss.backward()
             optimizer.step()
         return loss.item()
@@ -52,9 +57,14 @@ class ModelWrapperClassifications:
             pred_probas = []
             for data in data_loader:
                 data = data.to(device)
-                out = self.model(data.x, data.edge_index, data.edge_attr)[data.test_mask]
+                out = self.model(data.x, data.edge_index, edge_weight=data.edge_attr, batch=data.batch)
+                if hasattr(data, 'test_mask'):
+                    out = out[data.test_mask]
                 pred_probas.extend(torch.sigmoid(out).cpu().numpy())
-                labels.extend(data.y[data.test_mask].cpu().numpy())
+                if hasattr(data, 'test_mask'):
+                    labels.extend(data.y[data.test_mask].cpu().numpy())
+                else:
+                    labels.extend(data.y.cpu().numpy())
             if self.pred_proba_based_metric:
                 metric_value = self.eval_metric(labels, pred_probas)
             else:
