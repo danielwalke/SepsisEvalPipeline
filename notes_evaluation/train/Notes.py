@@ -42,10 +42,10 @@ class NotesEvaluation:
 
     def train_model(self):
         best_params = {
-            'hidden_dim': 64,
-            'heads': 4,
-            'dropout': 0.2,
-            'lr': 0.001
+            'hidden_dim': 128,
+            'heads': 8,
+            'dropout': 0.00,
+            'lr': 0.0005
         }
         model = GATModel(in_dim=self.train_graphs[0].num_features, hidden_dim=int(best_params['hidden_dim']), edge_dim=1, out_dim=1, heads=int(best_params['heads']), dropout=best_params['dropout'], non_lin=F.relu)
         model = model.to(self.device)

@@ -8,6 +8,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
 from hyperopt import hp, fmin, tpe, Trials, STATUS_OK, space_eval
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler, MaxAbsScaler
 
 class Baseline:
     def __init__(self, ModelClass = LogisticRegression):
@@ -63,8 +64,18 @@ class Baseline:
         self.val_X = self.vectorizer.transform(val_texts)
         self.test_X = self.vectorizer.transform(test_texts)
 
+    def scale_features(self):
+        print("Scaling features...")
+        scaler = MaxAbsScaler()
+        self.train_X = scaler.fit_transform(self.train_X)
+        self.val_X = scaler.transform(self.val_X)
+        self.test_X = scaler.transform(self.test_X)
+
     def train(self, **params):
         print(f"Training {self.ModelClass.__name__} model...")
+        params['random_state'] = 42
+        if self.ModelClass.__name__ in ['LogisticRegression']:
+            self.scale_features()
         self.model = self.ModelClass(**params)
         self.model.fit(self.train_X, self.train_labels)
 
@@ -101,17 +112,17 @@ class Baseline:
         return space_eval(search_space, best)
     
 if __name__ == "__main__":
-    # search_space = {
-    #         'C': hp.loguniform('C', -4, 4),
-    #         'max_iter': hp.choice('max_iter', [100, 500, 1000, 2000])
-    # }
-    # ModelClass = LogisticRegression
-    ModelClass = RandomForestClassifier
     search_space = {
-            'n_estimators': hp.choice('n_estimators', [100, 200, 500]),
-            'max_depth': hp.choice('max_depth', [None, 10, 20, 30]),
-            'min_samples_split': hp.choice('min_samples_split', [2, 5, 10])
+            'C': hp.loguniform('C', -4, 4),
+            'max_iter': hp.choice('max_iter', [100, 500, 1000, 2000])
     }
+    ModelClass = LogisticRegression
+    # ModelClass = RandomForestClassifier
+    # search_space = {
+    #         'n_estimators': hp.choice('n_estimators', [100, 200, 500]),
+    #         'max_depth': hp.choice('max_depth', [None, 10, 20, 30]),
+    #         'min_samples_split': hp.choice('min_samples_split', [2, 5, 10])
+    # }
 
     lr_baseline = Baseline(ModelClass=ModelClass)
     lr_baseline.get_graph_splits()

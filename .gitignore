@@ -4,7 +4,13 @@ data/graph_data/
 .venv/
 tests/
 gt_edge_index/
+notes_evaluation/batched_notes/
+notes_evaluation/graph_data/
 
 # Ignore all CSV files (case-insensitive)
 *.csv
+*.txt
+*.json
+*.tsv
+*.pt
 *.[Cc][Ss][Vv]
