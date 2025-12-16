@@ -1,0 +1,4 @@
+
+SEX_COLUMN_NAME = "Sex"
+AGE_COLUMN_NAME = "Age"
+LABEL_COLUMN_NAME = "Label"
