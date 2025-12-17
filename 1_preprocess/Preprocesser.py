@@ -21,15 +21,8 @@ class Preprocesser:
         self.features = [AGE_COLUMN_NAME, SEX_COLUMN_NAME]
         self.path = path
         self.append_user_features()
-        print(self.features)
         self.config = configparser.ConfigParser()
-        files_read = self.config.read('../config.ini')
-
-        if not files_read:
-            print("Could not find the config file!")
-        else:
-            print(f"Successfully loaded: {files_read}")
-        print(self.config['PREPROCESSING'].get('imputation', 'drop'))
+        files_read = self.config.read('./config.ini')
         self.nan_handler_type = self.config['PREPROCESSING'].get('imputation', 'drop')
         assert self.nan_handler_type in nan_handlers, f"nan_handler_type must be one of {nan_handlers}"
         
@@ -43,22 +36,40 @@ class Preprocesser:
     
     def nan_handler(self, data):
         if self.nan_handler_type == "drop":
-            data = data.query("~(" + " | ".join([i + ".isnull()" for i in self.features]) +")", engine='python') ## filters all rows with an empty feature value
+            data = data.dropna(subset=self.features)
+            
         elif self.nan_handler_type == "zero_fill":
-            data[self.features] = data[self.features].fillna(0)
+            data.loc[:, self.features] = data[self.features].fillna(0)
+            
         elif self.nan_handler_type == "mean_fill":
             for feature in self.features:
-                mean_value = data[feature].mean()
-                data[feature] = data[feature].fillna(mean_value)
+                if pd.api.types.is_numeric_dtype(data[feature]):
+                    mean_value = data[feature].mean()
+                    data.loc[:, feature] = data[feature].fillna(mean_value)
+                else:
+                    if not data[feature].mode().empty:
+                        mode_value = data[feature].mode()[0]
+                        data.loc[:, feature] = data[feature].fillna(mode_value)
+                        
         elif self.nan_handler_type == "multi_imputer":
-            imputer = IterativeImputer(max_iter=10, random_state=self.config['RANDOM'].getint('seed', 42))
-            imputed_matrix = imputer.fit_transform(data[self.features])
-            
-            data[self.features] = pd.DataFrame(
-                imputed_matrix, 
-                columns=self.features, 
-                index=data.index
-            )
+            numeric_features = [f for f in self.features if pd.api.types.is_numeric_dtype(data[f])]
+            categorical_features = [f for f in self.features if not pd.api.types.is_numeric_dtype(data[f])]
+
+            if numeric_features:
+                imputer = IterativeImputer(max_iter=10, random_state=self.config['RANDOM'].getint('seed', 42))
+                imputed_matrix = imputer.fit_transform(data[numeric_features])
+                
+                data[numeric_features] = pd.DataFrame(
+                    imputed_matrix, 
+                    columns=numeric_features, 
+                    index=data.index
+                )
+
+            for feature in categorical_features:
+                if not data[feature].mode().empty:
+                    mode_value = data[feature].mode()[0]
+                    data[feature] = data[feature].fillna(mode_value)
+
         return data
     
     
