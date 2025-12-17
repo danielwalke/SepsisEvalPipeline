@@ -22,7 +22,7 @@ class Preprocesser:
         self.path = path
         self.append_user_features()
         self.config = configparser.ConfigParser()
-        files_read = self.config.read('./config.ini')
+        files_read = self.config.read('/app/config/config.ini')
         self.nan_handler_type = self.config['PREPROCESSING'].get('imputation', 'drop')
         assert self.nan_handler_type in nan_handlers, f"nan_handler_type must be one of {nan_handlers}"
         
