@@ -130,9 +130,13 @@ class PreprocessWrapper:
 
     def write_mimic_processed_data(self, path):
         train_data, val_data, test_data = self.split_mimic_data_time_based()
+        
         train_data.to_csv(path.replace(".csv", "_train.csv"), index=False)
         val_data.to_csv(path.replace(".csv", "_val.csv"), index=False)
         test_data.to_csv(path.replace(".csv", "_test.csv"), index=False)
+        print(f"Wrote train data with {train_data.shape[0]} rows to {path.replace('.csv', '_train.csv')}")
+        print(f"Wrote validation data with {val_data.shape[0]} rows to {path.replace('.csv', '_val.csv')}")
+        print(f"Wrote test data with {test_data.shape[0]} rows to {path.replace('.csv', '_test.csv')}")
 
     def write_sbc_processed_data(self, path):
         self.sbc.get_data().to_csv(path, index=False)
