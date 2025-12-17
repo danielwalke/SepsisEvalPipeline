@@ -106,18 +106,26 @@ class Preprocesser:
         self.control_data = self.pre_processed_data.loc[control_filter]
         self.sepsis_data = self.pre_processed_data.loc[sepsis_filter]
         self.resample_data() 
+        
+    def get_rename_map(self):
+        rename_map = {col: f"f__{col}" for col in self.features}
+        rename_map[LABEL_COLUMN_NAME] = "y"
+        return rename_map
 
     def get_control_data(self):
-        return self.control_data
+        rename_map = self.get_rename_map()
+        return self.control_data.rename(columns=rename_map)
 
     def get_sepsis_data(self):
-        return self.sepsis_data
+        rename_map = self.get_rename_map()
+        return self.sepsis_data.rename(columns=rename_map)
 
     def resample_data(self):
         self.pre_processed_data = self.pre_processed_data.sample(frac=1).reset_index()
         
     def get_data(self):
-        return self.pre_processed_data
+        rename_map = self.get_rename_map()
+        return self.pre_processed_data.rename(columns=rename_map)
     
     def get_X(self):
         data = self.get_data()
