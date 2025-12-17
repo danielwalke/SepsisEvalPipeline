@@ -150,13 +150,18 @@ class PreprocessWrapper:
 
 if __name__ == "__main__":
     print(os.getcwd())
-    path = os.path.join(os.getcwd(), "0_mimic_preprocess") 
+    input_dir_path = "/app/input" # os.path.join(os.getcwd(), "0_mimic_preprocess")
+    output_dir_path = "/app/output" #os.path.join(os.getcwd(), "1_preprocess", "data", "preprocessed_data")
+    if not os.path.exists(output_dir_path):
+        os.makedirs(output_dir_path)
+    print(os.listdir(input_dir_path))
+    
     mimic_data = pd.read_csv(
-        os.path.join(path, "preprocessed_file/mimic_processed.csv"), header=0
+        os.path.join(input_dir_path, "preprocessed_file/mimic_processed.csv"), header=0
     )
     preprocess_wrapper = PreprocessWrapper(
-        mimic_data=mimic_data, print_logs=True, path=path
+        mimic_data=mimic_data, print_logs=True, path=input_dir_path
     )
     preprocess_wrapper.write_mimic_processed_data(
-        r"./data/preprocessed_data/mimic_processed.csv"
+        os.path.join(output_dir_path, "mimic_processed.csv")
     )
