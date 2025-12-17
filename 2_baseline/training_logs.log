@@ -1,0 +1,5 @@
+2025-12-17 08:45:17,554 - Model Class: LogisticRegression
+2025-12-17 08:45:17,554 - Hyperparameter Space: {'C': <hyperopt.pyll.base.Apply object at 0x7fbb1ddcf110>, 'penalty': <hyperopt.pyll.base.Apply object at 0x7fbb1de130b0>, 'solver': <hyperopt.pyll.base.Apply object at 0x7fbb1de1df50>, 'max_iter': <hyperopt.pyll.base.Apply object at 0x7fbb1e023e30>, 'random_state': 42}
+2025-12-17 08:45:17,558 - build_posterior_wrapper took 0.000643 seconds
+2025-12-17 08:45:17,558 - TPE using 0 trials
+2025-12-17 08:45:17,559 - job exception: 'LogisticRegression' object has no attribute 'train'
