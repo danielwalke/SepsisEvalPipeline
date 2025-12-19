@@ -4,6 +4,7 @@ from sklearn.metrics import roc_auc_score
 from Data import Data
 import configparser
 import numpy as np
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 class BaseModel:
     def __init__(self, input_dir, ModelClass, metric=roc_auc_score, maximize_metric=True, metric_pred_proba=True):
@@ -28,12 +29,21 @@ class BaseModel:
         self.logger.info(f"Hyperparameter Space: {param_space}")
 
         def objective(params):
-            model = self.ModelClass(**params)
-            model.fit(self.data.train_X, self.data.train_y)
-            if self.metric_pred_proba:
-                preds = model.predict_proba(self.data.val_X)[:, 1]
+            normalize = params.pop("normalize", False)
+            
+            if normalize:
+                scaler = MinMaxScaler()
+                train_X = scaler.fit_transform(self.data.train_X.copy())
+                val_X = scaler.transform(self.data.val_X.copy())
             else:
-                preds = model.predict(self.data.val_X)
+                train_X = self.data.train_X
+                val_X = self.data.val_X
+            model = self.ModelClass(**params, n_jobs=5)
+            model.fit(train_X, self.data.train_y)
+            if self.metric_pred_proba:
+                preds = model.predict_proba(val_X)[:, 1]
+            else:
+                preds = model.predict(val_X)
             score = self.metric(self.data.val_y, preds)
             if not self.maximize_metric:
                 score = -score
@@ -56,12 +66,21 @@ class BaseModel:
     def get_score(self, best_params, seed = None):
         if seed is None:
             seed = self.seed
-        model = self.ModelClass(**best_params)
-        model.train(self.data.train_X, self.data.train_y)
-        if self.metric_pred_proba:
-            preds = model.predict_proba(self.data.test_X)[:, 1]
+        normalize = best_params.pop("normalize", False)
+            
+        if normalize:
+            scaler = MinMaxScaler()
+            train_X = scaler.fit_transform(self.data.train_X.copy())
+            test_X = scaler.transform(self.data.test_X.copy())
         else:
-            preds = model.predict(self.data.test_X)
+            train_X = self.data.train_X
+            test_X = self.data.test_X
+        model = self.ModelClass(**best_params)
+        model.fit(train_X, self.data.train_y)
+        if self.metric_pred_proba:
+            preds = model.predict_proba(test_X)[:, 1]
+        else:
+            preds = model.predict(test_X)
         score = self.metric(self.data.test_y, preds)
         
         self.logger.info(f"Final Test Score: {score}")

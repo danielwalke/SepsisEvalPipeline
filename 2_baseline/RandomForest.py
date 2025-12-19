@@ -14,7 +14,8 @@ class RandomForestModel(BaseModel):
             "min_samples_split": hp.hp.choice("min_samples_split", [2, 5, 10]),
             "min_samples_leaf": hp.hp.choice("min_samples_leaf", [1, 2, 4]),
             "bootstrap": hp.hp.choice("bootstrap", [True, False]),  
-            "random_state": self.seed
+            "random_state": self.seed,
+            "class_weight": hp.hp.choice("class_weight", [None, "balanced"])
         }
         best_params = self.tune_params(search_space, max_evals=50)
         test_score = self.get_score(best_params)
