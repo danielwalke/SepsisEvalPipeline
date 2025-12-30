@@ -9,7 +9,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application code
 COPY . .
 
-# Create the input and output directories (redundant if mounted, but good practice)
 RUN mkdir -p /app/input /app/output
 
 CMD ["python", "PreprocessWrapper.py"]
