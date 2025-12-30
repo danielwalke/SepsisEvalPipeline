@@ -6,10 +6,11 @@ tests/
 gt_edge_index/
 notes_evaluation/batched_notes/
 notes_evaluation/graph_data/
+0_mimic_preprocess/extdata/
+0_mimic_preprocess/preprocessed_file/
 
 # Ignore all CSV files (case-insensitive)
 *.csv
-*.txt
 *.json
 *.tsv
 *.pt
