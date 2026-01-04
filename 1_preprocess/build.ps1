@@ -1,0 +1,1 @@
+docker build -f "${PWD}\1_preprocess\Dockerfile" -t 1_datapreprocess ${PWD}\1_preprocess
