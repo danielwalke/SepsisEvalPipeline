@@ -165,3 +165,13 @@ if __name__ == "__main__":
     preprocess_wrapper.write_mimic_processed_data(
         os.path.join(output_dir_path, "mimic_processed.csv")
     )
+    
+    sbc_data = pd.read_csv(
+        os.path.join(input_dir_path, "preprocessed_file/sbc_processed.csv"), header=0
+    )
+    preprocess_wrapper = PreprocessWrapper(
+        sbc_data=sbc_data, print_logs=True, path=input_dir_path
+    )
+    preprocess_wrapper.write_sbc_processed_data(
+        os.path.join(output_dir_path, "sbc_processed.csv")
+    )
