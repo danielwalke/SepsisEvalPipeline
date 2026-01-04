@@ -1,0 +1,1 @@
+docker build -f "${PWD}\3_graph_construction\Dockerfile" -t 3_graph_construction ${PWD}\3_graph_construction
