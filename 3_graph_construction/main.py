@@ -2,6 +2,7 @@ import pandas as pd
 from tqdm import tqdm
 import torch
 import numpy as np
+import os
 
 class GraphPreprocesser:
     def __init__(self, data):
@@ -49,12 +50,19 @@ class GraphPreprocesser:
         edge_weight = torch.tensor(edge_weights)
         return edge_index, edge_weight
     
-    def write_edges(self, edge_idx_path, edge_weight_path):
+    def write_edges(self, edge_path, include_weights=True):
+        if os.path.exists(edge_path):
+            print(f"Edges file {edge_path} already exists. Skipping edge writing.")
+            return
         edge_index, edge_weight = self.get_edges()
-        pd.DataFrame(edge_index.numpy().transpose()).to_csv(edge_idx_path, index=False)
-        pd.DataFrame(edge_weight.numpy().transpose()).to_csv(edge_weight_path, index=False)
-        print(f"Edge index saved to {edge_idx_path}")
-        print(f"Edge weight saved to {edge_weight_path}")
+        edge_index_df = pd.DataFrame(edge_index.numpy().transpose(), columns=["source", "target"])
+        if not include_weights:
+            edge_index_df.to_csv(edge_path, index=False)
+            print(f"Edges saved to {edge_path}")
+            return
+        edge_weight_df = pd.DataFrame(edge_weight.numpy().transpose(), columns=["weight"])
+        pd.concat([edge_index_df, edge_weight_df], axis=1).to_csv(edge_path, index=False)
+        print(f"Edges saved to {edge_path}")
 
     def get_pos_encoding(self, seq_len, n=10000):
         d = self.data.filter(regex="^f__").shape[1]
@@ -76,17 +84,32 @@ class GraphPreprocesser:
         return pos_encodings
     
     def write_pos_encodings(self, path):
+        if os.path.exists(path):
+            print(f"Positional encodings file {path} already exists. Skipping positional encoding writing.")
+            return
         pos_encodings = self.get_pos_encodings()
         pos_encodings = torch.tensor(pos_encodings, dtype=torch.float)
-        pd.DataFrame(pos_encodings.numpy()).to_csv(path, index=False)
+        df = pd.DataFrame({
+            "pos_encodings": [str(x.tolist()).replace(" ", "") for x in pos_encodings.numpy()]
+        })
+        df.index.name = "idx"
+        df.to_csv(path, index=True)
         print(f"Positional encodings saved to {path}")
         
     def write_nodes(self, path):
+        if os.path.exists(path):
+            print(f"Nodes file {path} already exists. Skipping node writing.")
+            return
         dataset = self.data.copy()
         y = dataset["y"]
-        ## sample columns starting with "f__"
-        X = dataset.filter(regex="^f__")
-        pd.concat([X, y], axis=1).to_csv(path, index=False)
+        X_df = dataset.filter(regex="^f__")
+        
+        df = pd.DataFrame({
+            "X": [str(x.tolist()).replace(" ", "") for x in X_df.to_numpy()],
+            "y": y
+        })
+        df.index.name = "idx"
+        df.to_csv(path, index=True)
         print(f"Sorted graph nodes saved to {path}")
 
 if __name__ == "__main__":
@@ -97,9 +120,15 @@ if __name__ == "__main__":
         mimic_preprocessed_data = pd.read_csv(f"{data_input_dir}/mimic_processed_{split}.csv", header=0)
         graph_preprocesser = GraphPreprocesser(mimic_preprocessed_data) 
         graph_preprocesser.sort_data()
-        graph_preprocesser.write_edges(f"{data_output_dir}/mimic_{split}_edge_index.csv",
-                                       f"{data_output_dir}/mimic_{split}_edge_weight.csv")
+        graph_preprocesser.write_edges(f"{data_output_dir}/mimic_{split}_edges.csv")
         graph_preprocesser.write_pos_encodings(f"{data_output_dir}/mimic_{split}_pos_encodings.csv")
         graph_preprocesser.write_nodes(f"{data_output_dir}/mimic_{split}_nodes.csv")
-    
+        
+    for split in ["", "_validation", "_ext_validation"]:
+        sbc_preprocessed_data = pd.read_csv(f"{data_input_dir}/sbc_processed{split}.csv", header=0)
+        graph_preprocesser = GraphPreprocesser(sbc_preprocessed_data) 
+        graph_preprocesser.sort_data()
+        graph_preprocesser.write_edges(f"{data_output_dir}/sbc{split}_edges.csv", include_weights=False)
+        # graph_preprocesser.write_pos_encodings(f"{data_output_dir}/sbc{split}_pos_encodings.csv")
+        graph_preprocesser.write_nodes(f"{data_output_dir}/sbc{split}_nodes.csv")
     
