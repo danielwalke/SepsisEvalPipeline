@@ -1,0 +1,1 @@
+docker-compose -f .\6_graphaware\docker-compose.yml up --build
