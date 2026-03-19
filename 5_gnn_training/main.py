@@ -14,7 +14,7 @@ import configparser
 if __name__ == '__main__':
     ## Load configuration parameters    
     config = configparser.ConfigParser()
-    config.read('config.ini')
+    config.read('../config.ini')
     
     BATCH_SIZE = int(eval(config['TRAINING']['batch_size']))
     NUM_WORKERS = int(config['TRAINING']['num_workers_for_loading'])
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     print(f"Using lr={lr}, weight_decay={weight_decay}, hidden_channels={hidden_channels}, out_channels={out_channels}, num_layers={num_layers}, dropout={dropout}, heads={heads}, activation={activation}, skip_connections={skip_connections}")
     
     neo4j_connector = Neo4jConnector()
-    #neo4j_connector.scale_and_add_pos_enc_to_features('SBC_TRAIN', 'SBC_TEST', 'SBC_EXT_TEST')
+    neo4j_connector.scale_and_add_pos_enc_to_features('SBC_TRAIN', 'SBC_TEST', 'SBC_EXT_TEST')
     train_seed_ids = neo4j_connector.get_train_ids()
     test_seed_ids = neo4j_connector.get_test_ids()
     ## TODO We want patient ids here to usse inductive graph learning on val instead of transductive learning.
@@ -52,7 +52,7 @@ if __name__ == '__main__':
     val_loader = dataloader.get_val_loader(val_dataset)
     test_loader = dataloader.get_test_loader(test_dataset)
     
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
     model_evaluation = ModelEvaluation(device = device, evaluation_fun=roc_auc_score, is_evaluation_fun_probabilistic=True)
     model_training = ModelTraining(device=device, model_evaluation = model_evaluation, lr=lr, weight_decay=weight_decay, in_channels=7, hidden_channels=hidden_channels, out_channels=out_channels, num_layers=num_layers, dropout=dropout, heads=heads, activation=activation, skip_connections=skip_connections)
     model_training.train(train_loader, val_loader, num_epochs=100)

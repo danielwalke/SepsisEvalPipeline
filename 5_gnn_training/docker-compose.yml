@@ -1,13 +1,13 @@
 services:
   neo4j_db:
-    image: neo4j:5.26-bullseye
+    image: neo4j:5.26
     container_name: neo4j_read_container
     ports:
       - "7474:7474"
       - "7687:7687"
     volumes:
-      - "C:/Users/danie/git/SepsisEvalPipeline/4_db_upload/neo4j_data:/data"
-      - "C:/Users/danie/git/SepsisEvalPipeline/3_graph_construction/data:/var/lib/neo4j/import"
+      - "~/git/SepsisEvalPipeline/4_db_upload/neo4j_data:/data"
+      - "~/git/SepsisEvalPipeline/3_graph_construction/data:/var/lib/neo4j/import"
     environment:
       NEO4J_AUTH: neo4j/password
       NEO4J_server_memory_heap_initial__size: 10G

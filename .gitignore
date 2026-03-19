@@ -8,6 +8,7 @@ notes_evaluation/batched_notes/
 notes_evaluation/graph_data/
 0_mimic_preprocess/extdata/
 0_mimic_preprocess/preprocessed_file/
+mimic/
 
 # Ignore all CSV files (case-insensitive)
 *.csv
@@ -15,3 +16,4 @@ notes_evaluation/graph_data/
 *.tsv
 *.pt
 *.[Cc][Ss][Vv]
+4_db_upload/neo4j_data

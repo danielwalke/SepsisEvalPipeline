@@ -129,6 +129,6 @@ if __name__ == "__main__":
         graph_preprocesser = GraphPreprocesser(sbc_preprocessed_data) 
         graph_preprocesser.sort_data()
         graph_preprocesser.write_edges(f"{data_output_dir}/sbc{split}_edges.csv", include_weights=False)
-        # graph_preprocesser.write_pos_encodings(f"{data_output_dir}/sbc{split}_pos_encodings.csv")
+        graph_preprocesser.write_pos_encodings(f"{data_output_dir}/sbc{split}_pos_encodings.csv")
         graph_preprocesser.write_nodes(f"{data_output_dir}/sbc{split}_nodes.csv")
     

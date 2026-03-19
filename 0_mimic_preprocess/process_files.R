@@ -41,7 +41,7 @@ import_mimic <- function(path, out_dir_path, verbose = interactive()) {
             "subject_id", "hadm_id", "itemid", "charttime", "valuenum"
         )
     )
-
+    print(names(labevents))
 
     if (verbose)
         message("Preprocess labevents")
@@ -53,28 +53,36 @@ import_mimic <- function(path, out_dir_path, verbose = interactive()) {
         labevents$itemid %in% feature_codes$itemid,
     ]
 
-    ## long to wide
     labevents <- unique(
         labevents,
         by = c("subject_id", "hadm_id", "charttime", "itemid")
     )
+    
     labevents <- dcast(
         labevents,
         subject_id + hadm_id + charttime ~ itemid,
         value.var = "valuenum"
     )
+    
+    gc()
 
-    ## rename columns
     print("Renaming columns")
     name_mapping <- d_labitems[itemid %in% feature_codes$itemid, .(itemid, label)]
     print(name_mapping)
+    
+    valid_mapping <- name_mapping[as.character(itemid) %in% names(labevents)]
+    
     setnames(labevents, 
-         old = as.character(name_mapping$itemid), 
-         new = name_mapping$label
+         old = as.character(valid_mapping$itemid), 
+         new = valid_mapping$label
     )
 
-    ## convert HGB to mmol/l
-    labevents[, HGB := HGB * 0.621]
+    if ("HGB" %in% names(labevents)) {
+        labevents[, HGB := HGB * 0.621]
+    }
+    
+    gc()
+
 
     if (verbose)
         message("Reading transfers")
@@ -92,7 +100,7 @@ import_mimic <- function(path, out_dir_path, verbose = interactive()) {
 
     ## recode sender
     icumap <- fread(file.path(
-        extdata_path, "mimic-iv-1.0", "icumap.csv"
+        extdata_path, "icumap.csv"
     ))
     transfers[, Sender := icumap$Type[match(careunit, icumap$Icu)]]
 
@@ -273,8 +281,11 @@ import_mimic <- function(path, out_dir_path, verbose = interactive()) {
         with = FALSE
     ]
     output_file <- file.path(out_dir_path, "mimic_processed.csv")
+    print("Start writing")
     fwrite(labevents, output_file)
+    print(output_file)
     message(paste("Processing complete. Saved to:", output_file))
+    print(paste("Processing complete. Saved to:", output_file))
 }
 
 import_mimic("/app/input", "/app/output") #'C:\\Users\\danie\\Downloads\\mimic-iv-3.1\\mimic-iv-3.1\\'
