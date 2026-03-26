@@ -6,9 +6,8 @@ services:
       - "7474:7474"
       - "7687:7687"
     volumes:
-      - "C:/Users/danie/git/SepsisEvalPipeline/4_db_upload/neo4j_data:/data"
-      - "C:/Users/danie/git/SepsisEvalPipeline/3_graph_construction/data:/var/lib/neo4j/import"
-      - "C:/Users/danie/git/SepsisEvalPipeline/plugins:/plugins"
+      - "~/git/SepsisEvalPipeline/4_db_upload/neo4j_data:/data"
+      - "~/git/SepsisEvalPipeline/plugins:/plugins"
     environment:
       NEO4J_AUTH: neo4j/password
       NEO4J_PLUGINS: '["apoc"]'

@@ -31,7 +31,7 @@ class Neo4jConnector:
                 WITH i, avg(n.features[i]) AS val
                 ORDER BY i
                 WITH collect(val) AS mean_features
-                MERGE (ref:ReferenceNode {id: -1})
+                MERGE (ref:ReferenceNode {id: -1, time: 0})
                 SET ref.features = mean_features
             """)
 
@@ -42,19 +42,37 @@ class Neo4jConnector:
                     {batchSize: 1000, parallel: false}
                 )
             """)
-    
+    def add_edge_weights_depending_on_time_ratio(self):
+        with self.driver.session() as session:
+            session.run("""
+                        MATCH (a)-[r]->(b)
+CALL {
+    WITH r, a, b
+    WITH r, a.time AS ta, b.time AS tb
+    WITH r,
+        CASE
+            WHEN ta = tb THEN 1.0
+            WHEN ta < tb AND tb > 0 THEN toFloat(ta+1) / tb+1
+            WHEN tb < ta AND ta > 0 THEN toFloat(tb+1) / ta+1
+            ELSE 0.0
+        END AS ratio_weight
+    SET r.weight = ratio_weight
+} IN TRANSACTIONS OF 1000 ROWS
+                        """)
     def feature_neighborhood_aggregation_function(self):
         with self.driver.session() as session:
             session.run("""
                 CALL apoc.periodic.iterate(
                 "MATCH (n) WHERE n.id > -1 RETURN n",
-                "MATCH (n)<--(neighbor)
-                WITH n, collect(neighbor.features) AS nb_features
-                WITH n, [i IN range(0, size(n.features)-1) | n.features[i] - apoc.coll.avg([f IN nb_features | f[i]])] AS diff_features
+                "MATCH (n)<-[r]-(neighbor)
+                WITH n, sum(r.weight) AS total_weight, collect({features: neighbor.features, weight: r.weight}) AS nb_data
+                WITH n, [i IN range(0, size(n.features)-1) | 
+                    n.features[i] - (CASE WHEN total_weight > 0 THEN reduce(s = 0.0, nb IN nb_data | s + (nb.features[i] * nb.weight)) / total_weight ELSE 0.0 END)
+                ] AS diff_features
                 SET n.aggregated_features = diff_features",
                 {batchSize: 1000, parallel: false}
                 )
             """)
         pass
-    
+    ## TODO add pos encodings and difference scaled by time difference 
     ## TODO might make sense to also scale and add pos encodings? Idk yet but might further push AUROC up
