@@ -106,7 +106,9 @@ class GraphPreprocesser:
         
         df = pd.DataFrame({
             "X": [str(x.tolist()).replace(" ", "") for x in X_df.to_numpy()],
-            "y": y
+            "y": y,
+            "patientId": dataset["Id"],
+            "time": dataset["Time"]
         })
         df.index.name = "idx"
         df.to_csv(path, index=True)
