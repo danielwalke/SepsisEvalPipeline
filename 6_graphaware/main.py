@@ -10,7 +10,7 @@ user = "neo4j"
 password = "password"
 driver = GraphDatabase.driver(uri, auth=(user, password))
 
-run_hyperparameter_tuning = False
+run_hyperparameter_tuning = True
 BATCH_SIZE = 100000
 
 def diff_user_fun(kwargs):
@@ -160,13 +160,13 @@ def optimize_hyperparams(session):
             "eval_metric": "auc",
             "scale_pos_weight": 640,
             "max_depth": int(params['max_depth']),
-            "learning_rate": params['learning_rate'],
-            "subsample": params['subsample'],
-            "colsample_bytree": params['colsample_bytree'],
-            "min_child_weight": int(params['min_child_weight']),
-            "gamma": params['gamma'],
-            "reg_alpha": params['reg_alpha'],
-            "reg_lambda": params['reg_lambda']
+            "learning_rate": float(params['learning_rate']),
+            "subsample": float(params['subsample']),
+            "colsample_bytree": float(params['colsample_bytree']),
+            "min_child_weight": float(params['min_child_weight']),
+            "gamma": float(params['gamma']),
+            "reg_alpha": float(params['alpha']),
+            "reg_lambda": float(params['lambda'])
         }
         
         val_cond = "WHERE toInteger(n.patientId) % 4 = 3"
@@ -190,13 +190,13 @@ with driver.session() as session:
             "eval_metric": "auc",
             "scale_pos_weight": 640,
             "max_depth": int(best_params['max_depth']),
-            "learning_rate": best_params['learning_rate'],
-            "subsample": best_params['subsample'],
-            "colsample_bytree": best_params['colsample_bytree'],
-            "min_child_weight": int(best_params['min_child_weight']),
-            "gamma": best_params['gamma'],
-            "reg_alpha": best_params['reg_alpha'],
-            "reg_lambda": best_params['reg_lambda']
+            "learning_rate": float(best_params['learning_rate']),
+            "subsample": float(best_params['subsample']),
+            "colsample_bytree": float(best_params['colsample_bytree']),
+            "min_child_weight": float(best_params['min_child_weight']),
+            "gamma": float(best_params['gamma']),
+            "reg_alpha": float(best_params['alpha']),
+            "reg_lambda": float(best_params['lambda'])
         }
     else:
         final_params = {'alpha': 9.538284629683702, 'booster': 'gbtree', 'colsample_bytree': 0.9080724508103653, 'gamma': 0.8284271722786946, 'lambda': 0.00906801548010611, 'learning_rate': 0.15996292193138167, 'max_depth': 3, 'min_child_weight': 3.3449149107880025, 'n_estimators': 150, 'n_jobs': -1, 'objective': 'binary:logistic', 'random_state': 42, 'scale_pos_weight': 1, 'subsample': 0.8923516991674396}
