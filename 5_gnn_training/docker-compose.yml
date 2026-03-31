@@ -1,6 +1,6 @@
 services:
   neo4j_db:
-    image: neo4j:5.26
+    image: neo4j:5.26-bullseye
     container_name: neo4j_read_container
     ports:
       - "7474:7474"
@@ -10,12 +10,9 @@ services:
       - "~/git/SepsisEvalPipeline/3_graph_construction/data:/var/lib/neo4j/import"
     environment:
       NEO4J_AUTH: neo4j/password
-      NEO4J_server_memory_heap_initial__size: 10G
-      NEO4J_server_memory_heap_max__size: 10G
-      NEO4J_server_memory_pagecache_size: 5G
-      NEO4J_PLUGINS: '["apoc", "apoc-extended"]'
-      NEO4J_dbms_security_procedures_unrestricted: apoc.*
-      NEO4J_dbms_security_procedures_allowlist: apoc.*
+      NEO4J_server_memory_heap_initial__size: 2G
+      NEO4J_server_memory_heap_max__size: 2G
+      NEO4J_server_memory_pagecache_size: 1G
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:7474 || exit 1"]
       interval: 10s

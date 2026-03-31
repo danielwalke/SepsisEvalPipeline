@@ -1,1 +1,1 @@
-docker-compose -f .\5_db_retrieval\docker-compose.yml up --build
+docker-compose -f .\5_gnn_training\docker-compose.yml up --build

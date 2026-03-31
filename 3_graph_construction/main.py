@@ -119,6 +119,7 @@ if __name__ == "__main__":
     data_output_dir = "/app/output"
     
     for split in ["train", "val", "test"]:
+        continue
         mimic_preprocessed_data = pd.read_csv(f"{data_input_dir}/mimic_processed_{split}.csv", header=0)
         graph_preprocesser = GraphPreprocesser(mimic_preprocessed_data) 
         graph_preprocesser.sort_data()
@@ -130,7 +131,7 @@ if __name__ == "__main__":
         sbc_preprocessed_data = pd.read_csv(f"{data_input_dir}/sbc_processed{split}.csv", header=0)
         graph_preprocesser = GraphPreprocesser(sbc_preprocessed_data) 
         graph_preprocesser.sort_data()
-        graph_preprocesser.write_edges(f"{data_output_dir}/sbc{split}_edges.csv", include_weights=False)
+        graph_preprocesser.write_edges(f"{data_output_dir}/sbc{split}_edges.csv", include_weights=True)
         graph_preprocesser.write_pos_encodings(f"{data_output_dir}/sbc{split}_pos_encodings.csv")
         graph_preprocesser.write_nodes(f"{data_output_dir}/sbc{split}_nodes.csv")
     

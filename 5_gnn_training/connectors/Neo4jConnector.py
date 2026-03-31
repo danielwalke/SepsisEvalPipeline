@@ -9,10 +9,10 @@ def get_subgraph_query(split='train'):
     return f"""
 UNWIND $seed_ids AS seedId
 MATCH (seed:{split})
-WHERE seed.id = seedId
+WHERE seed.id = seedId AND seedId > -1
 
 CALL(seed){{
-    MATCH (seed)<--(n1)
+    MATCH (seed:{split})<--(n1:{split})
     WITH n1
     ORDER BY n1.id
     LIMIT $limit_1
@@ -21,7 +21,7 @@ CALL(seed){{
 
 CALL(hop1_nodes) {{
     UNWIND hop1_nodes AS h1
-    MATCH (h1)<--(h2)
+    MATCH (h1:{split})<--(h2:{split})
     WITH h2
     ORDER BY h2.id
     LIMIT $limit_2
@@ -32,15 +32,15 @@ WITH seed, hop1_nodes, hop2_nodes, (hop1_nodes + hop2_nodes + [seed]) AS all_sam
 UNWIND all_sampled_nodes AS n
 WITH DISTINCT n AS sampledNode, all_sampled_nodes
 
-MATCH (sampledNode)-[r]->(target)
-WHERE target IN all_sampled_nodes
+MATCH (sampledNode:{split})-[r]->(target:{split})
+WHERE target IN all_sampled_nodes AND sampledNode.id > -1 AND target.id > -1
 
 WITH collect(DISTINCT sampledNode) AS uniqueNodes, collect(DISTINCT r) AS uniqueEdges
 RETURN 
     [n IN uniqueNodes | n.id] AS node_ids,
     [n IN uniqueNodes | n.features_scaled] AS features,
     [n IN uniqueNodes | toInteger(n.label)] AS labels,
-    [e IN uniqueEdges | [startNode(e).id, endNode(e).id, coalesce(e.weight, 1.0)]] AS edge_data
+    [e IN uniqueEdges | [startNode(e).id, endNode(e).id, coalesce(e.weight,1.0)]] AS edge_data
     """
     
 
@@ -111,9 +111,8 @@ class Neo4jConnector:
             print("Feature mins:", mins, "maxs:", maxs)
 
             scale_query = """
-                WHERE n.features_scaled IS NULL
-                CALL {
-                    WITH n
+                WHERE n.id > -1 AND  n.features_scaled IS NULL
+                CALL (n) {
                     SET n.features_scaled = [i IN range(0, size(n.features)-1) | 
                         CASE 
                             WHEN ($maxs[i] - $mins[i]) = 0 THEN 0.0 + n.pos_encodings[i]

@@ -20,12 +20,21 @@ class ModelTraining:
         
         self.device = device
         self.model_evaluation = model_evaluation
-        self.model = GNNModel(in_channels=in_channels, hidden_channels=hidden_channels, out_channels=out_channels, num_layers=num_layers, dropout=dropout, heads=heads, activation=activation, skip_connections=skip_connections).to(self.device)
+        self.hidden_channels = hidden_channels
+        self.out_channels = out_channels
+        self.in_channels = in_channels
+        self.num_layers = num_layers
+        self.dropout = dropout
+        self.heads = heads
+        self.activation = activation
+        self.skip_connections = skip_connections
+        
+        self.model = GNNModel(in_channels=self.in_channels, hidden_channels=self.hidden_channels, out_channels=self.out_channels, num_layers=self.num_layers, dropout=self.dropout, heads=self.heads, activation=self.activation, skip_connections=self.skip_connections).to(self.device)
         pos_weight = torch.tensor([664.0]).to(self.device) #525.0 for mimic, 664.0 for sbc
         self.criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, weight_decay=weight_decay)
 
-        self.best_val_auroc = float('-inf')
+        self.best_val_metric = float('-inf')
         self.PATIENCE = 10
         self.patience_counter = 0
         self.best_model_state_dict = None
@@ -42,8 +51,8 @@ class ModelTraining:
                 
                 out = self.model(batch.x, batch.edge_index, batch.edge_attr)
                 
-                target = batch.y[batch.batch_mask]
-                logits = out[batch.batch_mask]
+                target = batch.y[batch.batch_mask].squeeze()
+                logits = out[batch.batch_mask].squeeze()
                 
                 loss = self.criterion(logits, target)
                 self.optimizer.zero_grad()
@@ -55,10 +64,12 @@ class ModelTraining:
 
             print(f"Epoch {epoch} | Loss: {total_loss:.4f}")
             if epoch % 1 == 0:
-                val_auroc = self.model_evaluation.eval_model(self.model, val_loader)
-                print(f"--- VAL AUROC: {val_auroc:.4f} ---")
-                if val_auroc > self.best_val_auroc:
-                    self.best_val_auroc = val_auroc
+                val_metric = self.model_evaluation.eval_model(self.model, val_loader)
+                if not self.model_evaluation.is_higher_metric_better:
+                    val_metric = -val_metric
+                print(f"--- VAL METRIC: {val_metric:.4f} ---")
+                if val_metric > self.best_val_metric:
+                    self.best_val_metric = val_metric
                     self.best_model_state_dict = self.model.state_dict()
                     self.patience_counter = 0
                 else:

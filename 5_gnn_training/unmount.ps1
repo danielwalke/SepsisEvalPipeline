@@ -1,0 +1,1 @@
+docker compose -f .\5_gnn_training\docker-compose.yml down

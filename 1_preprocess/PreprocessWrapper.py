@@ -156,15 +156,15 @@ if __name__ == "__main__":
         os.makedirs(output_dir_path)
     print(os.listdir(input_dir_path))
     
-    mimic_data = pd.read_csv(
-        os.path.join(input_dir_path, "preprocessed_file/mimic_processed.csv"), header=0
-    )
-    preprocess_wrapper = PreprocessWrapper(
-        mimic_data=mimic_data, print_logs=True, path=input_dir_path
-    )
-    preprocess_wrapper.write_mimic_processed_data(
-        os.path.join(output_dir_path, "mimic_processed.csv")
-    )
+    #mimic_data = pd.read_csv(
+    #    os.path.join(input_dir_path, "preprocessed_file/mimic_processed.csv"), header=0
+    #)
+    #preprocess_wrapper = PreprocessWrapper(
+    #    mimic_data=mimic_data, print_logs=True, path=input_dir_path
+    #)
+    #preprocess_wrapper.write_mimic_processed_data(
+    #    os.path.join(output_dir_path, "mimic_processed.csv")
+    #)
     
     sbc_data = pd.read_csv(
         os.path.join(input_dir_path, "preprocessed_file/sbc_processed.csv"), header=0

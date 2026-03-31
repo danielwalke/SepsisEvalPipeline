@@ -62,17 +62,16 @@ CALL {
     def feature_neighborhood_aggregation_function(self):
         with self.driver.session() as session:
             session.run("""
-                CALL apoc.periodic.iterate(
-                "MATCH (n) WHERE n.id > -1 RETURN n",
-                "MATCH (n)<-[r]-(neighbor)
-                WITH n, sum(r.weight) AS total_weight, collect({features: neighbor.features, weight: r.weight}) AS nb_data
-                WITH n, [i IN range(0, size(n.features)-1) | 
-                    n.features[i] - (CASE WHEN total_weight > 0 THEN reduce(s = 0.0, nb IN nb_data | s + (nb.features[i] * nb.weight)) / total_weight ELSE 0.0 END)
-                ] AS diff_features
-                SET n.aggregated_features = diff_features",
-                {batchSize: 1000, parallel: false}
-                )
-            """)
+CALL apoc.periodic.iterate(
+    "MATCH (n) WHERE n.id > -1 RETURN n",
+    "MATCH (n)<-[r]-(neighbor)
+    WITH n, sum(coalesce(r.weight, 1.0)) AS total_weight, collect({features: neighbor.features, weight: coalesce(r.weight, 1.0)}) AS nb_data
+    WITH n, [i IN range(0, size(n.features)-1) | 
+        n.features[i] - (CASE WHEN total_weight > 0 THEN reduce(s = 0.0, nb IN nb_data | s + (nb.features[i] * nb.weight)) / total_weight ELSE 0.0 END)
+    ] AS diff_features
+    SET n.aggregated_features = diff_features",
+    {batchSize: 1000, parallel: false}
+)            """)
         pass
     ## TODO add pos encodings and difference scaled by time difference 
     ## TODO might make sense to also scale and add pos encodings? Idk yet but might further push AUROC up
