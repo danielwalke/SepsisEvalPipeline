@@ -1,6 +1,7 @@
 services:
   neo4j_db:
     image: neo4j:5.26-bullseye
+    stop_grace_period: 2m
     user: "${UID}:${GID}"
     container_name: neo4j_container
     ports:
@@ -15,10 +16,10 @@ services:
       NEO4J_server_memory_heap_max__size: 2G
       NEO4J_server_memory_pagecache_size: 1G
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:7474 || exit 1"]
+      test: ["CMD-SHELL", "cypher-shell -u neo4j -p password 'RETURN 1;' || exit 1"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
   
   data_uploader:
     build: .
