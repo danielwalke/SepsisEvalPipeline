@@ -4,6 +4,7 @@ import numpy as np
 from sklearn.metrics import roc_auc_score
 from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
 from GraphAware.EnsembleFramework import Framework
+import json
 
 uri = "bolt://localhost:7687"
 user = "neo4j"
@@ -157,16 +158,17 @@ def optimize_hyperparams(session):
     def objective(params):
         xgb_params = {
             "objective": "binary:logistic",
-            "eval_metric": "auc",
-            "scale_pos_weight": 640,
+            "scale_pos_weight": 1,
             "max_depth": int(params['max_depth']),
             "learning_rate": float(params['learning_rate']),
             "subsample": float(params['subsample']),
             "colsample_bytree": float(params['colsample_bytree']),
             "min_child_weight": float(params['min_child_weight']),
             "gamma": float(params['gamma']),
-            "reg_alpha": float(params['alpha']),
-            "reg_lambda": float(params['lambda'])
+            "alpha": float(params['alpha']),
+            "reg_lambda": float(params['lambda']),
+            "random_state": 42,
+            "booster": 'gbtree',
         }
         
         val_cond = "WHERE toInteger(n.patientId) % 4 = 3"
@@ -187,19 +189,25 @@ with driver.session() as session:
         
         final_params = {
             "objective": "binary:logistic",
-            "eval_metric": "auc",
-            "scale_pos_weight": 640,
+            "scale_pos_weight": 1,
             "max_depth": int(best_params['max_depth']),
             "learning_rate": float(best_params['learning_rate']),
             "subsample": float(best_params['subsample']),
             "colsample_bytree": float(best_params['colsample_bytree']),
             "min_child_weight": float(best_params['min_child_weight']),
             "gamma": float(best_params['gamma']),
-            "reg_alpha": float(best_params['alpha']),
-            "reg_lambda": float(best_params['lambda'])
+            "alpha": float(best_params['alpha']),
+            "reg_lambda": float(best_params['lambda']),
+            "random_state": 42,
+            "booster": 'gbtree',
         }
+        
     else:
         final_params = {'alpha': 9.538284629683702, 'booster': 'gbtree', 'colsample_bytree': 0.9080724508103653, 'gamma': 0.8284271722786946, 'lambda': 0.00906801548010611, 'learning_rate': 0.15996292193138167, 'max_depth': 3, 'min_child_weight': 3.3449149107880025, 'n_estimators': 150, 'n_jobs': -1, 'objective': 'binary:logistic', 'random_state': 42, 'scale_pos_weight': 1, 'subsample': 0.8923516991674396}
+        #final_params =  {'alpha': np.float64(9.458143880601247), 'colsample_bytree': np.float64(0.8118251996907339), 'gamma': np.float64(1.013022312981939), 'lambda': np.float64(0.0013768509710992743), 'learning_rate': np.float64(0.09107721668432846), 'max_depth': np.int64(0), 'min_child_weight': np.float64(3.486381643016147), 'n_estimators': np.int64(2), 'subsample': np.float64(0.7972547446622092)}
+    print(final_params)
+    with open("best_params.json", "w") as f:
+        json.dump(final_params, f, indent=4)
 
     final_model = train_model_batched(session, final_params, "SBC_TRAIN", trees_per_batch=50)
     

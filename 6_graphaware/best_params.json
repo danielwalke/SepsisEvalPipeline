@@ -1,0 +1,14 @@
+{
+    "objective": "binary:logistic",
+    "scale_pos_weight": 1,
+    "max_depth": 3,
+    "learning_rate": 0.12189422935673093,
+    "subsample": 0.879236717870908,
+    "colsample_bytree": 0.7106997225258949,
+    "min_child_weight": 3.885622717798215,
+    "gamma": 0.7836125832310136,
+    "alpha": 5.729981726651661,
+    "reg_lambda": 0.0035904299758038843,
+    "random_state": 42,
+    "booster": "gbtree"
+}
