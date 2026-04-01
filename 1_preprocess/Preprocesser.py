@@ -33,6 +33,9 @@ class Preprocesser:
         d_labitems = pd.read_csv(os.path.join(self.path, "extdata", "d_labitems.csv"), header=0)
         feature_mappings = pd.merge(feature_codes, d_labitems, on="itemid", how="left")
         self.features.extend(feature_mappings["label"].values.tolist())
+        os.makedirs(os.path.join(self.path, "features"), exist_ok=True)
+        with open(os.path.join(self.path, "features", "feature_names.txt"), "w") as f:
+            f.write(",".join(self.features))
     
     def nan_handler(self, data):
         if self.nan_handler_type == "drop":
