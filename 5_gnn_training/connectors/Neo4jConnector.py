@@ -9,7 +9,7 @@ def get_subgraph_query(split='train'):
     return f"""
 UNWIND $seed_ids AS seedId
 MATCH (seed:{split})
-WHERE seed.id = seedId AND seedId > -1
+WHERE seed.patientId = seedId AND seed.id > -1
 
 CALL(seed){{
     MATCH (seed:{split})<--(n1:{split})
@@ -53,7 +53,7 @@ class Neo4jConnector:
         
     def get_ids(self, split_name):
         with self.driver.session() as session:
-            seed_ids = session.run(f"MATCH (n:{split_name}) RETURN COLLECT(n.id) as ids").single().get("ids")
+            seed_ids = session.run(f"MATCH (n:{split_name}) RETURN COLLECT(DISTINCT n.patientId) as ids").single().get("ids")
         return seed_ids
     
     def get_train_ids(self):
