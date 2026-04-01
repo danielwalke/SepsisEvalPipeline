@@ -11,12 +11,21 @@ class RandomForestModel(BaseModel):
         search_space = {
             "n_estimators": hp.hp.choice("n_estimators", [100, 200, 300, 400, 500]),
             "max_depth": hp.hp.choice("max_depth", [None, 10, 20, 30, 40, 50]),
-            "min_samples_split": hp.hp.choice("min_samples_split", [2, 5, 10]),
-            "min_samples_leaf": hp.hp.choice("min_samples_leaf", [1, 2, 4]),
+            "max_leaf_nodes": hp.hp.choice("max_leaf_nodes", [None, 50, 79, 100]),
+            "min_samples_split": hp.hp.uniform("min_samples_split", 0.001, 0.01),
+            "min_samples_leaf": hp.hp.uniform("min_samples_leaf", 0.0001, 0.01),
             "bootstrap": hp.hp.choice("bootstrap", [True, False]),  
-            "random_state": self.seed,
-            "class_weight": hp.hp.choice("class_weight", [None, "balanced"])
+            "class_weight": hp.hp.choice("class_weight", [
+                None, 
+                "balanced", 
+                {0: 0.001, 1: 1}, 
+                {0: 0.0015, 1: 1}, 
+                {0: 0.002, 1: 1}, 
+                {0: 0.0025, 1: 1}, 
+                {0: 0.005, 1: 1}, 
+                {0: 0.01, 1: 1}
+            ])
         }
-        best_params = self.tune_params(search_space, max_evals=50)
+        best_params = self.tune_params(search_space, max_evals=10)
         test_score = self.get_score(best_params)
         return best_params, test_score

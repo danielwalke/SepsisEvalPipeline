@@ -18,6 +18,6 @@ class LogisticRegressionModel(BaseModel):
             "class_weight": hp.hp.choice("class_weight", [None, "balanced"]),
             "normalize": hp.hp.choice("normalize", [True, False])
         }
-        best_params = self.tune_params(search_space, max_evals=50)
+        best_params = self.tune_params(search_space, max_evals=10)
         test_score = self.get_score(best_params)
         return best_params, test_score

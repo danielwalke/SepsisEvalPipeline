@@ -24,3 +24,7 @@ class Data:
     
     def load_test_data(self):
         return self.load_data("mimic_processed_test.csv")
+
+    @property
+    def name(self):
+        return "MIMIC"

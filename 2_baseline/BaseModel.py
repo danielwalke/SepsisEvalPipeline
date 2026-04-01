@@ -2,15 +2,17 @@ import logging
 from hyperopt import tpe, Trials, fmin, STATUS_OK, space_eval
 from sklearn.metrics import roc_auc_score
 from Data import Data
+from SbcData import SbcData
 import configparser
 import numpy as np
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from ResultsLogger import append_result
 
 class BaseModel:
     def __init__(self, input_dir, ModelClass, metric=roc_auc_score, maximize_metric=True, metric_pred_proba=True):
         
         
-        self.data = Data(input_dir)
+        self.data = Data(input_dir) if "mimic_processed_train.csv" in input_dir else SbcData(input_dir)
         self.ModelClass = ModelClass
         self.metric = metric
         self.maximize_metric = maximize_metric
@@ -38,7 +40,7 @@ class BaseModel:
             else:
                 train_X = self.data.train_X
                 val_X = self.data.val_X
-            model = self.ModelClass(**params, n_jobs=5)
+            model = self.ModelClass(**params, n_jobs=10)
             model.fit(train_X, self.data.train_y)
             if self.metric_pred_proba:
                 preds = model.predict_proba(val_X)[:, 1]
@@ -84,5 +86,21 @@ class BaseModel:
         score = self.metric(self.data.test_y, preds)
         
         self.logger.info(f"Final Test Score: {score}")
-        
+        if self.data.name == "SBC":
+            ext_test_X = self.data.ext_test_X
+            ext_test_y = self.data.ext_test_y
+            if normalize:
+                ext_test_X = scaler.transform(ext_test_X.copy())
+            ext_preds = model.predict_proba(ext_test_X)[:, 1] if self.metric_pred_proba else model.predict(ext_test_X)
+            ext_score = self.metric(ext_test_y, ext_preds)
+            self.logger.info(f"Final External Test Score: {ext_score}")
+        append_result(
+            dataset=self.data.name,
+            features=self.data.train_X.columns.tolist(),
+            model=self.ModelClass.__name__,
+            approach="baseline",
+            test_score=score,
+            ext_test_score=ext_score if self.data.name == "SBC" else None,
+            hyperparameters=best_params
+        )
         return score
