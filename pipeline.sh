@@ -32,10 +32,7 @@ docker compose -f ./6_graphaware/docker-compose.yml up --build --wait
 
 python ./5_gnn_training/main.py >> gnn_training.log
 
-cd 6_graphaware
-python true_mini_batch.py >> graphaware_training.log
-cd ..
-
+python ./6_graphaware/main.py >> graphaware_training.log
 docker compose -f ./6_graphaware/docker-compose.yml down
 
 echo "--- PIPELINE COMPLETE ---"
