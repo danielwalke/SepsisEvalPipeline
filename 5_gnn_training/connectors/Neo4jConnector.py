@@ -9,7 +9,7 @@ def get_subgraph_query(split='train'):
     return f"""
 UNWIND $seed_ids AS seedId
 MATCH (seed:{split})
-WHERE seed.patientId = seedId AND seed.id > -1
+WHERE seed.id = seedId AND seed.id > -1
 
 CALL(seed){{
     MATCH (seed:{split})<--(n1:{split})
@@ -51,17 +51,56 @@ class Neo4jConnector:
     def close(self):
         self.driver.close()
         
-    def get_ids(self, split_name):
+    def get_patient_ids(self, split_name):
         with self.driver.session() as session:
             seed_ids = session.run(f"MATCH (n:{split_name}) RETURN COLLECT(DISTINCT n.patientId) as ids").single().get("ids")
         return seed_ids
     
-    def get_train_ids(self):
-        return self.get_ids('SBC_TRAIN')
+    def get_sbc_patient_train_ids(self):
+        return self.get_patient_ids('SBC_TRAIN')
     
-    def get_test_ids(self):
-        return self.get_ids('SBC_TEST')
-    
+    def get_sbc_patient_test_ids(self):
+        return self.get_patient_ids('SBC_TEST')
+
+    def get_sbc_patient_ext_test_ids(self):
+        return self.get_patient_ids('SBC_EXT_TEST')
+
+    def get_mimic_patient_train_ids(self):
+        return self.get_patient_ids('MIMIC_TRAIN')
+
+    def get_mimic_patient_test_ids(self):
+        return self.get_patient_ids('MIMIC_TEST')
+
+    def get_mimic_patient_val_ids(self):
+        return self.get_patient_ids('MIMIC_VAL')
+
+    def get_ids_from_patient_ids(self, patient_ids, split_name):
+        with self.driver.session() as session:
+            result = session.run(f"""
+                MATCH (n:{split_name})
+                WHERE n.patientId IN $patient_ids
+                RETURN COLLECT(n.id) AS ids
+            """, patient_ids=patient_ids).single()
+            return result["ids"] if result else []
+
+    def get_sbc_train_ids(self, patient_ids):
+        return self.get_ids_from_patient_ids(patient_ids, 'SBC_TRAIN')
+
+    def get_sbc_test_ids(self, patient_ids):
+        return self.get_ids_from_patient_ids(patient_ids, 'SBC_TEST')
+
+    def get_sbc_ext_test_ids(self, patient_ids):
+        return self.get_ids_from_patient_ids(patient_ids, 'SBC_EXT_TEST')
+
+    def get_mimic_train_ids(self, patient_ids):
+        return self.get_ids_from_patient_ids(patient_ids, 'MIMIC_TRAIN')
+
+    def get_mimic_test_ids(self, patient_ids):
+        return self.get_ids_from_patient_ids(patient_ids, 'MIMIC_TEST')
+
+    def get_mimic_val_ids(self, patient_ids):
+        return self.get_ids_from_patient_ids(patient_ids, 'MIMIC_VAL')
+
     def get_seeded_subgraphs(self, batch_seeds, hops_limits, split_name):
         with self.driver.session() as session:
             result = session.run(
@@ -127,3 +166,13 @@ class Neo4jConnector:
             for split_name in test_split_names:
                 session.run(f"MATCH (n:{split_name}) {scale_query}", mins=mins, maxs=maxs)
             print("Scaled features and added positional encodings.")
+
+    def has_sbc_nodes(self):
+        with self.driver.session() as session:
+            result = session.run("MATCH (n:SBC_TRAIN) RETURN COUNT(n) AS count").single()
+            return result["count"] > 0      
+
+    def has_mimic_nodes(self):
+        with self.driver.session() as session:
+            result = session.run("MATCH (n:MIMIC_TRAIN) RETURN COUNT(n) AS count").single()
+            return result["count"] > 0

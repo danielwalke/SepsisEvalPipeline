@@ -45,10 +45,7 @@ class ModelTraining:
             total_loss = 0
             for batch in train_loader:
                 if batch is None: continue
-                
                 batch = batch.to(self.device)
-                
-                
                 out = self.model(batch.x, batch.edge_index, batch.edge_attr)
                 
                 target = batch.y[batch.batch_mask].squeeze()
