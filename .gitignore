@@ -12,8 +12,9 @@ mimic/
 
 # Ignore all CSV files (case-insensitive)
 *.csv
-*.json
 *.tsv
 *.pt
 *.[Cc][Ss][Vv]
 4_db_upload/neo4j_data
+__pycache__/
+*.py[cod]
