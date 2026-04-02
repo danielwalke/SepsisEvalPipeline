@@ -147,25 +147,18 @@ class PreprocessWrapper:
             path.replace(".csv", "_ext_validation.csv"), index=False
         )
 
+def process_mimic_data():
+    mimic_data = pd.read_csv(
+       os.path.join(input_dir_path, "preprocessed_file/mimic_processed.csv"), header=0
+    )
+    preprocess_wrapper = PreprocessWrapper(
+       mimic_data=mimic_data, print_logs=True, path=input_dir_path
+    )
+    preprocess_wrapper.write_mimic_processed_data(
+       os.path.join(output_dir_path, "mimic_processed.csv")
+    )
 
-if __name__ == "__main__":
-    print(os.getcwd())
-    input_dir_path = "/app/input" # os.path.join(os.getcwd(), "0_mimic_preprocess")
-    output_dir_path = "/app/output" #os.path.join(os.getcwd(), "1_preprocess", "data", "preprocessed_data")
-    if not os.path.exists(output_dir_path):
-        os.makedirs(output_dir_path)
-    print(os.listdir(input_dir_path))
-    
-    #mimic_data = pd.read_csv(
-    #    os.path.join(input_dir_path, "preprocessed_file/mimic_processed.csv"), header=0
-    #)
-    #preprocess_wrapper = PreprocessWrapper(
-    #    mimic_data=mimic_data, print_logs=True, path=input_dir_path
-    #)
-    #preprocess_wrapper.write_mimic_processed_data(
-    #    os.path.join(output_dir_path, "mimic_processed.csv")
-    #)
-    
+def process_sbc_data():
     sbc_data = pd.read_csv(
         os.path.join(input_dir_path, "preprocessed_file/sbc_processed.csv"), header=0
     )
@@ -175,3 +168,17 @@ if __name__ == "__main__":
     preprocess_wrapper.write_sbc_processed_data(
         os.path.join(output_dir_path, "sbc_processed.csv")
     )
+
+
+if __name__ == "__main__":
+    print(os.getcwd())
+    input_dir_path = "/app/input" # os.path.join(os.getcwd(), "0_mimic_preprocess")
+    output_dir_path = "/app/output" #os.path.join(os.getcwd(), "1_preprocess", "data", "preprocessed_data")
+    if not os.path.exists(output_dir_path):
+        os.makedirs(output_dir_path)    
+    if os.path.exists(os.path.join(input_dir_path, "preprocessed_file/mimic_processed.csv")):
+        process_mimic_data()    
+    
+    if os.path.exists(os.path.join(input_dir_path, "preprocessed_file/sbc_processed.csv")):
+        process_sbc_data()
+
