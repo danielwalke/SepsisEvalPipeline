@@ -15,8 +15,8 @@ class SBCTraining:
         train_seed_ids = connector.get_sbc_train_ids(train_patient_ids)
         val_seed_ids = connector.get_sbc_val_ids(val_patient_ids)
 
-        self.train_split_info = NodeSplitInformation(train_seed_ids, self.train_label_name, "WHERE n.id IN $ids")
-        self.val_split_info = NodeSplitInformation(val_seed_ids, self.val_label_name, "WHERE n.id IN $ids")
-        self.test_split_info = NodeSplitInformation(connector.get_ids('SBC_TEST'), self.test_label_name, "")
-        self.ext_test_split_info = NodeSplitInformation(connector.get_ids('SBC_EXT_TEST'), self.ext_test_label_name, "")
+        self.train_split_info = NodeSplitInformation(train_seed_ids, self.train_label_name, "WHERE n.id IN $ids", "SBC_TRAIN")
+        self.val_split_info = NodeSplitInformation(val_seed_ids, self.val_label_name, "WHERE n.id IN $ids", "SBC_VAL")
+        self.test_split_info = NodeSplitInformation(connector.get_ids('SBC_TEST'), self.test_label_name, "", "SBC_TEST")
+        self.ext_test_split_info = NodeSplitInformation(connector.get_ids('SBC_EXT_TEST'), self.ext_test_label_name, "", "SBC_EXT_TEST")
         return NodeSplitContainer(self.train_split_info, self.val_split_info, self.test_split_info, self.ext_test_split_info)

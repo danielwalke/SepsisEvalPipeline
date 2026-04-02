@@ -65,7 +65,7 @@ if __name__ == "__main__":
             mlflow.log_params(final_params)           
             for test_info in node_split_container.test_split_information_list:
                 auroc = manager.evaluate_model(connector, final_model, test_info.label_name, test_info.condition, framework, test_info.node_ids)
-                print(f"{test_info.label_name} AUROC: {auroc}")
-                mlflow.log_metric(f"{test_info.label_name}_auroc", auroc)
+                print(f"{test_info.name} AUROC: {auroc}")
+                mlflow.log_metric(f"{test_info.name}_auroc", auroc)
 
         connector.close()

@@ -1,9 +1,10 @@
 
 class NodeSplitInformation:
-    def __init__(self, node_ids, label_name, condition):
+    def __init__(self, node_ids, label_name, condition, name):
         self.node_ids = node_ids
         self.label_name = label_name
         self.condition = condition
+        self.name = name
 
 
 class NodeSplitContainer:
