@@ -1,1 +1,1 @@
-docker run -p 5000:5000 ghcr.io/mlflow/mlflow:latest mlflow server --host 0.0.0.0
+docker run -d -p 5000:5000 --name mlflow_container ghcr.io/mlflow/mlflow:latest mlflow server --host 0.0.0.0 --allowed-hosts "host.docker.internal:5000,host.docker.internal,localhost,localhost:5000,127.0.0.1"

@@ -103,7 +103,7 @@ class BaseModel:
             ext_score = self.metric(ext_test_y, ext_preds)
             self.logger.info(f"Final External Test Score: {ext_score}")
 
-        mlflow.set_tracking_uri("http://127.0.0.1:5000")
+        mlflow.set_tracking_uri("http://host.docker.internal:5000")
         mlflow.set_experiment(f"evaluations_{self.feature_set_name}")
 
         with mlflow.start_run():

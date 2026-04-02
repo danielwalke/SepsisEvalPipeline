@@ -12,6 +12,7 @@ docker run --rm \
 echo "--- STEP 2: BASELINE ---"
 docker build -f "${PWD}/2_baseline/Dockerfile" -t 2_baseline "${PWD}/2_baseline"
 docker run --rm \
+  --add-host=host.docker.internal:host-gateway \
   -v "${PWD}/1_preprocess/data/preprocessed_data:/app/input" \
   -v "${PWD}/2_baseline:/app/output" \
   -v "${PWD}/config.ini:/app/config/config.ini" \
