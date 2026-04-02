@@ -119,7 +119,9 @@ if __name__ == "__main__":
     data_output_dir = "/app/output"
     
     for split in ["train", "val", "test"]:
-        continue
+        if not os.path.exists(f"{data_input_dir}/mimic_processed_{split}.csv"):
+            print(f"Input file {data_input_dir}/mimic_processed_{split}.csv not found. Skipping {split} split.")
+            continue
         mimic_preprocessed_data = pd.read_csv(f"{data_input_dir}/mimic_processed_{split}.csv", header=0)
         graph_preprocesser = GraphPreprocesser(mimic_preprocessed_data) 
         graph_preprocesser.sort_data()
@@ -128,6 +130,9 @@ if __name__ == "__main__":
         graph_preprocesser.write_nodes(f"{data_output_dir}/mimic_{split}_nodes.csv")
         
     for split in ["", "_validation", "_ext_validation"]:
+        if not os.path.exists(f"{data_input_dir}/sbc_processed{split}.csv"):
+            print(f"Input file {data_input_dir}/sbc_processed{split}.csv not found. Skipping {split} split.")
+            continue
         sbc_preprocessed_data = pd.read_csv(f"{data_input_dir}/sbc_processed{split}.csv", header=0)
         graph_preprocesser = GraphPreprocesser(sbc_preprocessed_data) 
         graph_preprocesser.sort_data()
