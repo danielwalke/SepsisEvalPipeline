@@ -32,6 +32,7 @@ if __name__ == '__main__':
     config = configparser.ConfigParser()
     config.read('config.ini')
     seed_everything(int(config['RANDOM']['seed']))
+    feature_set_name = config['PANEL']['panel_name']
     
     BATCH_SIZE = int(eval(config['TRAINING']['batch_size']))
     NUM_WORKERS = int(config['TRAINING']['num_workers_for_loading'])
@@ -101,22 +102,20 @@ if __name__ == '__main__':
         print(f"Using lr={lr}, weight_decay={weight_decay}, hidden_channels={hidden_channels}, out_channels={out_channels}, num_layers={num_layers}, dropout={dropout}, heads={heads}, activation={activation}, skip_connections={skip_connections}")
         model_training = ModelTraining(device=device, model_evaluation = model_evaluation, lr=lr, weight_decay=weight_decay, in_channels=in_channels, hidden_channels=hidden_channels, out_channels=out_channels, num_layers=num_layers, dropout=dropout, heads=heads, activation=activation, skip_connections=skip_connections)
         model_training.train(train_loader, val_loader, num_epochs=100)
-        
-        val_auroc = model_evaluation.eval_model(model_training.model, val_loader)
-        for test_loader in test_loaders:
-            test_auroc = model_evaluation.eval_model(model_training.model, test_loader)
-            print(f"FINAL VAL AUROC: {val_auroc:.4f} --- FINAL TEST AUROC: {test_auroc:.4f} ---")
-            mlflow.set_tracking_uri("http://127.0.0.1:5000")
-            mlflow.set_experiment("model_evaluations")
+
+        mlflow.set_tracking_uri("http://127.0.0.1:5000")
+        mlflow.set_experiment(f"evaluations_{feature_set_name}")
+
+        with mlflow.start_run():
+            mlflow.set_tag("model", "GNN")
+            mlflow.set_tag("approach", "Graph-based")
+            mlflow.log_params(best_hyperparams)
             
-            with mlflow.start_run():
-                mlflow.set_tag("dataset", test_loader.name)
-                mlflow.set_tag("features", str(feature_names))
-                mlflow.set_tag("model", "GNN")
-                mlflow.set_tag("approach", "Graph-based")
-                mlflow.log_params(best_hyperparams)    
-                mlflow.log_metric("test_score", test_auroc)
-
-
-        
+            for test_loader in test_loaders:
+                test_auroc = model_evaluation.eval_model(model_training.model, test_loader)
+                
+                print(f"EVALUATING {test_loader.name} --- AUROC: {test_auroc:.4f}")
+                
+                mlflow.log_metric(f"{test_loader.name}_auroc", test_auroc)
+                
     

@@ -5,6 +5,7 @@ from Neo4jConnector import Neo4jConnector
 from XGBoostManager import XGBoostManager
 from SBCTraining import SBCTraining
 from MIMICTraining import MIMICTraining
+import mlflow
 
 def diff_user_fun(kwargs):
     return kwargs["original_features"] - kwargs["mean_neighbors"]
@@ -54,7 +55,17 @@ if __name__ == "__main__":
             json.dump(final_params, f, indent=4)
 
         final_model = manager.train_model_iterator(connector, final_params, train_label_name, train_condition, num_trees, framework, train_seed_ids)
-        for test_info in node_split_container.test_split_information_list:
-            auroc = manager.evaluate_model(connector, final_model, test_info.label_name, test_info.condition, framework, test_info.node_ids)
-            print(f"{test_info.label_name} AUROC: {auroc}")
+        
+        mlflow.set_tracking_uri("http://127.0.0.1:5000")
+        mlflow.set_experiment(f"evaluations_{feature_set_name}")
+
+        with mlflow.start_run():
+            mlflow.set_tag("model", "GraphAware XGBoost")
+            mlflow.set_tag("approach", "Graph-based")
+            mlflow.log_params(final_params)           
+            for test_info in node_split_container.test_split_information_list:
+                auroc = manager.evaluate_model(connector, final_model, test_info.label_name, test_info.condition, framework, test_info.node_ids)
+                print(f"{test_info.label_name} AUROC: {auroc}")
+                mlflow.log_metric(f"{test_info.label_name}_auroc", auroc)
+
         connector.close()

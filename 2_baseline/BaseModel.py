@@ -6,7 +6,7 @@ from SbcData import SbcData
 import configparser
 import numpy as np
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from ResultsLogger import append_result
+import mlflow
 
 class BaseModel:
     def __init__(self, input_dir, ModelClass, metric=roc_auc_score, maximize_metric=True, metric_pred_proba=True):
@@ -74,18 +74,24 @@ class BaseModel:
             scaler = MinMaxScaler()
             train_X = scaler.fit_transform(self.data.train_X.copy())
             test_X = scaler.transform(self.data.test_X.copy())
+            val_X = scaler.transform(self.data.val_X.copy())
         else:
             train_X = self.data.train_X
             test_X = self.data.test_X
+            val_X = self.data.val_X
         model = self.ModelClass(**best_params)
         model.fit(train_X, self.data.train_y)
         if self.metric_pred_proba:
-            preds = model.predict_proba(test_X)[:, 1]
+            test_preds = model.predict_proba(test_X)[:, 1]
+            val_preds = model.predict_proba(val_X)[:, 1]
         else:
-            preds = model.predict(test_X)
-        score = self.metric(self.data.test_y, preds)
-        
+            test_preds = model.predict(test_X)
+            val_preds = model.predict(val_X)
+        score = self.metric(self.data.test_y, test_preds)
+        val_score = self.metric(self.data.val_y, val_preds)
+
         self.logger.info(f"Final Test Score: {score}")
+        self.logger.info(f"Final Validation Score: {val_score}")
         if self.data.name == "SBC":
             ext_test_X = self.data.ext_test_X
             ext_test_y = self.data.ext_test_y
@@ -94,13 +100,19 @@ class BaseModel:
             ext_preds = model.predict_proba(ext_test_X)[:, 1] if self.metric_pred_proba else model.predict(ext_test_X)
             ext_score = self.metric(ext_test_y, ext_preds)
             self.logger.info(f"Final External Test Score: {ext_score}")
-        append_result(
-            dataset=self.data.name,
-            features=self.data.train_X.columns.tolist(),
-            model=self.ModelClass.__name__,
-            approach="baseline",
-            test_score=score,
-            ext_test_score=ext_score if self.data.name == "SBC" else None,
-            hyperparameters=best_params
-        )
+
+        mlflow.set_tracking_uri("http://127.0.0.1:5000")
+        mlflow.set_experiment(f"evaluations_{feature_set_name}")
+
+        with mlflow.start_run():
+            mlflow.set_tag("model", self.ModelClass.__name__)
+            mlflow.set_tag("approach", "Baseline")
+            mlflow.log_params(best_params)           
+            if self.data.name == "SBC":
+                mlflow.log_metric(f"SBC_TEST_auroc", score)
+                mlflow.log_metric(f"SBC_EXT_Test_auroc", ext_score)
+                mlflow.log_metric(f"SBC_TRAIN_auroc", val_score)
+            else:
+                mlflow.log_metric(f"MIMIC_TEST_auroc", score)
+                mlflow.log_metric(f"MIMIC_TRAIN_auroc", val_score)
         return score
