@@ -110,9 +110,9 @@ class BaseModel:
             mlflow.log_params(best_params)           
             if self.data.name == "SBC":
                 mlflow.log_metric(f"SBC_TEST_auroc", score)
-                mlflow.log_metric(f"SBC_EXT_Test_auroc", ext_score)
-                mlflow.log_metric(f"SBC_TRAIN_auroc", val_score)
+                mlflow.log_metric(f"SBC_EXT_TEST_auroc", ext_score)
+                mlflow.log_metric(f"SBC_VAL_auroc", val_score)
             else:
                 mlflow.log_metric(f"MIMIC_TEST_auroc", score)
-                mlflow.log_metric(f"MIMIC_TRAIN_auroc", val_score)
+                mlflow.log_metric(f"MIMIC_VAL_auroc", val_score)
         return score
