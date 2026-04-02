@@ -21,6 +21,8 @@ class BaseModel:
         files_read = self.config.read('/app/config/config.ini')
         self.seed = int(self.config['RANDOM'].get('seed', '42'))
         
+        self.feature_set_name = self.config['PANEL']['panel_name']
+        
         logging.basicConfig(filename='/app/output/training_logs.log',
                             filemode='a',
                             level=logging.INFO, format='%(asctime)s - %(message)s')
@@ -102,7 +104,7 @@ class BaseModel:
             self.logger.info(f"Final External Test Score: {ext_score}")
 
         mlflow.set_tracking_uri("http://127.0.0.1:5000")
-        mlflow.set_experiment(f"evaluations_{feature_set_name}")
+        mlflow.set_experiment(f"evaluations_{self.feature_set_name}")
 
         with mlflow.start_run():
             mlflow.set_tag("model", self.ModelClass.__name__)

@@ -12,6 +12,11 @@ def diff_user_fun(kwargs):
 
 if __name__ == "__main__":
     run_hyperparameter_tuning = False
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    RANDOM_SEED = int(config['RANDOM']['seed'])
+    feature_set_name = config['PANEL']['panel_name']
+
     BATCH_SIZE = 100000
     hops = [0, 1]
 
@@ -46,7 +51,7 @@ if __name__ == "__main__":
         if run_hyperparameter_tuning:
             final_params = manager.optimize_hyperparams(connector, train_seed_ids, val_seed_ids, framework)
         else:
-            final_params = {'alpha': 9.538284629683702, 'booster': 'gbtree', 'colsample_bytree': 0.9080724508103653, 'gamma': 0.8284271722786946, 'lambda': 0.00906801548010611, 'learning_rate': 0.15996292193138167, 'max_depth': 3, 'min_child_weight': 3.3449149107880025, 'n_estimators': 150, 'n_jobs': -1, 'objective': 'binary:logistic', 'random_state': 42, 'scale_pos_weight': 1, 'subsample': 0.8923516991674396}
+            final_params = {'alpha': 9.538284629683702, 'booster': 'gbtree', 'colsample_bytree': 0.9080724508103653, 'gamma': 0.8284271722786946, 'lambda': 0.00906801548010611, 'learning_rate': 0.15996292193138167, 'max_depth': 3, 'min_child_weight': 3.3449149107880025, 'n_estimators': 150, 'n_jobs': -1, 'objective': 'binary:logistic', 'random_state': RANDOM_SEED, 'scale_pos_weight': 1, 'subsample': 0.8923516991674396}
             num_trees = int(final_params.pop('n_estimators', 150))
             final_params.pop('n_jobs', None)
             
