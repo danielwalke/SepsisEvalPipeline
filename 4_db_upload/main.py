@@ -1,5 +1,6 @@
 from neo4j import GraphDatabase
 from Neo4jQueries import Neo4jQueries
+import os
 
 if __name__ == "__main__":
     uri = "bolt://neo4j_db:7687"
@@ -20,19 +21,28 @@ if __name__ == "__main__":
         print(session.run("MATCH (n) RETURN count(n) AS count").single().get("count"))
         
     with neo4j_driver.session() as session:
+        mimic_split_dict = {
+            "train": "MIMIC_TRAIN",
+            "test": "MIMIC_TEST",
+            "val": "MIMIC_VAL"
+        }
         print("Cleared existing data in the database.")
-        # for split in ["train", "val", "test"]:      
-        #     neo4j_queries = Neo4jQueries(split.upper())
-        #     print(f"Uploading {split} data to Neo4j database...")      
-        #     print(neo4j_queries.get_nodes_creation_query())
-        #     session.run(neo4j_queries.get_nodes_creation_query(), file=f"file:///mimic_{split}_nodes.csv")  
-        #     print(f"Nodes for {split} uploaded.")     
-        #     session.run(neo4j_queries.get_node_id_index_query())     
-        #     session.run("CALL db.awaitIndexes()")
-        #     session.run(neo4j_queries.get_edges_creation_query(), file=f"file:///mimic_{split}_edges.csv")  
-        #     print(f"Edges for {split} uploaded.")          
-        #     session.run(neo4j_queries.get_pos_enc_creation_query(), file=f"file:///mimic_{split}_pos_encodings.csv")
-        #     print(f"Postional encodings for {split} uploaded.")
+        IMPORT_PATH = "/var/lib/neo4j/import"
+        for split in ["train", "val", "test"]:      
+            if not os.path.exists(os.path.join(IMPORT_PATH, f"mimic_{split}_nodes.csv")) or not os.path.exists(os.path.join(IMPORT_PATH, f"mimic_{split}_edges.csv")) or not os.path.exists(os.path.join(IMPORT_PATH, f"mimic_{split}_pos_encodings.csv")):
+                print(f"File mimic_{split}_nodes.csv not found in {IMPORT_PATH}. Skipping upload for {split} split.")
+                continue
+            neo4j_queries = Neo4jQueries(mimic_split_dict[split])
+            print(f"Uploading {split} data to Neo4j database...")      
+            print(neo4j_queries.get_nodes_creation_query())
+            session.run(neo4j_queries.get_nodes_creation_query(), file=f"file:///mimic_{split}_nodes.csv")  
+            print(f"Nodes for {split} uploaded.")     
+            session.run(neo4j_queries.get_node_id_index_query())     
+            session.run("CALL db.awaitIndexes()")
+            session.run(neo4j_queries.get_edges_creation_query(), file=f"file:///mimic_{split}_edges.csv")  
+            print(f"Edges for {split} uploaded.")          
+            session.run(neo4j_queries.get_pos_enc_creation_query(), file=f"file:///mimic_{split}_pos_encodings.csv")
+            print(f"Postional encodings for {split} uploaded.")
         
         split_dict = {
             "": "SBC_TRAIN",
@@ -40,6 +50,9 @@ if __name__ == "__main__":
             "_ext_validation": "SBC_EXT_TEST"
         }
         for split in ["", "_validation", "_ext_validation"]:      
+            if not os.path.exists(os.path.join(IMPORT_PATH, f"sbc{split}_nodes.csv")) or not os.path.exists(os.path.join(IMPORT_PATH, f"sbc{split}_edges.csv")) or not os.path.exists(os.path.join(IMPORT_PATH, f"sbc{split}_pos_encodings.csv")):
+                print(f"File sbc{split}_nodes.csv not found in {IMPORT_PATH}. Skipping upload for {split} split.")
+                continue
             neo4j_queries = Neo4jQueries(split_dict[split])
             print(f"Uploading {split} data to Neo4j database...")      
             print(neo4j_queries.get_nodes_creation_query())
