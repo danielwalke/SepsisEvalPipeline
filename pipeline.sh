@@ -10,7 +10,7 @@ docker run --rm \
   1_datapreprocess
 
 echo "--- STEP 2: BASELINE ---"
-docker build -f "${PWD}/2_baseline/Dockerfile" -t 2_baseline "${PWD}/2_baseline" 
+docker build -f "${PWD}/2_baseline/Dockerfile" -t 2_baseline "${PWD}/2_baseline"
 docker run --rm \
   -v "${PWD}/1_preprocess/data/preprocessed_data:/app/input" \
   -v "${PWD}/2_baseline:/app/output" \
@@ -30,7 +30,7 @@ docker compose -f ./4_db_upload/docker-compose.yml up --build --abort-on-contain
 echo "--- STEPS 5 & 6: DB STARTUP & TRAINING ---"
 docker compose -f ./6_graphaware/docker-compose.yml up --build --wait
 
-python 5_gnn_training/main.py >> gnn_training.log
+python ./5_gnn_training/main.py >> gnn_training.log
 
 cd 6_graphaware
 python true_mini_batch.py >> graphaware_training.log
