@@ -5,8 +5,10 @@ from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
 from Neo4jDataloader import Neo4jDataIter
 
 class XGBoostManager:
-    def __init__(self, batch_size=100000):
+    def __init__(self, train_label_name, val_label_name, batch_size=100000):
         self.batch_size = batch_size
+        self.train_label_name = train_label_name
+        self.val_label_name = val_label_name
 
     def train_model_iterator(self, connector, params, node_label, condition, num_trees, framework, target_ids=None):
         iterator = Neo4jDataIter(connector, node_label, condition, framework, self.batch_size, target_ids)
@@ -83,11 +85,27 @@ class XGBoostManager:
             train_cond = "WHERE n.patientId IN $ids"
             val_cond = "WHERE n.patientId IN $ids"
             
-            model = self.train_model_iterator(connector, xgb_params, "SBC_TRAIN", train_cond, int(num_trees), framework, train_ids)
-            auroc = self.evaluate_model(connector, model, "SBC_TRAIN", val_cond, framework, val_ids)
+            model = self.train_model_iterator(connector, xgb_params, self.train_label_name, train_cond, int(num_trees), framework, train_ids)
+            auroc = self.evaluate_model(connector, model, self.val_label_name, val_cond, framework, val_ids)
             
             return {'loss': -auroc, 'status': STATUS_OK}
 
         trials = Trials()
-        best = fmin(fn=objective, space=space, algo=tpe.suggest, max_evals=80, trials=trials, verbose=1)
-        return best
+        best_params = fmin(fn=objective, space=space, algo=tpe.suggest, max_evals=80, trials=trials, verbose=1)
+        num_trees = int(best_params.get('n_estimators', 150))
+        
+        final_params = {
+            "objective": "binary:logistic",
+            "scale_pos_weight": 1,
+            "max_depth": int(best_params['max_depth']),
+            "learning_rate": float(best_params['learning_rate']),
+            "subsample": float(best_params['subsample']),
+            "colsample_bytree": float(best_params['colsample_bytree']),
+            "min_child_weight": float(best_params['min_child_weight']),
+            "gamma": float(best_params['gamma']),
+            "alpha": float(best_params['alpha']),
+            "reg_lambda": float(best_params['lambda']),
+            "random_state": 42,
+            "booster": 'gbtree',
+        }
+        return final_params

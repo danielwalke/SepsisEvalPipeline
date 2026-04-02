@@ -9,9 +9,24 @@ class Neo4jConnector:
     def close(self):
         self.driver.close()
 
-    def get_ids(self, split_name):
+    def get_patient_ids(self, split_name):
         with self.driver.session() as session:
             result = session.run(f"MATCH (n:{split_name}) RETURN COLLECT(DISTINCT n.patientId) as ids")
+            return result.single().get("ids")
+
+    def get_ids(self, split_name):
+        with self.driver.session() as session:
+            result = session.run(f"MATCH (n:{split_name}) RETURN COLLECT(id(n)) as ids")
+            return result.single().get("ids")
+
+    def get_sbc_train_ids(self, train_patient_ids):
+        with self.driver.session() as session:
+            result = session.run("MATCH (n:SBC_TRAIN) WHERE n.patientId IN $ids RETURN COLLECT(id(n)) as ids", ids=train_patient_ids)
+            return result.single().get("ids")
+
+    def get_sbc_val_ids(self, val_patient_ids):
+        with self.driver.session() as session:
+            result = session.run("MATCH (n:SBC_TRAIN) WHERE n.patientId IN $ids RETURN COLLECT(id(n)) as ids", ids=val_patient_ids)
             return result.single().get("ids")
 
     def fetch_data_batch(self, node_label, condition, skip, limit, framework, target_ids=None):
@@ -91,3 +106,13 @@ class Neo4jConnector:
         valid_mask = ~np.isnan(extracted_labels)
         
         return final_features[valid_mask], extracted_labels[valid_mask]
+
+    def has_sbc_nodes(self):
+        with self.driver.session() as session:
+            result = session.run("MATCH (n:SBC_TRAIN) RETURN COUNT(n) AS count").single()
+            return result["count"] > 0      
+
+    def has_mimic_nodes(self):
+        with self.driver.session() as session:
+            result = session.run("MATCH (n:MIMIC_TRAIN) RETURN COUNT(n) AS count").single()
+            return result["count"] > 0
