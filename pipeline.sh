@@ -1,6 +1,13 @@
 #!/bin/bash
 set -e
 
+docker build ./0_mimic_preprocess/. -t mimic-preprocessor
+docker run --rm \
+  -v "${PWD}/mimic:/app/input" \
+  -v "${PWD}/0_mimic_preprocess/preprocessed_file:/app/output" \
+  -v "${PWD}/0_mimic_preprocess/features:/app/features" \
+  mimic-preprocessor
+
 echo "--- STEP 1: PREPROCESS ---"
 docker build -f "${PWD}/1_preprocess/Dockerfile" -t 1_datapreprocess "${PWD}/1_preprocess"
 docker run --rm \
