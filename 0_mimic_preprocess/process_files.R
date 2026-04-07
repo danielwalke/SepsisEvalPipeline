@@ -68,14 +68,15 @@ import_mimic <- function(path, out_dir_path, verbose = interactive()) {
 
     print("Renaming columns")
     name_mapping <- d_labitems[itemid %in% feature_codes$itemid, .(itemid, label)]
-    print(name_mapping)
-    
+
+    name_mapping[, label := gsub(", ", "_", label)]
+
     valid_mapping <- name_mapping[as.character(itemid) %in% names(labevents)]
-    
+
     setnames(labevents, 
-         old = as.character(valid_mapping$itemid), 
-         new = valid_mapping$label
-    )
+            old = as.character(valid_mapping$itemid), 
+            new = valid_mapping$label, 
+            skip_absent = TRUE)
 
     if ("HGB" %in% names(labevents)) {
         labevents[, HGB := HGB * 0.621]

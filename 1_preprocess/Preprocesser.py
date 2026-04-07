@@ -31,6 +31,7 @@ class Preprocesser:
     def append_user_features(self):
         feature_codes = pd.read_csv(os.path.join(self.path, "features", "feature_codes.csv"), header=0)
         d_labitems = pd.read_csv(os.path.join(self.path, "extdata", "d_labitems.csv"), header=0)
+        d_labitems["label"] = d_labitems["label"].str.replace(", ", "_", regex=False)
         feature_mappings = pd.merge(feature_codes, d_labitems, on="itemid", how="left")
         self.features.extend(feature_mappings["label"].values.tolist())
         os.makedirs(os.path.join(self.path, "features"), exist_ok=True)
