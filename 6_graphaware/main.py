@@ -74,4 +74,4 @@ if __name__ == "__main__":
                 print(f"{test_info.name} AUROC: {auroc}")
                 mlflow.log_metric(f"{test_info.name}_auroc", auroc)
 
-        connector.close()
+    connector.close()
