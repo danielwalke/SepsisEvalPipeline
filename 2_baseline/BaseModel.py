@@ -12,8 +12,7 @@ import os
 
 class BaseModel:
     def __init__(self, input_dir, ModelClass, metric=roc_auc_score, maximize_metric=True, metric_pred_proba=True):
-        
-        
+    
         self.data = Data(input_dir) if "mimic_processed_train.csv" in os.listdir(input_dir) else SbcData(input_dir)
         self.ModelClass = ModelClass
         self.metric = metric

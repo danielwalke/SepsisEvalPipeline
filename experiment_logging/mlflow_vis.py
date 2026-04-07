@@ -1,6 +1,11 @@
 import mlflow
 import pandas as pd
 import matplotlib.pyplot as plt
+import configparser
+
+config = configparser.ConfigParser()
+config.read('config.ini')
+panel_name = str(config['PANEL']['panel_name'])
 
 mlflow.set_tracking_uri("http://localhost:5000")
 
@@ -40,5 +45,5 @@ if target_tag in runs_df.columns:
         plt.xticks(rotation=45, ha="right")
         
         plt.tight_layout()
-        plt.savefig(f"experiment_logging/{metric}_by_tags_model.png")
+        plt.savefig(f"experiment_logging/{metric}_by_tags_model_{panel_name}.png")
         plt.close()

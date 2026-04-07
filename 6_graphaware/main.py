@@ -17,6 +17,7 @@ if __name__ == "__main__":
     config.read('config.ini')
     RANDOM_SEED = int(config['RANDOM']['seed'])
     feature_set_name = config['PANEL']['panel_name']
+    include_sbc = config['PANEL'].getboolean('include_sbc', fallback=False)
 
     BATCH_SIZE = 100000
     hops = [0, 1]
@@ -31,7 +32,7 @@ if __name__ == "__main__":
     connector = Neo4jConnector(uri="bolt://localhost:7687", user="neo4j", password="password")
 
     training_container = []
-    if connector.has_sbc_nodes():
+    if connector.has_sbc_nodes() and include_sbc:
         sbc_training = SBCTraining()
         training_container.append(sbc_training)
     if connector.has_mimic_nodes():

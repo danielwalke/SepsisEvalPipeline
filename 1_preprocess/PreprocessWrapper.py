@@ -2,10 +2,16 @@ import os
 from Preprocesser import Preprocesser
 from utils.CountFunctions import count_cbc_cases, count_cbc
 import pandas as pd
+import configparser
+
 
 
 class PreprocessWrapper:
     def __init__(self, sbc_data=None, mimic_data=None, print_logs=False, path=None):
+        self.config = configparser.ConfigParser()
+        self.config.read('config/config.ini')
+        self.include_sbc = self.config['PANEL'].getboolean('include_sbc', fallback=False)
+
         if mimic_data is not None:
             mimic_validation_data = mimic_data.query(
                 "Center == 'MIMIC-IV' & Set == 'Validation'"
@@ -31,7 +37,7 @@ class PreprocessWrapper:
                     f"Sepsis data are {count_cbc_cases(self.mimic.get_sepsis_data())} cases "
                     f"and {count_cbc(self.mimic.get_sepsis_data())} CBCs"
                 )
-        if sbc_data is not None:
+        if self.include_sbc and sbc_data is not None:
             sbc_training_data = sbc_data.query(
                 "Center == 'Leipzig' & Set == 'Training'"
             )
@@ -139,6 +145,9 @@ class PreprocessWrapper:
         print(f"Wrote test data with {test_data.shape[0]} rows to {path.replace('.csv', '_test.csv')}")
 
     def write_sbc_processed_data(self, path):
+        if not self.include_sbc:
+            print("SBC data inclusion is disabled in the config. Skipping writing SBC processed data.")
+            return
         self.sbc.get_data().to_csv(path, index=False)
         self.sbc_validation.get_data().to_csv(
             path.replace(".csv", "_validation.csv"), index=False

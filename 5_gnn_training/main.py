@@ -33,6 +33,7 @@ if __name__ == '__main__':
     config.read('config.ini')
     seed_everything(int(config['RANDOM']['seed']))
     feature_set_name = config['PANEL']['panel_name']
+    include_sbc = config['PANEL'].getboolean('include_sbc', fallback=False)
     
     BATCH_SIZE = int(eval(config['TRAINING']['batch_size']))
     NUM_WORKERS = int(config['TRAINING']['num_workers_for_loading'])
@@ -43,16 +44,18 @@ if __name__ == '__main__':
         feature_names = f.read().replace("[", "").replace("]", "").replace("'", "").split(",")
         print(f"Using features: {feature_names} ({len(feature_names)} features)")
     
-    print(f"Using BATCH_SIZE={BATCH_SIZE}, NUM_WORKERS={NUM_WORKERS}, LIMIT={LIMIT}, MAX_RAM_GB={MAX_RAM_GB}")
+    
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
     hops = 2 ##rgaph depth for neighborhood sampling
     out_channels = 1
     in_channels = len(feature_names)
     
+    print(f"Using BATCH_SIZE={BATCH_SIZE}, NUM_WORKERS={NUM_WORKERS}, LIMIT={LIMIT}, MAX_RAM_GB={MAX_RAM_GB}, IN_CHANNELS={in_channels}, OUT_CHANNELS={out_channels}, DEVICE={device}")
+
     dataloader_containers = []
     sbc_training = SBC_Training(hops, MAX_RAM_GB, BATCH_SIZE, NUM_WORKERS, LIMIT)
-    if sbc_training.has_sbc_nodes:
+    if sbc_training.has_sbc_nodes and include_sbc:
         dataloader_containers.append(sbc_training)
     mimic_training = Mimic_Training(hops, MAX_RAM_GB, BATCH_SIZE, NUM_WORKERS, LIMIT)
     if mimic_training.has_mimic_nodes:
