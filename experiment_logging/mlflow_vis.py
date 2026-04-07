@@ -9,7 +9,8 @@ panel_name = str(config['PANEL']['panel_name'])
 
 mlflow.set_tracking_uri("http://localhost:5000")
 
-runs_df = mlflow.search_runs(search_all_experiments=True)
+exp_name = f"evaluations_{panel_name}"
+runs_df = mlflow.search_runs(experiment_names=[exp_name], order_by=["attributes.start_time DESC"])
 print(runs_df.head())
 print(runs_df.columns)
 
