@@ -8,7 +8,7 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import mlflow
 import os
-
+import time
 
 class BaseModel:
     def __init__(self, input_dir, ModelClass, metric=roc_auc_score, maximize_metric=True, metric_pred_proba=True):
@@ -22,14 +22,19 @@ class BaseModel:
         files_read = self.config.read('/app/config/config.ini')
         self.seed = int(self.config['RANDOM'].get('seed', '42'))
         
+        
         self.feature_set_name = self.config['PANEL']['panel_name']
         
         logging.basicConfig(filename='/app/output/training_logs.log',
                             filemode='a',
                             level=logging.INFO, format='%(asctime)s - %(message)s')
         self.logger = logging.getLogger(__name__)
+        mlflow.set_tracking_uri("http://host.docker.internal:5000")
+        mlflow.set_experiment(f"evaluations_{self.feature_set_name}")
     
     def tune_params(self, param_space, max_evals=50):
+        exp_name = f"{self.data.name}_{self.feature_set_name}_{self.ModelClass.__name__}"
+        hyperparam_start_time = time.time()
         self.logger.info(f"Model Class: {self.ModelClass.__name__}")
         self.logger.info(f"Hyperparameter Space: {param_space}")
 
@@ -62,10 +67,11 @@ class BaseModel:
                     trials=trials)
         best_params = space_eval(param_space, best)
         best_val_score = -trials.best_trial['result']['loss']
-        
+        hyperparam_end_time = time.time()
         self.logger.info(f"Best Hyperparameters: {best_params}")
         self.logger.info(f"Best Validation Score: {best_val_score}")
-        
+        self.logger.info(f"Hyperparameter Tuning Time: {hyperparam_end_time - hyperparam_start_time}")
+        mlflow.log_metric(f"{exp_name}__hyperparameter_tuning_time_seconds", hyperparam_end_time - hyperparam_start_time)
         return best_params
     
     def get_score(self, best_params, seed = None):
@@ -82,8 +88,14 @@ class BaseModel:
             train_X = self.data.train_X
             test_X = self.data.test_X
             val_X = self.data.val_X
+        train_start_time = time.time()
         model = self.ModelClass(**best_params)
         model.fit(train_X, self.data.train_y)
+        train_end_time = time.time()
+        exp_name = f"{self.data.name}_{self.feature_set_name}_{self.ModelClass.__name__}"
+        mlflow.log_metric(f"{exp_name}__training_time_seconds", train_end_time - train_start_time)
+
+        inference_start_time = time.time()
         if self.metric_pred_proba:
             test_preds = model.predict_proba(test_X)[:, 1]
             val_preds = model.predict_proba(val_X)[:, 1]
@@ -92,6 +104,9 @@ class BaseModel:
             val_preds = model.predict(val_X)
         score = self.metric(self.data.test_y, test_preds)
         val_score = self.metric(self.data.val_y, val_preds)
+        inference_end_time = time.time()
+        mlflow.log_metric(f"{exp_name}__inference_time_seconds", inference_end_time - inference_start_time)
+
 
         self.logger.info(f"Final Test Score: {score}")
         self.logger.info(f"Final Validation Score: {val_score}")
@@ -104,18 +119,16 @@ class BaseModel:
             ext_score = self.metric(ext_test_y, ext_preds)
             self.logger.info(f"Final External Test Score: {ext_score}")
 
-        mlflow.set_tracking_uri("http://host.docker.internal:5000")
-        mlflow.set_experiment(f"evaluations_{self.feature_set_name}")
-
-        with mlflow.start_run():
-            mlflow.set_tag("model", self.ModelClass.__name__)
-            mlflow.set_tag("approach", "Baseline")
-            mlflow.log_params(best_params)           
-            if self.data.name == "SBC":
-                mlflow.log_metric(f"SBC_TEST_auroc", score)
-                mlflow.log_metric(f"SBC_EXT_TEST_auroc", ext_score)
-                mlflow.log_metric(f"SBC_VAL_auroc", val_score)
-            else:
-                mlflow.log_metric(f"MIMIC_TEST_auroc", score)
-                mlflow.log_metric(f"MIMIC_VAL_auroc", val_score)
+        
+        mlflow.set_tag("model", self.ModelClass.__name__)
+        mlflow.set_tag("approach", "Baseline")
+        mlflow.log_params(best_params)           
+        if self.data.name == "SBC":
+            mlflow.log_metric(f"{exp_name}__SBC_TEST_auroc", score)
+            mlflow.log_metric(f"{exp_name}__SBC_EXT_TEST_auroc", ext_score)
+            mlflow.log_metric(f"{exp_name}__SBC_VAL_auroc", val_score)
+        else:
+            mlflow.log_metric(f"{exp_name}__MIMIC_TEST_auroc", score)
+            mlflow.log_metric(f"{exp_name}__MIMIC_VAL_auroc", val_score)
+        mlflow.end_run()
         return score
