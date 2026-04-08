@@ -75,7 +75,7 @@ if __name__ == "__main__":
         with mlflow.start_run():
             mlflow.set_tag("model", "GraphAware XGBoost")
             mlflow.set_tag("approach", "Graph-based")
-            mlflow.set_tag("feature_set", self.feature_set_name)
+            mlflow.set_tag("feature_set", feature_set_name)
             mlflow.log_params(final_params)           
             for test_info in node_split_container.test_split_information_list:
                 inference_start_time = time.time()
@@ -84,6 +84,6 @@ if __name__ == "__main__":
                 print(f"{test_info.name} AUROC: {auroc}")
                 mlflow.log_metric(f"{test_info.name}__inference_time_seconds", inference_end_time - inference_start_time)
                 mlflow.log_metric(f"{test_info.name}__auroc", auroc)
-            mlflow.log_metric(f"{exp_name}__hyperparameter_tuning__time_seconds", hyperparam_tuning_end_time - hyperparam_tuning_start_time)
+            mlflow.log_metric(f"{exp_name}__hyperparameter_tuning_time_seconds", hyperparam_tuning_end_time - hyperparam_tuning_start_time)
             mlflow.log_metric(f"{exp_name}__training__time_seconds", train_end_time - train_start_time)
     connector.close()
