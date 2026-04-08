@@ -3,7 +3,7 @@ services:
     image: neo4j:5.26-bullseye
     container_name: neo4j_read_container
     ports:
-      - "7474:7474"
+      - "7473:7474"
       - "7687:7687"
     volumes:
       - "~/git/SepsisEvalPipeline/4_db_upload/neo4j_data:/data"
