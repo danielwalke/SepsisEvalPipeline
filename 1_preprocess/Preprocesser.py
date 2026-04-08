@@ -37,8 +37,10 @@ class Preprocesser:
         feature_mappings = pd.merge(feature_codes, d_labitems, on="itemid", how="left")
         self.features.extend(feature_mappings["label"].values.tolist())
         os.makedirs(os.path.join(self.path, "features"), exist_ok=True)
-        with open(os.path.join(self.path, "features", "feature_names.txt"), "w") as f:
+        with open(os.path.join(self.feature_input_dir_path, "feature_names.txt"), "w") as f:
+            print(f"Features: {self.features}")
             f.write(",".join(self.features))
+
     
     def nan_handler(self, data):
         if self.nan_handler_type == "drop":
