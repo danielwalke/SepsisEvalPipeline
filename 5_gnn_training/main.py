@@ -120,7 +120,9 @@ if __name__ == '__main__':
         with mlflow.start_run():
             mlflow.set_tag("model", "GNN")
             mlflow.set_tag("approach", "Graph-based")
+            mlflow.set_tag("feature_set", self.feature_set_name)
             mlflow.log_params(best_hyperparams)
+
             
             for test_loader in test_loaders:
                 inference_start_time = time.time()
@@ -130,5 +132,5 @@ if __name__ == '__main__':
                 
                 mlflow.log_metric(f"{test_loader.name}__auroc", test_auroc)
                 mlflow.log_metric(f"{test_loader.name}__inference_time_seconds", inference_end_time - inference_start_time)
-        mlflow.log_metric(f"{exp_name}__hyperparameter_tuning__time_seconds", hyperparam_tuning_end_time - hyperparam_tuning_start_time)
-        mlflow.log_metric(f"{exp_name}__training_time_seconds", training_end_time - training_start_time)
+            mlflow.log_metric(f"{exp_name}__hyperparameter_tuning__time_seconds", hyperparam_tuning_end_time - hyperparam_tuning_start_time)
+            mlflow.log_metric(f"{exp_name}__training_time_seconds", training_end_time - training_start_time)

@@ -15,7 +15,9 @@ nan_handlers = [
 ]
 
 class Preprocesser:
-    def __init__(self, data, path):
+    def __init__(self, feature_input_dir_path, extdata_input_dir_path, data, path):
+        self.feature_input_dir_path = feature_input_dir_path
+        self.extdata_input_dir_path = extdata_input_dir_path
         self.raw_data = data
         self.pre_processed_data = None
         self.features = [AGE_COLUMN_NAME, SEX_COLUMN_NAME]
@@ -29,8 +31,8 @@ class Preprocesser:
         
         
     def append_user_features(self):
-        feature_codes = pd.read_csv(os.path.join(self.path, "features", "feature_codes.csv"), header=0)
-        d_labitems = pd.read_csv(os.path.join(self.path, "extdata", "d_labitems.csv"), header=0)
+        feature_codes = pd.read_csv(os.path.join(self.feature_input_dir_path, "feature_codes.csv"), header=0)
+        d_labitems = pd.read_csv(os.path.join(self.extdata_input_dir_path, "d_labitems.csv"), header=0)
         d_labitems["label"] = d_labitems["label"].str.replace(", ", "_", regex=False)
         feature_mappings = pd.merge(feature_codes, d_labitems, on="itemid", how="left")
         self.features.extend(feature_mappings["label"].values.tolist())

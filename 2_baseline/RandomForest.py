@@ -26,6 +26,6 @@ class RandomForestModel(BaseModel):
                 {0: 0.01, 1: 1}
             ])
         }
-        best_params = self.tune_params(search_space, max_evals=10)
+        best_params = self.tune_params(search_space, max_evals=20)
         test_score = self.get_score(best_params)
         return best_params, test_score

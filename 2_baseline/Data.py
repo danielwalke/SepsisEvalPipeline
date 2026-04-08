@@ -11,7 +11,8 @@ class Data:
     def load_data(self, path):
         data_path = os.path.join(self.input_dir, path)
         data = pd.read_csv(data_path)
-        y = data["y"]
+        y = data["y"] == "Sepsis"
+        y = y.astype(int)
         ## sample columns starting with "f__"
         X = data.filter(regex="^f__")
         return X, y
