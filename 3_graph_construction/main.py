@@ -3,6 +3,7 @@ from tqdm import tqdm
 import torch
 import numpy as np
 import os
+import configparser
 
 class GraphPreprocesser:
     def __init__(self, data):
@@ -117,6 +118,7 @@ class GraphPreprocesser:
 if __name__ == "__main__":
     data_input_dir = "/app/input"
     data_output_dir = "/app/output"
+
     
     for split in ["train", "val", "test"]:
         if not os.path.exists(f"{data_input_dir}/mimic_processed_{split}.csv"):
