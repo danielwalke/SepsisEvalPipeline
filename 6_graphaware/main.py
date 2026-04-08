@@ -85,5 +85,5 @@ if __name__ == "__main__":
                 mlflow.log_metric(f"{test_info.name}__inference_time_seconds", inference_end_time - inference_start_time)
                 mlflow.log_metric(f"{test_info.name}__auroc", auroc)
             mlflow.log_metric(f"{exp_name}__hyperparameter_tuning_time_seconds", hyperparam_tuning_end_time - hyperparam_tuning_start_time)
-            mlflow.log_metric(f"{exp_name}__training__time_seconds", train_end_time - train_start_time)
+            mlflow.log_metric(f"{exp_name}__training_time_seconds", train_end_time - train_start_time)
     connector.close()
