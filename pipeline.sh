@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+python -m 0_mimic_preprocess.panel_name_to_feature_codes
+
 docker build ./0_mimic_preprocess/. -t mimic-preprocessor
 
 PANEL_NAME=$(awk -F '=[ ]*' '/^ *panel_name/ {print $2}' config.ini | tr -d ' "')
