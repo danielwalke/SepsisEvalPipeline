@@ -9,11 +9,14 @@ PANEL_NAME=$(awk -F '=[ ]*' '/^ *panel_name/ {print $2}' config.ini | tr -d ' "'
 R_PREPROCESS_DIR="${PWD}/0_mimic_preprocess/preprocessed_file/${PANEL_NAME}"
 PRE_PROCESS_DIR="${PWD}/1_preprocess/data/preprocessed_data/${PANEL_NAME}"
 GRAPH_CONSTRUCTION_DIR="${PWD}/3_graph_construction/data/${PANEL_NAME}"
+METRICS_DIR="${PWD}/3_graph_construction/metrics"
+
 echo "PANEL_NAME: $PANEL_NAME, R_PREPROCESS_DIR: $R_PREPROCESS_DIR, PRE_PROCESS_DIR: $PRE_PROCESS_DIR, GRAPH_CONSTRUCTION_DIR: $GRAPH_CONSTRUCTION_DIR"
 
 mkdir -p "$R_PREPROCESS_DIR"
 mkdir -p "$PRE_PROCESS_DIR"
 mkdir -p "$GRAPH_CONSTRUCTION_DIR"
+mkdir -p "$METRICS_DIR"
 
 docker run --rm \
   -v "${PWD}/mimic:/app/input" \
@@ -26,7 +29,6 @@ ls -l "$R_PREPROCESS_DIR"
 echo "--- STEP 1: PREPROCESS ---"
 docker build -f "${PWD}/1_preprocess/Dockerfile" -t 1_datapreprocess "${PWD}/1_preprocess"
 
-
 docker run --rm \
   -v "${R_PREPROCESS_DIR}:/app/input" \
   -v "${PWD}/0_mimic_preprocess/features:/app/features" \
@@ -34,7 +36,6 @@ docker run --rm \
   -v "${PRE_PROCESS_DIR}:/app/output" \
   -v "${PWD}/config.ini:/app/config/config.ini" \
   1_datapreprocess
-
 
 echo "--- STEP 2: BASELINE ---"
 ls -l "$PRE_PROCESS_DIR"
@@ -51,6 +52,8 @@ docker build -f "${PWD}/3_graph_construction/Dockerfile" -t 3_graph_construction
 docker run --rm \
   -v "${PRE_PROCESS_DIR}:/app/input" \
   -v "${GRAPH_CONSTRUCTION_DIR}:/app/output" \
+  -v "${METRICS_DIR}:/app/metrics" \
+  -v "${PWD}/config.ini:/app/config/config.ini" \
   3_graph_construction
 
 echo "--- STEP 4: DATABASE UPLOAD ---"
