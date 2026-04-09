@@ -79,7 +79,7 @@ panel_name_to_feature_codes = {
 }
 
 config = configparser.ConfigParser()
-config.read("config.ini")
+config.read('config.ini')
 panel_name = config["PANEL"]["panel_name"]
 feature_codes = []
 for panel in config["PANEL"]["panel_name"].split("_"):

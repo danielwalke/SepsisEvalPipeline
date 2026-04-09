@@ -72,3 +72,46 @@ LAB_PANELS = {
     "KIDNEY_FUNCTION": KIDNEY_FUNCTION,
     "HIL_INDICES": HIL_INDICES
 }
+
+
+## This is just LLM guessed but mostly works lol (no i didnt leaked any data to the LLM)
+mimic_iv_lab_itemids = {
+    "Hematocrit (Blood)": 51221,
+    "Hemoglobin (Blood)": 51222,
+    "White Blood Cells (Blood)": 51301,
+    "Red Blood Cells (Blood)": 51279,
+    "Platelet Count (Blood)": 51265,
+    "MCV (Blood)": 51250,
+    "MCH (Blood)": 51248,
+    "MCHC (Blood)": 51249,
+    "RDW (Blood)": 51277,
+    "RDW-SD (Blood)": 52159,
+    "Neutrophils (Blood)": 51256,
+    "Lymphocytes (Blood)": 51244,
+    "Monocytes (Blood)": 51254,
+    "Eosinophils (Blood)": 51200,
+    "Basophils (Blood)": 51146,
+    "Glucose (Blood)": 50931,
+    "Calcium, Total (Blood)": 50893,
+    "Sodium (Blood)": 50983,
+    "Potassium (Blood)": 50971,
+    "Chloride (Blood)": 50902,
+    "Bicarbonate (Blood)": 50882,
+    "Urea Nitrogen (Blood)": 51006,
+    "Creatinine (Blood)": 50912,
+    "Magnesium (Blood)": 50960,
+    "Phosphate (Blood)": 50970,
+    "Anion Gap (Blood)": 50868,
+    "Alanine Aminotransferase (ALT) (Blood)": 50861,
+    "Asparate Aminotransferase (AST) (Blood)": 50878,
+    "Alkaline Phosphatase (Blood)": 50863,
+    "Bilirubin, Total (Blood)": 50885,
+    "Albumin (Blood)": 50862,
+    "PT (Blood)": 51274,
+    "INR(PT) (Blood)": 51237,
+    "PTT (Blood)": 51275,
+    "Estimated GFR (MDRD equation) (Blood)": 52026,
+    "H (Blood)": None,
+    "L (Blood)": None,
+    "I (Blood)": None
+}
