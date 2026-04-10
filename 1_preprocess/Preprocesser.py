@@ -15,13 +15,12 @@ nan_handlers = [
 ]
 
 class Preprocesser:
-    def __init__(self, feature_input_dir_path, extdata_input_dir_path, data, path):
+    def __init__(self, feature_input_dir_path, extdata_input_dir_path, data):
         self.feature_input_dir_path = feature_input_dir_path
         self.extdata_input_dir_path = extdata_input_dir_path
         self.raw_data = data
         self.pre_processed_data = None
         self.features = [AGE_COLUMN_NAME, SEX_COLUMN_NAME]
-        self.path = path
         self.append_user_features()
         self.config = configparser.ConfigParser()
         files_read = self.config.read('/app/config/config.ini')
@@ -36,10 +35,6 @@ class Preprocesser:
         d_labitems["label"] = d_labitems["label"].str.replace(", ", "_", regex=False)
         feature_mappings = pd.merge(feature_codes, d_labitems, on="itemid", how="left")
         self.features.extend(feature_mappings["label"].values.tolist())
-        os.makedirs(os.path.join(self.path, "features"), exist_ok=True)
-        with open(os.path.join(self.feature_input_dir_path, "feature_names.txt"), "w") as f:
-            print(f"Features: {self.features}")
-            f.write(",".join(self.features))
 
     
     def nan_handler(self, data):
@@ -133,6 +128,7 @@ class Preprocesser:
         
     def get_data(self):
         rename_map = self.get_rename_map()
+        
         return self.pre_processed_data.rename(columns=rename_map)
     
     def get_X(self):

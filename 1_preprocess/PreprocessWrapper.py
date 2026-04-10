@@ -5,7 +5,7 @@ import pandas as pd
 import configparser
 
 class PreprocessWrapper:
-    def __init__(self, feature_input_dir_path, extdata_input_dir_path, sbc_data=None, mimic_data=None, print_logs=False, path=None):
+    def __init__(self, feature_input_dir_path, extdata_input_dir_path, sbc_data=None, mimic_data=None, print_logs=False):
         self.config = configparser.ConfigParser()
         self.config.read('config/config.ini')
         self.include_sbc = self.config['PANEL'].getboolean('include_sbc', fallback=False)
@@ -16,7 +16,7 @@ class PreprocessWrapper:
             mimic_validation_data = mimic_data.query(
                 "Center == 'MIMIC-IV' & Set == 'Validation'"
             )
-            self.mimic = Preprocesser(feature_input_dir_path, extdata_input_dir_path, mimic_validation_data, path=path)
+            self.mimic = Preprocesser(feature_input_dir_path, extdata_input_dir_path, mimic_validation_data)
             self.mimic.preprocess_data()
             if print_logs:
                 print(20 * "$")
@@ -41,17 +41,17 @@ class PreprocessWrapper:
             sbc_training_data = sbc_data.query(
                 "Center == 'Leipzig' & Set == 'Training'"
             )
-            self.sbc = Preprocesser(feature_input_dir_path, extdata_input_dir_path, sbc_training_data, path=path)
+            self.sbc = Preprocesser(feature_input_dir_path, extdata_input_dir_path, sbc_training_data)
             self.sbc.preprocess_data()
             sbc_validation_data = sbc_data.query(
                 "Center == 'Leipzig' & Set == 'Validation'"
             )
-            self.sbc_validation = Preprocesser(feature_input_dir_path, extdata_input_dir_path, sbc_validation_data, path=path)
+            self.sbc_validation = Preprocesser(feature_input_dir_path, extdata_input_dir_path, sbc_validation_data)
             self.sbc_validation.preprocess_data()
             sbc_ext_validation_data = sbc_data.query(
                 "Center == 'Greifswald' & Set == 'Validation'"
             )
-            self.sbc_ext_validation = Preprocesser(feature_input_dir_path, extdata_input_dir_path, sbc_ext_validation_data, path=path)
+            self.sbc_ext_validation = Preprocesser(feature_input_dir_path, extdata_input_dir_path, sbc_ext_validation_data)
             self.sbc_ext_validation.preprocess_data()
             if not print_logs:
                 return
@@ -135,6 +135,11 @@ class PreprocessWrapper:
 
     def write_mimic_processed_data(self, path):
         train_data, val_data, test_data = self.split_mimic_data_time_based()
+
+        features = train_data.filter(regex="^f__").columns.tolist()
+        with open(os.path.join(self.feature_input_dir_path, "feature_names.txt"), "w") as f:
+            print(f"Features: {features}")
+            f.write(",".join(features))
         
         train_data.to_csv(path.replace(".csv", "_train.csv"), index=False)
         val_data.to_csv(path.replace(".csv", "_val.csv"), index=False)
@@ -147,7 +152,13 @@ class PreprocessWrapper:
         if not self.include_sbc:
             print("SBC data inclusion is disabled in the config. Skipping writing SBC processed data.")
             return
-        self.sbc.get_data().to_csv(path, index=False)
+        train_data = self.sbc.get_data()
+        features = train_data.filter(regex="^f__").columns.tolist()
+        with open(os.path.join(self.feature_input_dir_path, "sbc_feature_names.txt"), "w") as f:
+            print(f"Features: {features}")
+            f.write(",".join(features))
+
+        train_data.to_csv(path, index=False)
         self.sbc_validation.get_data().to_csv(
             path.replace(".csv", "_validation.csv"), index=False
         )
@@ -155,12 +166,12 @@ class PreprocessWrapper:
             path.replace(".csv", "_ext_validation.csv"), index=False
         )
 
-def process_mimic_data(feature_input_dir_path, extdata_input_dir_path):
+def process_mimic_data(input_dir_path, feature_input_dir_path, extdata_input_dir_path):
     mimic_data = pd.read_csv(
        os.path.join(input_dir_path, "mimic_processed.csv"), header=0
     )
     preprocess_wrapper = PreprocessWrapper(feature_input_dir_path, extdata_input_dir_path,
-       mimic_data=mimic_data, print_logs=True, path=input_dir_path
+       mimic_data=mimic_data, print_logs=True
     )
     preprocess_wrapper.write_mimic_processed_data(
        os.path.join(output_dir_path, "mimic_processed.csv")
@@ -171,7 +182,7 @@ def process_sbc_data(feature_input_dir_path, extdata_input_dir_path):
         os.path.join(input_dir_path, "sbc_processed.csv"), header=0
     )
     preprocess_wrapper = PreprocessWrapper(feature_input_dir_path, extdata_input_dir_path,
-        sbc_data=sbc_data, print_logs=True, path=input_dir_path
+        sbc_data=sbc_data, print_logs=True
     )
     preprocess_wrapper.write_sbc_processed_data(
         os.path.join(output_dir_path, "sbc_processed.csv")
@@ -191,13 +202,13 @@ if __name__ == "__main__":
     mimic_path = os.path.join(input_dir_path, "mimic_processed.csv")
     if os.path.exists(mimic_path):
         print(f"Found {mimic_path}, processing...")
-        process_mimic_data(feature_input_dir_path, extdata_input_dir_path)    
+        process_mimic_data(input_dir_path, feature_input_dir_path, extdata_input_dir_path)
     else:
         print(f"Could not find {mimic_path}")
     
     sbc_path = os.path.join(input_dir_path, "sbc_processed.csv")
     if os.path.exists(sbc_path):
         print(f"Found {sbc_path}, processing...")
-        process_sbc_data(feature_input_dir_path, extdata_input_dir_path)
+        process_sbc_data(input_dir_path, feature_input_dir_path, extdata_input_dir_path)
     else:
         print(f"Could not find {sbc_path}")
