@@ -87,8 +87,8 @@ class Neo4jConnector:
                     node_labels.append(np.nan)
                     node_mask.append(False)
                     
-                edge_sources.append(id_to_index[seed_id])
-                edge_targets.append(id_to_index[neighbor_id])
+                edge_sources.append(id_to_index[neighbor_id])
+                edge_targets.append(id_to_index[seed_id])
                 
                 weight = record["edge_weight"]
                 edge_weights.append(weight if weight is not None else 1.0)
