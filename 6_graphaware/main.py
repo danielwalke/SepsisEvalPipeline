@@ -8,6 +8,7 @@ from MIMICTraining import MIMICTraining
 import mlflow
 import time
 import configparser
+import os
 
 def diff_user_fun(kwargs):
     return kwargs["original_features"] - kwargs["mean_neighbors"]
@@ -50,6 +51,11 @@ if __name__ == "__main__":
         train_condition = node_split_container.train_split_information.condition
         exp_name = f"{train_label_name.split('_')[0]}_{feature_set_name}"
 
+        model_exp_path = os.path.join(os.path.expanduser("~"), "git", "SepsisEvalPipeline", "6_graphaware", "models", exp_name)
+        hyperparams_path = os.path.join(os.path.expanduser("~"), "git", "SepsisEvalPipeline", "6_graphaware", "hyperparameters", exp_name)
+        os.makedirs(model_exp_path, exist_ok=True)
+        os.makedirs(hyperparams_path, exist_ok=True)
+
         manager = XGBoostManager(train_label_name=train_label_name, val_label_name=val_label_name, batch_size=BATCH_SIZE)
 
         hyperparam_tuning_start_time = time.time()
@@ -62,12 +68,14 @@ if __name__ == "__main__":
         hyperparam_tuning_end_time = time.time()
             
         print(final_params)
-        with open("true_mini_batch_best_params.json", "w") as f:
+        with open(os.path.join(hyperparams_path, "best_params.json"), "w") as f:
             json.dump(final_params, f, indent=4)
 
         train_start_time = time.time()
         final_model = manager.train_model_iterator(connector, final_params, train_label_name, train_condition, num_trees, framework, train_seed_ids)
         train_end_time = time.time()
+
+        manager.save_model(final_model, os.path.join(model_exp_path, "final_model.xgb"))
 
         mlflow.set_tracking_uri("http://127.0.0.1:5000")
         mlflow.set_experiment(f"evaluations_{feature_set_name}")

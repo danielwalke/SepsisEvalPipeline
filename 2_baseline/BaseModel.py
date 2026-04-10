@@ -8,6 +8,7 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import mlflow
 import os
+import pickle
 import time
 
 class BaseModel:
@@ -35,7 +36,7 @@ class BaseModel:
         mlflow.set_tag("model", self.ModelClass.__name__)
         mlflow.set_tag("approach", "Baseline")
     
-    def tune_params(self, param_space, max_evals=50):
+    def tune_params(self, param_space, max_evals=1):
         exp_name = f"{self.data.name}_{self.feature_set_name}"
         hyperparam_start_time = time.time()
         self.logger.info(f"Model Class: {self.ModelClass.__name__}")
@@ -76,29 +77,45 @@ class BaseModel:
         self.logger.info(f"Hyperparameter Tuning Time: {hyperparam_end_time - hyperparam_start_time}")
         mlflow.log_metric(f"{exp_name}__hyperparameter_tuning_time_seconds", hyperparam_end_time - hyperparam_start_time)
         return best_params
+
+    def save_model(self, trained_model, best_params):
+        exp_name = f"{self.data.name}_{self.feature_set_name}"
+        os.makedirs(f"/app/models/{exp_name}", exist_ok=True)
+        model_path = f"/app/models/{exp_name}/{self.ModelClass.__name__}.pkl"
+        with open(model_path, 'wb') as f:            
+            pickle.dump(trained_model, f)
+        mlflow.log_artifact(model_path, artifact_path="models")
+        mlflow.log_params(best_params)     
+        print(f"Model saved to {model_path} and logged to MLflow.")
+
+    def normalize_data(self, train_X, val_X, test_X):
+        scaler = MinMaxScaler()
+        train_X_scaled = scaler.fit_transform(train_X.copy())
+        val_X_scaled = scaler.transform(val_X.copy())
+        test_X_scaled = scaler.transform(test_X.copy())
+        return train_X_scaled, val_X_scaled, test_X_scaled
+
     
     def get_score(self, best_params, seed = None):
+        exp_name = f"{self.data.name}_{self.feature_set_name}"
+
         if seed is None:
             seed = self.seed
         
         ## Scaling
         normalize = best_params.pop("normalize", False)            
         if normalize:
-            scaler = MinMaxScaler()
-            train_X = scaler.fit_transform(self.data.train_X.copy())
-            test_X = scaler.transform(self.data.test_X.copy())
-            val_X = scaler.transform(self.data.val_X.copy())
+            train_X, val_X, test_X = self.normalize_data(self.data.train_X, self.data.val_X, self.data.test_X)
         else:
-            train_X = self.data.train_X
-            test_X = self.data.test_X
-            val_X = self.data.val_X
+            train_X, val_X, test_X = self.data.train_X, self.data.val_X, self.data.test_X
 
         ## Retrain with best params
         train_start_time = time.time()
         model = self.ModelClass(**best_params)
         model.fit(train_X, self.data.train_y)
         train_end_time = time.time()
-        exp_name = f"{self.data.name}_{self.feature_set_name}"
+        self.save_model(model, best_params)
+        
         mlflow.log_metric(f"{exp_name}__training_time_seconds", train_end_time - train_start_time)
         
         ## Inference and Scoring
@@ -131,10 +148,7 @@ class BaseModel:
             ext_preds = model.predict_proba(ext_test_X)[:, 1] if self.metric_pred_proba else model.predict(ext_test_X)
             ext_score = self.metric(ext_test_y, ext_preds)
             self.logger.info(f"Final External Test Score: {ext_score}")
-
-        
-        
-        mlflow.log_params(best_params)           
+              
         if self.data.name == "SBC":
             mlflow.log_metric(f"SBC_TEST__auroc", score)
             mlflow.log_metric(f"SBC_EXT_TEST__auroc", ext_score)

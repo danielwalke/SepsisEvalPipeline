@@ -109,3 +109,11 @@ class XGBoostManager:
             "booster": 'gbtree',
         }
         return final_params
+
+    def save_model(self, model, filepath):
+        model.save_model(filepath)
+
+    def load_model(self, filepath):
+        model = xgb.Booster()
+        model.load_model(filepath)
+        return model

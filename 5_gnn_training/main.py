@@ -35,6 +35,8 @@ if __name__ == '__main__':
     seed_everything(int(config['RANDOM']['seed']))
     feature_set_name = config['PANEL']['panel_name']
     include_sbc = config['PANEL'].getboolean('include_sbc', fallback=False)
+    checkpoint_path = os.path.expanduser("~/git/SepsisEvalPipeline/5_gnn_training/checkpoints")
+    os.makedirs(checkpoint_path, exist_ok=True)
     
     BATCH_SIZE = int(eval(config['TRAINING']['batch_size']))
     NUM_WORKERS = int(config['TRAINING']['num_workers_for_loading'])
@@ -79,7 +81,8 @@ if __name__ == '__main__':
     for dataloader_container in dataloader_containers:
         print(f"Processing dataset: {dataloader_container.name}")
         exp_name = f"{dataloader_container.name}_{feature_set_name}"
-        
+        checkpoint_exp_path = os.path.join(checkpoint_path, exp_name)
+        os.makedirs(checkpoint_exp_path, exist_ok=True)
 
         train_loader, val_loader, test_loaders = dataloader_container.get_dataloaders()
         hyperparam_tuning_start_time = time.time()
@@ -112,6 +115,8 @@ if __name__ == '__main__':
         training_start_time = time.time()
         model_training = ModelTraining(device=device, model_evaluation = model_evaluation, lr=lr, weight_decay=weight_decay, in_channels=in_channels, hidden_channels=hidden_channels, out_channels=out_channels, num_layers=num_layers, dropout=dropout, heads=heads, activation=activation, skip_connections=skip_connections)
         model_training.train(train_loader, val_loader, num_epochs=100)
+        model_training.save_checkpoint(filepath=os.path.join(checkpoint_exp_path, "best_model.pth"))
+        
         training_end_time = time.time()
 
         mlflow.set_tracking_uri("http://127.0.0.1:5000")

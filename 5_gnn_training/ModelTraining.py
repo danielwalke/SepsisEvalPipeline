@@ -76,4 +76,43 @@ class ModelTraining:
                     break
         self.model.load_state_dict(self.best_model_state_dict)
         return self.model
+
+    def save_checkpoint(self, filepath="gnn_checkpoint.pth"):
+        checkpoint = {
+            'hyperparameters': {
+                'in_channels': self.in_channels,
+                'hidden_channels': self.hidden_channels,
+                'out_channels': self.out_channels,
+                'num_layers': self.num_layers,
+                'dropout': self.dropout,
+                'heads': self.heads,
+                'skip_connections': self.skip_connections
+            },
+            'model_state_dict': self.best_model_state_dict if self.best_model_state_dict else self.model.state_dict(),
+            'optimizer_state_dict': self.optimizer.state_dict(),
+            'best_val_metric': self.best_val_metric
+        }
+        torch.save(checkpoint, filepath)
+
+    def load_model_from_checkpoint(filepath, device):
+        checkpoint = torch.load(filepath, map_location=device)
+
+        hparams = checkpoint['hyperparameters']
+
+        loaded_model = GNNModel(
+            in_channels=hparams['in_channels'],
+            hidden_channels=hparams['hidden_channels'],
+            out_channels=hparams['out_channels'],
+            num_layers=hparams['num_layers'],
+            dropout=hparams['dropout'],
+            heads=hparams['heads'],
+            activation=nn.ReLU(), 
+            skip_connections=hparams['skip_connections']
+        ).to(device)
+
+        loaded_model.load_state_dict(checkpoint['model_state_dict'])
+
+        loaded_model.eval()
+
+        return loaded_model, checkpoint
                 
