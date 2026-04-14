@@ -37,4 +37,5 @@
 -> Just pass CSV as Input and check results if not good enough add new MIMC trained models in web app?
 
 ### TODO
-Docker setup
+TODO Docu
+MCP-Servers with GraphAware only for now -> Append to neo4j database for continously learning? Whenever we have 500 newly added nodes train the xgboost model again? IMHO that would be cool?
