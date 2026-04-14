@@ -50,6 +50,9 @@ if __name__ == "__main__":
         train_label_name = node_split_container.train_split_information.label_name
         exp_name = f"{train_label_name.split('_')[0]}_{feature_set_name}"
         model_exp_path = os.path.join(os.path.expanduser("~"), "git", "SepsisEvalPipeline", "6_graphaware", "models", exp_name)
+        figure_exp_path = os.path.join(os.path.expanduser("~"), "git", "SepsisEvalPipeline", "6_graphaware", "figures", exp_name)
+        os.makedirs(model_exp_path, exist_ok=True)
+        os.makedirs(figure_exp_path, exist_ok=True)
         
         model = xgb.Booster()
         model.load_model(os.path.join(model_exp_path, "final_model.xgb"))
@@ -79,15 +82,6 @@ if __name__ == "__main__":
                 
                 actual_base = base_feature_names[:half_f]
                 full_names = actual_base + [f"{n} (Δ Mean)" for n in actual_base]
-
-
-                df_features = pd.DataFrame(X_test_all_np, columns=full_names)
-                stats_df = df_features.describe().T[['min', '50%', 'max', 'mean', 'std']]
-                stats_df.rename(columns={'50%': 'median'}, inplace=True)
-                stats_csv_path = os.path.join(model_exp_path, f"feature_stats_{test_info.name}.csv")
-                stats_df.to_csv(stats_csv_path)
-                print(f"\nFeature Statistics for {test_info.name}:")
-                print(stats_df)
                 
                 explainer = shap.TreeExplainer(model)
                 shap_values = explainer.shap_values(X_test_all_np)
@@ -96,7 +90,7 @@ if __name__ == "__main__":
                 shap.summary_plot(shap_values, X_test_all_np, feature_names=full_names, show=False)
                 plt.title(f"Global Importance: Raw vs. Delta Features ({test_info.name})")
                 plt.tight_layout()
-                plt.savefig(os.path.join(model_exp_path, f"shap_full_{test_info.name}.png"))
+                plt.savefig(os.path.join(figure_exp_path, f"shap_full_{test_info.name}.png"))
                 plt.close()
                 
                 agg_shap = shap_values[:, :half_f] + shap_values[:, half_f:]
@@ -106,7 +100,7 @@ if __name__ == "__main__":
                 shap.summary_plot(agg_shap, X_test_all_np[:, :half_f], feature_names=agg_names, show=False)
                 plt.title(f"Aggregated Global Importance ({test_info.name})")
                 plt.tight_layout()
-                plt.savefig(os.path.join(model_exp_path, f"shap_aggregated_{test_info.name}.png"))
+                plt.savefig(os.path.join(figure_exp_path, f"shap_aggregated_{test_info.name}.png"))
                 plt.close()
 
     connector.close()
