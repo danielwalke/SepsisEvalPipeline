@@ -29,6 +29,7 @@ class BaseModel:
         self.logger = logging.getLogger(__name__)
         mlflow.set_tracking_uri("http://host.docker.internal:5000")
         mlflow.set_experiment(f"evaluations_{self.feature_set_name}")
+        mlflow.start_run(run_name=f"{self.ModelClass.__name__}_Baseline_{data.name}")
         mlflow.set_tag("feature_set", self.feature_set_name)
         mlflow.set_tag("model", self.ModelClass.__name__)
         mlflow.set_tag("approach", "Baseline")
@@ -72,7 +73,7 @@ class BaseModel:
         self.logger.info(f"Best Hyperparameters: {best_params}")
         self.logger.info(f"Best Validation Score: {best_val_score}")
         self.logger.info(f"Hyperparameter Tuning Time: {hyperparam_end_time - hyperparam_start_time}")
-        mlflow.log_metric(f"{exp_name}__hyperparameter_tuning_time_seconds", hyperparam_end_time - hyperparam_start_time)
+        mlflow.log_metric(f"hyperparameter_tuning_time_seconds", hyperparam_end_time - hyperparam_start_time)
         return best_params
 
     def save_model(self, trained_model, best_params):
@@ -113,7 +114,7 @@ class BaseModel:
         train_end_time = time.time()
         self.save_model(model, best_params)
         
-        mlflow.log_metric(f"{exp_name}__training_time_seconds", train_end_time - train_start_time)
+        mlflow.log_metric(f"training_time_seconds", train_end_time - train_start_time)
         
         ## Inference and Scoring
         inference_test_start_time = time.time()

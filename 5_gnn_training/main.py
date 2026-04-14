@@ -122,7 +122,7 @@ if __name__ == '__main__':
         mlflow.set_tracking_uri("http://127.0.0.1:5000")
         mlflow.set_experiment(f"evaluations_{feature_set_name}")
 
-        with mlflow.start_run():
+        with mlflow.start_run(run_name=f"GNN_{dataloader_container.name}"):
             mlflow.set_tag("model", "GNN")
             mlflow.set_tag("approach", "Graph-based")
             mlflow.set_tag("feature_set", feature_set_name)
@@ -135,7 +135,7 @@ if __name__ == '__main__':
                 inference_end_time = time.time()
                 print(f"EVALUATING {test_loader.name} --- AUROC: {test_auroc:.4f}")
                 
-                mlflow.log_metric(f"{test_loader.name}__auroc", test_auroc)
+                mlflow.log_metric(f"{test_loader.name}__AUROC", test_auroc)
                 mlflow.log_metric(f"{test_loader.name}__inference_time_seconds", inference_end_time - inference_start_time)
-            mlflow.log_metric(f"{exp_name}__hyperparameter_tuning_time_seconds", hyperparam_tuning_end_time - hyperparam_tuning_start_time)
-            mlflow.log_metric(f"{exp_name}__training_time_seconds", training_end_time - training_start_time)
+            mlflow.log_metric(f"hyperparameter_tuning_time_seconds", hyperparam_tuning_end_time - hyperparam_tuning_start_time)
+            mlflow.log_metric(f"training_time_seconds", training_end_time - training_start_time)
