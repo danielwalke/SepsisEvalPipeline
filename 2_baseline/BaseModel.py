@@ -33,7 +33,7 @@ class BaseModel:
         mlflow.set_tag("model", self.ModelClass.__name__)
         mlflow.set_tag("approach", "Baseline")
     
-    def tune_params(self, param_space, max_evals=20):
+    def tune_params(self, param_space, max_evals=5):
         exp_name = f"{self.data.name}_{self.feature_set_name}"
         hyperparam_start_time = time.time()
         self.logger.info(f"Model Class: {self.ModelClass.__name__}")
