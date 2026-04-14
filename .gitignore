@@ -22,3 +22,4 @@ __pycache__/
 *.pyc
 *.txt
 */__pycache__/*
+2_baseline/training_logs.log
