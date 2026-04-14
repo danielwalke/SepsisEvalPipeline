@@ -18,3 +18,5 @@ mimic/
 4_db_upload/neo4j_data
 __pycache__/
 *.py[cod]
+*.log
+*.pyc
