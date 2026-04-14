@@ -69,6 +69,9 @@ if __name__ == "__main__":
                 
                 session.run(neo4j_queries.get_pos_enc_creation_query(), file=f"file:///sbc{split}_pos_encodings.csv")
                 print(f"Postional encodings for sbc{split} uploaded.")
+
+                # session.run(neo4j_queries.get_self_loops_creation_query())
+                # print(f"Self-loops for sbc{split} created.")
                 
             except Exception as e:
                 print(f"Skipping sbc{split} split. Error details: {e}")

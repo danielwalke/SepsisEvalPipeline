@@ -47,3 +47,12 @@ class Neo4jQueries:
                 SET p.pos_encodings = [x IN pos_encodings | toFloat(trim(x))]
             }} IN TRANSACTIONS OF 500 ROWS
             """
+
+        def get_self_loops_creation_query(self):
+            return f"""
+            MATCH (n:{self.split})
+            CALL {{
+                WITH n
+                CREATE (n)-[:connects {{weight: 1.0}}]->(n)
+            }} IN TRANSACTIONS OF 100000 ROWS
+            """
