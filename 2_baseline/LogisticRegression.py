@@ -5,8 +5,8 @@ import hyperopt as hp
 
 class LogisticRegressionModel(BaseModel):
     
-    def __init__(self, input_dir, metric, maximize_metric, metric_pred_proba):
-        super().__init__(input_dir, LogisticRegression, metric=metric, maximize_metric=maximize_metric, metric_pred_proba=metric_pred_proba)
+    def __init__(self, data, metric, maximize_metric, metric_pred_proba):
+        super().__init__(data, LogisticRegression, metric=metric, maximize_metric=maximize_metric, metric_pred_proba=metric_pred_proba)
     
     def evaluate(self):
         search_space = {
