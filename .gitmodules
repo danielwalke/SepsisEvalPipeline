@@ -1,0 +1,3 @@
+[submodule "6_graphaware/GraphAware"]
+	path = 6_graphaware/GraphAware
+	url = https://github.com/danielwalke/GraphAware.git
