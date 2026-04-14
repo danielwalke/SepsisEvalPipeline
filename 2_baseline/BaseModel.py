@@ -12,9 +12,8 @@ import pickle
 import time
 
 class BaseModel:
-    def __init__(self, input_dir, ModelClass, metric=roc_auc_score, maximize_metric=True, metric_pred_proba=True):
-        print(os.listdir(input_dir))
-        self.data = Data(input_dir) if "mimic_processed_train.csv" in os.listdir(input_dir) else SbcData(input_dir)
+    def __init__(self, data, ModelClass, metric=roc_auc_score, maximize_metric=True, metric_pred_proba=True):
+        self.data = data
         self.ModelClass = ModelClass
         self.metric = metric
         self.maximize_metric = maximize_metric
@@ -36,7 +35,7 @@ class BaseModel:
         mlflow.set_tag("model", self.ModelClass.__name__)
         mlflow.set_tag("approach", "Baseline")
     
-    def tune_params(self, param_space, max_evals=1):
+    def tune_params(self, param_space, max_evals=20):
         exp_name = f"{self.data.name}_{self.feature_set_name}"
         hyperparam_start_time = time.time()
         self.logger.info(f"Model Class: {self.ModelClass.__name__}")
