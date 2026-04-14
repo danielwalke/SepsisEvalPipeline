@@ -1,8 +1,6 @@
 import logging
 from hyperopt import tpe, Trials, fmin, STATUS_OK, space_eval
 from sklearn.metrics import roc_auc_score
-from Data import Data
-from SbcData import SbcData
 import configparser
 import numpy as np
 from sklearn.preprocessing import StandardScaler, MinMaxScaler

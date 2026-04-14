@@ -2,6 +2,8 @@ from LogisticRegression import LogisticRegressionModel
 from RandomForest import RandomForestModel
 from sklearn.metrics import roc_auc_score
 import os
+from Data import Data
+from SbcData import SbcData
 
 
 if __name__ == "__main__":
