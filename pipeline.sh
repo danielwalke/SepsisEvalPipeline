@@ -45,6 +45,7 @@ docker run --rm \
   -v "${PRE_PROCESS_DIR}:/app/input" \
   -v "${PWD}/2_baseline:/app/output" \
   -v "${PWD}/config.ini:/app/config/config.ini" \
+  -v "${PWD}/2_baseline/models:/app/models" \
   2_baseline
 
 echo "--- STEP 3: GRAPH CONSTRUCTION ---"
@@ -65,6 +66,7 @@ docker compose -f ./6_graphaware/docker-compose.yml up --build --wait
 python ./5_gnn_training/main.py >> gnn_training.log
 
 python ./6_graphaware/main.py >> graphaware_training.log
-docker compose -f ./6_graphaware/docker-compose.yml down
+python 6_graphaware/Interpretability.py 
 
+docker compose -f ./6_graphaware/docker-compose.yml down
 echo "--- PIPELINE COMPLETE ---"
