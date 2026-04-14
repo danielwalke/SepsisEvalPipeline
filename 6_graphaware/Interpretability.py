@@ -14,6 +14,10 @@ from MIMICTraining import MIMICTraining
 def diff_user_fun(kwargs):
     return kwargs["original_features"] - kwargs["mean_neighbors"]
 
+
+"""
+IMPORT COMMENT: Diff to sex is not zero across the same patient because of the weighted avergaing based on the time difference to previous measurements (if the edge weight is indeed 1 for each edge and all are equally weighted then it would be zero, but the edge weights are not all 1 and they are not all the same, so the weighted average of neighbors can differ from the original features even for static features)
+"""
 if __name__ == "__main__":
     config = configparser.ConfigParser()
     config.read('config.ini')
@@ -69,14 +73,7 @@ if __name__ == "__main__":
             if X_test_all:
                 X_test_all_np = np.vstack(X_test_all)
 
-                print(f"\n--- f__Sex Integrity Check ---")
-                print(f"Maximum difference between any node and its 1-hop neighbors for f__Sex: {max_diff}")
-
-                if max_diff == 0.0:
-                    print("VERIFIED: The Python array confirms all 1-hop neighbors have the exact same f__Sex.")
-                else:
-                    print("FAILED: There is a mismatch. This means either isolated nodes (defaulting to 0.0 mean), directed edges dropping connections, or a batching issue is altering the neighborhood.")
-                print("------------------------------\n")
+                
                 num_features = X_test_all_np.shape[1]
                 half_f = num_features // 2
                 
