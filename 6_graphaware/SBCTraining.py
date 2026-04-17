@@ -20,3 +20,7 @@ class SBCTraining:
         self.test_split_info = NodeSplitInformation(connector.get_ids('SBC_TEST'), self.test_label_name, "", "SBC_TEST")
         self.ext_test_split_info = NodeSplitInformation(connector.get_ids('SBC_EXT_TEST'), self.ext_test_label_name, "", "SBC_EXT_TEST")
         return NodeSplitContainer(self.train_split_info, self.val_split_info, self.test_split_info, self.ext_test_split_info)
+
+    @property
+    def name(self):
+        return "SBC"
