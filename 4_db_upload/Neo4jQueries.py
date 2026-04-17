@@ -17,7 +17,8 @@ class Neo4jQueries:
                         SET p.label = CASE WHEN line.y = 'Sepsis' THEN 1 ELSE 0 END,
                         p.features = [x IN split(trim(replace(replace(line.X, '[', ''), ']', '')), ',') | toFloat(trim(x))],
                         p.patientId = toInteger(line.patientId),
-                        p.time = toFloat(line.time)
+                        p.time = toFloat(line.time),
+                        p.hadmId = toInteger(line.hadmId)
                 }} IN TRANSACTIONS OF 500 ROWS
                 """ ## -2 because linenumber starts at 1 and we have a header row anid the edge index starts at 0
                 
