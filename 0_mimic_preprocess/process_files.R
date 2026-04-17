@@ -272,7 +272,7 @@ import_mimic <- function(path, out_dir_path, verbose = interactive()) {
     ## add missing CRP/PCT columns
     labevents[, `:=` (CRP = NA_real_, PCT = NA_real_)]
     
-    ##Excluded hadmission ids to match with clinical notes
+    ##Included hadmission ids to match with clinical notes
     labevents <- labevents[!is.na(hadm_id)]
     labevents[,
         c("subject_id", "hadm_id", "anchor_year_group",
