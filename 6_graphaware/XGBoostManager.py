@@ -46,26 +46,26 @@ class XGBoostManager:
             
         return roc_auc_score(all_labels, all_preds)
 
-    def optimize_hyperparams(self, connector, train_ids, val_ids, framework):
+    def optimize_hyperparams(self, connector, train_cond, val_cond, train_ids, val_ids, framework, max_evals=80):
         space = {
-            'alpha': hp.uniform('alpha', 5.0, 15.0),
+            'alpha': hp.uniform('alpha', 7.5, 11.5),
             'booster': 'gbtree',
-            'colsample_bytree': hp.uniform('colsample_bytree', 0.7, 1.0),
-            'gamma': hp.uniform('gamma', 0.4, 1.3),
-            'lambda': hp.loguniform('lambda', np.log(0.001), np.log(0.05)),
-            'learning_rate': hp.loguniform('learning_rate', np.log(0.05), np.log(0.3)),
-            'max_depth': hp.choice('max_depth', [2, 3, 4, 5]),
-            'min_child_weight': hp.uniform('min_child_weight', 1.5, 5.5),
-            'n_estimators': hp.choice('n_estimators', [50, 100, 125, 150, 175, 200]),
-            'n_jobs': -1,
+            'colsample_bytree': hp.uniform('colsample_bytree', 0.8, 1.0),
+            'gamma': hp.uniform('gamma', 0.6, 1.0),
+            'lambda': hp.loguniform('lambda', np.log(0.005), np.log(0.02)),
+            'learning_rate': hp.loguniform('learning_rate', np.log(0.1), np.log(0.25)),
+            'max_depth': hp.choice('max_depth', [2, 3, 4]),
+            'min_child_weight': hp.uniform('min_child_weight', 2.0, 4.5),
+            'n_estimators': hp.choice('n_estimators', [125, 150, 175]),
+            'n_jobs': 3,
             'objective': 'binary:logistic',
             'random_state': 42,
             'scale_pos_weight': 1,
-            'subsample': hp.uniform('subsample', 0.7, 1.0)
+            'subsample': hp.uniform('subsample', 0.75, 0.95)
         }
         
         def objective(params):
-            num_trees = params.get('n_estimators', 100)
+            num_trees = params.get('n_estimators', 150)
             
             xgb_params = {
                 "objective": "binary:logistic",
@@ -81,17 +81,13 @@ class XGBoostManager:
                 "random_state": 42,
                 "booster": 'gbtree',
             }
-            
-            train_cond = "WHERE n.patientId IN $ids"
-            val_cond = "WHERE n.patientId IN $ids"
-            
             model = self.train_model_iterator(connector, xgb_params, self.train_label_name, train_cond, int(num_trees), framework, train_ids)
             auroc = self.evaluate_model(connector, model, self.val_label_name, val_cond, framework, val_ids)
             
             return {'loss': -auroc, 'status': STATUS_OK}
 
         trials = Trials()
-        best_params = fmin(fn=objective, space=space, algo=tpe.suggest, max_evals=80, trials=trials, verbose=1)
+        best_params = fmin(fn=objective, space=space, algo=tpe.suggest, max_evals=max_evals, trials=trials, verbose=1)
         num_trees = int(best_params.get('n_estimators', 150))
         
         final_params = {
