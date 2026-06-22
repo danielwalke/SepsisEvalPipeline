@@ -81,6 +81,15 @@ Output:
 ## 7. Access - Open TODO
 MCP-Servers with GraphAware only for now -> Append to neo4j database for continously learning? Whenever we have 500 newly added nodes train the xgboost model again?
 
+TODO: Notes integration? with embeddings? might be too much?
+PROOBABLY:
+We could create embeddings for notes and learn a gnn with best end to end approach and use this as sota value which is hard to interprret
+But we comapre it against GraphAware with a simple bag of words approach after lemmatization of notes
+-> 2nd more interpretable but first might be more powerful?
+-> Would take me at leats one month
+-> Might make sense to discuss my current points till now with david at least with an end-to-end trainable neo4j graph learning pipeline for sepsis prediction with re-training or re-fit potential and MCP for increased accessibility 
+-> Then potentially Integration of notes?or might be overkill since costs again some months of implementation -> probably need to ask robert since i am mainly working on MCP project now
+
 ## References
 [1] Applying Machine Learning to Blood Count Data Predicts Sepsis with ICU Admission. D. Steinbach, P. C. Ahrens, M. Schmidt, M. Federbusch, L. Heuft, Ch. Lübbert, M. Nauck, M. Gründling, B. Isermann, S. Gibb, Th. Kaiser 2024. Clinical Chemistry. DOI: 10.1093/clinchem/hvae001.
 [2] Edges are all you need: Potential of medical time series analysis on complete blood count data with graph neural networks

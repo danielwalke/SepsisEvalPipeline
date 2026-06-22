@@ -31,11 +31,21 @@ if __name__ == '__main__':
     
     ## Load configuration parameters    
     config = configparser.ConfigParser()
-    config.read('config.ini')
+    print(os.listdir("/app/config/"))
+    config_path = '/app/config/config.ini'
+    # config.read('/app/config/config.ini')
+    
+    with open(config_path, 'r', encoding='utf-8-sig') as f:
+        config.read_file(f)
+        
+    print(f"Successfully loaded sections: {config.sections()}")
+    
+    # 3. Read the seed
+    seed_everything(int(config['RANDOM']['seed']))
     seed_everything(int(config['RANDOM']['seed']))
     feature_set_name = config['PANEL']['panel_name']
     include_sbc = config['PANEL'].getboolean('include_sbc', fallback=False)
-    checkpoint_path = os.path.expanduser("~/git/SepsisEvalPipeline/5_gnn_training/checkpoints")
+    checkpoint_path = os.path.expanduser("/app/checkpoints")
     os.makedirs(checkpoint_path, exist_ok=True)
     
     BATCH_SIZE = int(eval(config['TRAINING']['batch_size']))
@@ -43,7 +53,7 @@ if __name__ == '__main__':
     LIMIT = int(config['TRAINING']['limit_neighbors'])
     MAX_RAM_GB = int(config['TRAINING']['max_ram_gb'])
     
-    with open("./0_mimic_preprocess/features/feature_names.txt", "r") as f:
+    with open("/app/0_mimic_preprocess/features/feature_names.txt", "r") as f:
         feature_names = f.read().replace("[", "").replace("]", "").replace("'", "").split(",")
         print(f"Using features: {feature_names} ({len(feature_names)} features)")
     
@@ -119,7 +129,7 @@ if __name__ == '__main__':
         
         training_end_time = time.time()
 
-        mlflow.set_tracking_uri("http://127.0.0.1:5000")
+        mlflow.set_tracking_uri("http://host.docker.internal:5000")
         mlflow.set_experiment(f"evaluations_{feature_set_name}")
 
         with mlflow.start_run(run_name=f"GNN_{dataloader_container.name}"):

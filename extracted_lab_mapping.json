@@ -1,0 +1,26 @@
+{
+    "hemgloib": {
+        "mimicLabParam": "Hemoglobin (Blood)",
+        "mimicLabItemId": 51222
+    },
+    "Glucose": {
+        "mimicLabParam": "Glucose (Blood)",
+        "mimicLabItemId": 50931
+    },
+    "Creatinine": {
+        "mimicLabParam": "Creatinine (Blood)",
+        "mimicLabItemId": 50912
+    },
+    "WBC": {
+        "mimicLabParam": "White Blood Cells (Blood)",
+        "mimicLabItemId": 51301
+    },
+    "Platelet Count": {
+        "mimicLabParam": "Platelet Count (Blood)",
+        "mimicLabItemId": 51265
+    },
+    "MCV": {
+        "mimicLabParam": "MCV (Blood)",
+        "mimicLabItemId": 51250
+    }
+}

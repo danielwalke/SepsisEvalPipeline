@@ -45,7 +45,7 @@ RETURN
     
 
 class Neo4jConnector:
-    def __init__(self, uri="bolt://localhost:7687", user="neo4j", password="password"):
+    def __init__(self, uri="bolt://host.docker.internal:7688", user="neo4j", password="password"):
         self.driver = GraphDatabase.driver(uri, auth=(user, password))
         
     def close(self):

@@ -14,7 +14,7 @@ def diff_user_fun(kwargs):
     return kwargs["original_features"] - kwargs["mean_neighbors"]
 
 if __name__ == "__main__":
-    run_hyperparameter_tuning = False
+    run_hyperparameter_tuning = True
     config = configparser.ConfigParser()
     config.read('config.ini')
     RANDOM_SEED = int(config['RANDOM']['seed'])
@@ -43,12 +43,14 @@ if __name__ == "__main__":
         training_container.append(mimic_training)
 
     for container in training_container:
+        print(f"Starting training for {container.name}...")
         node_split_container = container.get_node_split_containers(connector)
         train_label_name = node_split_container.train_split_information.label_name
         val_label_name = node_split_container.val_split_information.label_name
         train_seed_ids = node_split_container.train_split_information.node_ids
         val_seed_ids = node_split_container.val_split_information.node_ids
         train_condition = node_split_container.train_split_information.condition
+        val_condition = node_split_container.val_split_information.condition
         exp_name = f"{train_label_name.split('_')[0]}_{feature_set_name}"
 
         model_exp_path = os.path.join(os.path.expanduser("~"), "git", "SepsisEvalPipeline", "6_graphaware", "models", exp_name)
@@ -60,11 +62,13 @@ if __name__ == "__main__":
 
         hyperparam_tuning_start_time = time.time()
         if run_hyperparameter_tuning:
-            final_params = manager.optimize_hyperparams(connector, train_seed_ids, val_seed_ids, framework)
+            final_params = manager.optimize_hyperparams(connector, train_condition, val_condition, train_seed_ids, val_seed_ids, framework, max_evals=30)
         else:
-            final_params = {'alpha': 9.538284629683702, 'booster': 'gbtree', 'colsample_bytree': 0.9080724508103653, 'gamma': 0.8284271722786946, 'lambda': 0.00906801548010611, 'learning_rate': 0.15996292193138167, 'max_depth': 3, 'min_child_weight': 3.3449149107880025, 'n_estimators': 150, 'n_jobs': -1, 'objective': 'binary:logistic', 'random_state': RANDOM_SEED, 'scale_pos_weight': 1, 'subsample': 0.8923516991674396}
-            num_trees = int(final_params.pop('n_estimators', 150))
-            final_params.pop('n_jobs', None)
+            # final_params = {'alpha': 9.538284629683702, 'booster': 'gbtree', 'colsample_bytree': 0.9080724508103653, 'gamma': 0.8284271722786946, 'lambda': 0.00906801548010611, 'learning_rate': 0.15996292193138167, 'max_depth': 3, 'min_child_weight': 3.3449149107880025, 'n_estimators': 150, 'n_jobs': -1, 'objective': 'binary:logistic', 'random_state': RANDOM_SEED, 'scale_pos_weight': 1, 'subsample': 0.8923516991674396}
+            with open(os.path.join(hyperparams_path, "best_params.json"), "r") as f:
+                final_params = json.load(f)
+            # final_params.pop('n_jobs', None)
+        num_trees = int(final_params.pop('n_estimators', 150))
         hyperparam_tuning_end_time = time.time()
             
         print(final_params)
@@ -94,4 +98,7 @@ if __name__ == "__main__":
                 mlflow.log_metric(f"{test_info.name}__AUROC", auroc)
             mlflow.log_metric(f"hyperparameter_tuning_time_seconds", hyperparam_tuning_end_time - hyperparam_tuning_start_time)
             mlflow.log_metric(f"training_time_seconds", train_end_time - train_start_time)
+            break
     connector.close()
+
+    ##TODO test also mimic I have removed with cypher self loops

@@ -61,12 +61,14 @@ echo "--- STEP 4: DATABASE UPLOAD ---"
 GRAPH_DIR="${GRAPH_CONSTRUCTION_DIR}" docker compose -f ./4_db_upload/docker-compose.yml up --build --abort-on-container-exit
 
 echo "--- STEPS 5 & 6: DB STARTUP & TRAINING ---"
+docker compose -f ./5_gnn_training/docker-compose.yml up --build --wait
 docker compose -f ./6_graphaware/docker-compose.yml up --build --wait
 
-python ./5_gnn_training/main.py >> gnn_training.log
 
-python ./6_graphaware/main.py >> graphaware_training.log
-python 6_graphaware/Interpretability.py 
+# python ./5_gnn_training/main.py >> gnn_training.log
 
-docker compose -f ./6_graphaware/docker-compose.yml down
+# python ./6_graphaware/main.py >> graphaware_training.log
+# python 6_graphaware/Interpretability.py 
+
+# docker compose -f ./6_graphaware/docker-compose.yml down
 echo "--- PIPELINE COMPLETE ---"

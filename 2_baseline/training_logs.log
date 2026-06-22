@@ -1021,3 +1021,1134 @@
 2026-04-01 09:11:31,002 - Best Validation Score: 0.8393031096720849
 2026-04-01 09:11:36,077 - Final Test Score: 0.8370008300646076
 2026-04-01 09:11:36,163 - Final External Test Score: 0.7546716480414102
+2026-04-14 07:05:57,968 - Model Class: RandomForestClassifier
+2026-04-14 07:05:57,968 - Hyperparameter Space: {'n_estimators': <hyperopt.pyll.base.Apply object at 0x718c538ef610>, 'max_depth': <hyperopt.pyll.base.Apply object at 0x718c539516d0>, 'max_leaf_nodes': <hyperopt.pyll.base.Apply object at 0x718c539bc550>, 'min_samples_split': <hyperopt.pyll.base.Apply object at 0x718c5398d040>, 'min_samples_leaf': <hyperopt.pyll.base.Apply object at 0x718c5390d570>, 'bootstrap': <hyperopt.pyll.base.Apply object at 0x718c539a1440>, 'class_weight': <hyperopt.pyll.base.Apply object at 0x718c539c26d0>}
+2026-04-14 07:05:57,996 - build_posterior_wrapper took 0.019254 seconds
+2026-04-14 07:05:57,996 - TPE using 0 trials
+2026-04-14 07:06:03,485 - build_posterior_wrapper took 0.001063 seconds
+2026-04-14 07:06:03,485 - TPE using 1/1 trials with best loss -0.872722
+2026-04-14 07:06:36,686 - build_posterior_wrapper took 0.001093 seconds
+2026-04-14 07:06:36,686 - TPE using 2/2 trials with best loss -0.872722
+2026-04-14 07:06:44,121 - build_posterior_wrapper took 0.001061 seconds
+2026-04-14 07:06:44,121 - TPE using 3/3 trials with best loss -0.872722
+2026-04-14 07:07:09,995 - build_posterior_wrapper took 0.001061 seconds
+2026-04-14 07:07:09,995 - TPE using 4/4 trials with best loss -0.873054
+2026-04-14 07:07:21,181 - Best Hyperparameters: {'bootstrap': False, 'class_weight': {0: 0.0025, 1: 1}, 'max_depth': 10, 'max_leaf_nodes': 50, 'min_samples_leaf': 0.005965288791925495, 'min_samples_split': 0.002909954052940017, 'n_estimators': 400}
+2026-04-14 07:07:21,181 - Best Validation Score: 0.8730535279249649
+2026-04-14 07:07:21,181 - Hyperparameter Tuning Time: 83.21298599243164
+2026-04-14 07:10:06,075 - Final Test Score: 0.8653058323336442
+2026-04-14 07:10:06,075 - Final Validation Score: 0.8726276950484195
+2026-04-14 07:10:10,207 - Final External Test Score: 0.809428303670787
+2026-04-14 07:10:10,267 - Model Class: LogisticRegression
+2026-04-14 07:10:10,267 - Hyperparameter Space: {'C': <hyperopt.pyll.base.Apply object at 0x718c52ee1050>, 'penalty': <hyperopt.pyll.base.Apply object at 0x718c52ee0cd0>, 'solver': <hyperopt.pyll.base.Apply object at 0x718c52ee0dd0>, 'max_iter': <hyperopt.pyll.base.Apply object at 0x718c52ee2250>, 'random_state': 42, 'class_weight': <hyperopt.pyll.base.Apply object at 0x718c52ee2950>, 'normalize': <hyperopt.pyll.base.Apply object at 0x718c52ee30d0>}
+2026-04-14 07:10:10,269 - build_posterior_wrapper took 0.000560 seconds
+2026-04-14 07:10:10,269 - TPE using 0 trials
+2026-04-14 07:10:13,446 - build_posterior_wrapper took 0.000934 seconds
+2026-04-14 07:10:13,446 - TPE using 1/1 trials with best loss -0.826229
+2026-04-14 07:10:51,044 - build_posterior_wrapper took 0.001005 seconds
+2026-04-14 07:10:51,044 - TPE using 2/2 trials with best loss -0.826229
+2026-04-14 07:10:51,952 - build_posterior_wrapper took 0.000927 seconds
+2026-04-14 07:10:51,952 - TPE using 3/3 trials with best loss -0.826229
+2026-04-14 07:10:59,155 - build_posterior_wrapper took 0.000919 seconds
+2026-04-14 07:10:59,155 - TPE using 4/4 trials with best loss -0.826229
+2026-04-14 07:11:00,731 - Best Hyperparameters: {'C': 201.16839586877572, 'class_weight': 'balanced', 'max_iter': 400, 'normalize': False, 'penalty': 'l2', 'random_state': 42, 'solver': 'lbfgs'}
+2026-04-14 07:11:00,731 - Best Validation Score: 0.8262285614227419
+2026-04-14 07:11:00,731 - Hyperparameter Tuning Time: 50.46421933174133
+2026-04-14 07:11:09,101 - Final Test Score: 0.8370677351242526
+2026-04-14 07:11:09,101 - Final Validation Score: 0.8262280132773006
+2026-04-14 07:11:09,192 - Final External Test Score: 0.7543101551403781
+2026-04-14 07:11:11,214 - Model Class: RandomForestClassifier
+2026-04-14 07:11:11,214 - Hyperparameter Space: {'n_estimators': <hyperopt.pyll.base.Apply object at 0x718c539870d0>, 'max_depth': <hyperopt.pyll.base.Apply object at 0x718c53047e50>, 'max_leaf_nodes': <hyperopt.pyll.base.Apply object at 0x718c52eb7dd0>, 'min_samples_split': <hyperopt.pyll.base.Apply object at 0x718c52eb72d0>, 'min_samples_leaf': <hyperopt.pyll.base.Apply object at 0x718c52eb42d0>, 'bootstrap': <hyperopt.pyll.base.Apply object at 0x718c52eb6bd0>, 'class_weight': <hyperopt.pyll.base.Apply object at 0x718c52eb71d0>}
+2026-04-14 07:11:11,218 - build_posterior_wrapper took 0.001014 seconds
+2026-04-14 07:11:11,218 - TPE using 0 trials
+2026-04-14 07:11:17,332 - build_posterior_wrapper took 0.001066 seconds
+2026-04-14 07:11:17,332 - TPE using 1/1 trials with best loss -0.792961
+2026-04-14 07:11:52,259 - build_posterior_wrapper took 0.001085 seconds
+2026-04-14 07:11:52,259 - TPE using 2/2 trials with best loss -0.793096
+2026-04-14 07:12:00,444 - build_posterior_wrapper took 0.001102 seconds
+2026-04-14 07:12:00,444 - TPE using 3/3 trials with best loss -0.793096
+2026-04-14 07:12:29,424 - build_posterior_wrapper took 0.001099 seconds
+2026-04-14 07:12:29,425 - TPE using 4/4 trials with best loss -0.793096
+2026-04-14 07:12:42,074 - Best Hyperparameters: {'bootstrap': False, 'class_weight': None, 'max_depth': 50, 'max_leaf_nodes': 50, 'min_samples_leaf': 0.008623211770943004, 'min_samples_split': 0.0064742424595402295, 'n_estimators': 500}
+2026-04-14 07:12:42,074 - Best Validation Score: 0.7930958083448637
+2026-04-14 07:12:42,074 - Hyperparameter Tuning Time: 90.85921168327332
+2026-04-14 07:16:15,434 - Final Test Score: 0.8214167473800537
+2026-04-14 07:16:15,434 - Final Validation Score: 0.7922673579861887
+2026-04-14 07:16:15,475 - Model Class: LogisticRegression
+2026-04-14 07:16:15,475 - Hyperparameter Space: {'C': <hyperopt.pyll.base.Apply object at 0x718c52c81c50>, 'penalty': <hyperopt.pyll.base.Apply object at 0x718c52c81150>, 'solver': <hyperopt.pyll.base.Apply object at 0x718c52c824d0>, 'max_iter': <hyperopt.pyll.base.Apply object at 0x718c52c83250>, 'random_state': 42, 'class_weight': <hyperopt.pyll.base.Apply object at 0x718c52c83650>, 'normalize': <hyperopt.pyll.base.Apply object at 0x718c52c80ed0>}
+2026-04-14 07:16:15,477 - build_posterior_wrapper took 0.000567 seconds
+2026-04-14 07:16:15,477 - TPE using 0 trials
+2026-04-14 07:16:19,440 - build_posterior_wrapper took 0.000625 seconds
+2026-04-14 07:16:19,440 - TPE using 1/1 trials with best loss -0.779486
+2026-04-14 07:17:02,651 - build_posterior_wrapper took 0.000921 seconds
+2026-04-14 07:17:02,651 - TPE using 2/2 trials with best loss -0.779486
+2026-04-14 07:17:03,610 - build_posterior_wrapper took 0.000654 seconds
+2026-04-14 07:17:03,610 - TPE using 3/3 trials with best loss -0.779486
+2026-04-14 07:17:10,869 - build_posterior_wrapper took 0.000922 seconds
+2026-04-14 07:17:10,869 - TPE using 4/4 trials with best loss -0.779486
+2026-04-14 07:17:12,723 - Best Hyperparameters: {'C': 201.16839586877572, 'class_weight': 'balanced', 'max_iter': 400, 'normalize': False, 'penalty': 'l2', 'random_state': 42, 'solver': 'lbfgs'}
+2026-04-14 07:17:12,723 - Best Validation Score: 0.7794863078965286
+2026-04-14 07:17:12,723 - Hyperparameter Tuning Time: 57.24710249900818
+2026-04-14 07:17:20,049 - Final Test Score: 0.7986765264447959
+2026-04-14 07:17:20,049 - Final Validation Score: 0.779486505985313
+2026-04-14 07:59:32,382 - Model Class: RandomForestClassifier
+2026-04-14 07:59:32,382 - Hyperparameter Space: {'n_estimators': <hyperopt.pyll.base.Apply object at 0x7d15a55bbb10>, 'max_depth': <hyperopt.pyll.base.Apply object at 0x7d15a54255b0>, 'max_leaf_nodes': <hyperopt.pyll.base.Apply object at 0x7d15a546c550>, 'min_samples_split': <hyperopt.pyll.base.Apply object at 0x7d15a54615e0>, 'min_samples_leaf': <hyperopt.pyll.base.Apply object at 0x7d15a55d58b0>, 'bootstrap': <hyperopt.pyll.base.Apply object at 0x7d15a54794f0>, 'class_weight': <hyperopt.pyll.base.Apply object at 0x7d15a549b4d0>}
+2026-04-14 07:59:32,387 - build_posterior_wrapper took 0.001312 seconds
+2026-04-14 07:59:32,387 - TPE using 0 trials
+2026-04-14 07:59:37,816 - build_posterior_wrapper took 0.001473 seconds
+2026-04-14 07:59:37,816 - TPE using 1/1 trials with best loss -0.872763
+2026-04-14 08:00:10,631 - build_posterior_wrapper took 0.001397 seconds
+2026-04-14 08:00:10,632 - TPE using 2/2 trials with best loss -0.872763
+2026-04-14 08:00:18,128 - build_posterior_wrapper took 0.001438 seconds
+2026-04-14 08:00:18,129 - TPE using 3/3 trials with best loss -0.872763
+2026-04-14 08:00:44,221 - build_posterior_wrapper took 0.003588 seconds
+2026-04-14 08:00:44,221 - TPE using 4/4 trials with best loss -0.873668
+2026-04-14 08:00:55,374 - Best Hyperparameters: {'bootstrap': True, 'class_weight': {0: 0.001, 1: 1}, 'max_depth': 20, 'max_leaf_nodes': 79, 'min_samples_leaf': 0.002944827566547015, 'min_samples_split': 0.0018698018110930824, 'n_estimators': 200}
+2026-04-14 08:00:55,374 - Best Validation Score: 0.8739182349716792
+2026-04-14 08:00:55,375 - Hyperparameter Tuning Time: 82.99219703674316
+2026-04-14 08:01:55,768 - Final Test Score: 0.8658353820869179
+2026-04-14 08:01:55,768 - Final Validation Score: 0.8728237255618491
+2026-04-14 08:01:58,222 - Final External Test Score: 0.8142226272751252
+2026-04-14 08:01:58,275 - Model Class: LogisticRegression
+2026-04-14 08:01:58,275 - Hyperparameter Space: {'C': <hyperopt.pyll.base.Apply object at 0x7d15a54c66d0>, 'penalty': <hyperopt.pyll.base.Apply object at 0x7d15a54c5ad0>, 'solver': <hyperopt.pyll.base.Apply object at 0x7d15a54c7850>, 'max_iter': <hyperopt.pyll.base.Apply object at 0x7d15a54c5850>, 'random_state': 42, 'class_weight': <hyperopt.pyll.base.Apply object at 0x7d15a54c5250>, 'normalize': <hyperopt.pyll.base.Apply object at 0x7d15a54c6850>}
+2026-04-14 08:01:58,277 - build_posterior_wrapper took 0.000540 seconds
+2026-04-14 08:01:58,277 - TPE using 0 trials
+2026-04-14 08:02:01,450 - build_posterior_wrapper took 0.001013 seconds
+2026-04-14 08:02:01,450 - TPE using 1/1 trials with best loss -0.826229
+2026-04-14 08:02:39,699 - build_posterior_wrapper took 0.000984 seconds
+2026-04-14 08:02:39,699 - TPE using 2/2 trials with best loss -0.826229
+2026-04-14 08:02:40,602 - build_posterior_wrapper took 0.000911 seconds
+2026-04-14 08:02:40,602 - TPE using 3/3 trials with best loss -0.826229
+2026-04-14 08:02:47,750 - build_posterior_wrapper took 0.000910 seconds
+2026-04-14 08:02:47,750 - TPE using 4/4 trials with best loss -0.826229
+2026-04-14 08:02:49,318 - Best Hyperparameters: {'C': 201.16839586877572, 'class_weight': 'balanced', 'max_iter': 400, 'normalize': False, 'penalty': 'l2', 'random_state': 42, 'solver': 'lbfgs'}
+2026-04-14 08:02:49,318 - Best Validation Score: 0.8262285614227419
+2026-04-14 08:02:49,318 - Hyperparameter Tuning Time: 51.042823791503906
+2026-04-14 08:02:55,314 - Final Test Score: 0.8370677351242526
+2026-04-14 08:02:55,314 - Final Validation Score: 0.8262280132773006
+2026-04-14 08:02:55,402 - Final External Test Score: 0.7543101551403781
+2026-04-14 08:02:57,397 - Model Class: RandomForestClassifier
+2026-04-14 08:02:57,397 - Hyperparameter Space: {'n_estimators': <hyperopt.pyll.base.Apply object at 0x7d15a4bc86d0>, 'max_depth': <hyperopt.pyll.base.Apply object at 0x7d15a4bca450>, 'max_leaf_nodes': <hyperopt.pyll.base.Apply object at 0x7d15a4bcafd0>, 'min_samples_split': <hyperopt.pyll.base.Apply object at 0x7d15a4bcb5d0>, 'min_samples_leaf': <hyperopt.pyll.base.Apply object at 0x7d15a4bc85d0>, 'bootstrap': <hyperopt.pyll.base.Apply object at 0x7d15a4bcae50>, 'class_weight': <hyperopt.pyll.base.Apply object at 0x7d15a4baf8d0>}
+2026-04-14 08:02:57,401 - build_posterior_wrapper took 0.001010 seconds
+2026-04-14 08:02:57,401 - TPE using 0 trials
+2026-04-14 08:03:03,314 - build_posterior_wrapper took 0.001089 seconds
+2026-04-14 08:03:03,314 - TPE using 1/1 trials with best loss -0.793301
+2026-04-14 08:03:38,242 - build_posterior_wrapper took 0.001077 seconds
+2026-04-14 08:03:38,242 - TPE using 2/2 trials with best loss -0.793854
+2026-04-14 08:03:46,473 - build_posterior_wrapper took 0.001105 seconds
+2026-04-14 08:03:46,473 - TPE using 3/3 trials with best loss -0.793854
+2026-04-14 08:04:14,779 - build_posterior_wrapper took 0.001131 seconds
+2026-04-14 08:04:14,779 - TPE using 4/4 trials with best loss -0.793854
+2026-04-14 08:04:27,393 - Best Hyperparameters: {'bootstrap': False, 'class_weight': None, 'max_depth': 50, 'max_leaf_nodes': 50, 'min_samples_leaf': 0.008623211770943004, 'min_samples_split': 0.0064742424595402295, 'n_estimators': 500}
+2026-04-14 08:04:27,393 - Best Validation Score: 0.793853584070327
+2026-04-14 08:04:27,393 - Hyperparameter Tuning Time: 89.99557185173035
+2026-04-14 08:07:56,151 - Final Test Score: 0.8214292268811133
+2026-04-14 08:07:56,151 - Final Validation Score: 0.792128243678005
+2026-04-14 08:07:56,197 - Model Class: LogisticRegression
+2026-04-14 08:07:56,197 - Hyperparameter Space: {'C': <hyperopt.pyll.base.Apply object at 0x7d15a4758e50>, 'penalty': <hyperopt.pyll.base.Apply object at 0x7d15a4758b50>, 'solver': <hyperopt.pyll.base.Apply object at 0x7d15a4759a50>, 'max_iter': <hyperopt.pyll.base.Apply object at 0x7d15a475a650>, 'random_state': 42, 'class_weight': <hyperopt.pyll.base.Apply object at 0x7d15a475aad0>, 'normalize': <hyperopt.pyll.base.Apply object at 0x7d15a4758250>}
+2026-04-14 08:07:56,199 - build_posterior_wrapper took 0.000542 seconds
+2026-04-14 08:07:56,199 - TPE using 0 trials
+2026-04-14 08:08:01,056 - build_posterior_wrapper took 0.001054 seconds
+2026-04-14 08:08:01,056 - TPE using 1/1 trials with best loss -0.779486
+2026-04-14 08:08:42,926 - build_posterior_wrapper took 0.000925 seconds
+2026-04-14 08:08:42,926 - TPE using 2/2 trials with best loss -0.779486
+2026-04-14 08:08:43,888 - build_posterior_wrapper took 0.000646 seconds
+2026-04-14 08:08:43,889 - TPE using 3/3 trials with best loss -0.779486
+2026-04-14 08:08:50,949 - build_posterior_wrapper took 0.000944 seconds
+2026-04-14 08:08:50,949 - TPE using 4/4 trials with best loss -0.779486
+2026-04-14 08:08:52,920 - Best Hyperparameters: {'C': 201.16839586877572, 'class_weight': 'balanced', 'max_iter': 400, 'normalize': False, 'penalty': 'l2', 'random_state': 42, 'solver': 'lbfgs'}
+2026-04-14 08:08:52,920 - Best Validation Score: 0.7794864198597546
+2026-04-14 08:08:52,920 - Hyperparameter Tuning Time: 56.72278189659119
+2026-04-14 08:08:59,443 - Final Test Score: 0.798676526444796
+2026-04-14 08:08:59,443 - Final Validation Score: 0.7794864370848661
+2026-04-14 09:01:34,474 - Model Class: RandomForestClassifier
+2026-04-14 09:01:34,475 - Hyperparameter Space: {'n_estimators': <hyperopt.pyll.base.Apply object at 0x7d092ffb3b10>, 'max_depth': <hyperopt.pyll.base.Apply object at 0x7d093001d5b0>, 'max_leaf_nodes': <hyperopt.pyll.base.Apply object at 0x7d0930064650>, 'min_samples_split': <hyperopt.pyll.base.Apply object at 0x7d09300594f0>, 'min_samples_leaf': <hyperopt.pyll.base.Apply object at 0x7d092ffcd980>, 'bootstrap': <hyperopt.pyll.base.Apply object at 0x7d09300714f0>, 'class_weight': <hyperopt.pyll.base.Apply object at 0x7d09300934d0>}
+2026-04-14 09:01:34,480 - build_posterior_wrapper took 0.001070 seconds
+2026-04-14 09:01:34,480 - TPE using 0 trials
+2026-04-14 09:01:39,950 - build_posterior_wrapper took 0.001448 seconds
+2026-04-14 09:01:39,950 - TPE using 1/1 trials with best loss -0.871577
+2026-04-14 09:02:12,927 - build_posterior_wrapper took 0.001362 seconds
+2026-04-14 09:02:12,927 - TPE using 2/2 trials with best loss -0.871577
+2026-04-14 09:02:20,377 - build_posterior_wrapper took 0.001498 seconds
+2026-04-14 09:02:20,377 - TPE using 3/3 trials with best loss -0.871577
+2026-04-14 09:02:46,799 - build_posterior_wrapper took 0.001390 seconds
+2026-04-14 09:02:46,799 - TPE using 4/4 trials with best loss -0.872862
+2026-04-14 09:02:58,147 - Best Hyperparameters: {'bootstrap': True, 'class_weight': {0: 0.001, 1: 1}, 'max_depth': 20, 'max_leaf_nodes': 79, 'min_samples_leaf': 0.002944827566547015, 'min_samples_split': 0.0018698018110930824, 'n_estimators': 200}
+2026-04-14 09:02:58,147 - Best Validation Score: 0.8735053520311833
+2026-04-14 09:02:58,148 - Hyperparameter Tuning Time: 83.67296981811523
+2026-04-14 09:03:58,367 - Final Test Score: 0.8670688018560241
+2026-04-14 09:03:58,367 - Final Validation Score: 0.8740436841464156
+2026-04-14 09:04:00,776 - Final External Test Score: 0.8133280594121962
+2026-04-14 09:04:00,846 - Model Class: LogisticRegression
+2026-04-14 09:04:00,846 - Hyperparameter Space: {'C': <hyperopt.pyll.base.Apply object at 0x7d092eecf550>, 'penalty': <hyperopt.pyll.base.Apply object at 0x7d092eece450>, 'solver': <hyperopt.pyll.base.Apply object at 0x7d092eece750>, 'max_iter': <hyperopt.pyll.base.Apply object at 0x7d0930092350>, 'random_state': 42, 'class_weight': <hyperopt.pyll.base.Apply object at 0x7d0930092bd0>, 'normalize': <hyperopt.pyll.base.Apply object at 0x7d0930092ed0>}
+2026-04-14 09:04:00,864 - build_posterior_wrapper took 0.000675 seconds
+2026-04-14 09:04:00,864 - TPE using 0 trials
+2026-04-14 09:04:04,036 - build_posterior_wrapper took 0.000926 seconds
+2026-04-14 09:04:04,036 - TPE using 1/1 trials with best loss -0.826229
+2026-04-14 09:04:42,256 - build_posterior_wrapper took 0.000920 seconds
+2026-04-14 09:04:42,256 - TPE using 2/2 trials with best loss -0.826229
+2026-04-14 09:04:43,146 - build_posterior_wrapper took 0.000924 seconds
+2026-04-14 09:04:43,146 - TPE using 3/3 trials with best loss -0.826229
+2026-04-14 09:04:50,292 - build_posterior_wrapper took 0.000994 seconds
+2026-04-14 09:04:50,292 - TPE using 4/4 trials with best loss -0.826229
+2026-04-14 09:04:51,836 - Best Hyperparameters: {'C': 201.16839586877572, 'class_weight': 'balanced', 'max_iter': 400, 'normalize': False, 'penalty': 'l2', 'random_state': 42, 'solver': 'lbfgs'}
+2026-04-14 09:04:51,836 - Best Validation Score: 0.8262285614227419
+2026-04-14 09:04:51,836 - Hyperparameter Tuning Time: 50.990596532821655
+2026-04-14 09:04:57,826 - Final Test Score: 0.8370677351242526
+2026-04-14 09:04:57,826 - Final Validation Score: 0.8262280132773006
+2026-04-14 09:04:57,917 - Final External Test Score: 0.7543101551403781
+2026-04-14 09:04:59,864 - Model Class: RandomForestClassifier
+2026-04-14 09:04:59,864 - Hyperparameter Space: {'n_estimators': <hyperopt.pyll.base.Apply object at 0x7d092ef41050>, 'max_depth': <hyperopt.pyll.base.Apply object at 0x7d092ef403d0>, 'max_leaf_nodes': <hyperopt.pyll.base.Apply object at 0x7d092ef40c50>, 'min_samples_split': <hyperopt.pyll.base.Apply object at 0x7d092ef42ad0>, 'min_samples_leaf': <hyperopt.pyll.base.Apply object at 0x7d092ef80950>, 'bootstrap': <hyperopt.pyll.base.Apply object at 0x7d092ef80850>, 'class_weight': <hyperopt.pyll.base.Apply object at 0x7d092ef832d0>}
+2026-04-14 09:04:59,867 - build_posterior_wrapper took 0.000985 seconds
+2026-04-14 09:04:59,867 - TPE using 0 trials
+2026-04-14 09:05:05,866 - build_posterior_wrapper took 0.001080 seconds
+2026-04-14 09:05:05,866 - TPE using 1/1 trials with best loss -0.790766
+2026-04-14 09:05:40,561 - build_posterior_wrapper took 0.001093 seconds
+2026-04-14 09:05:40,561 - TPE using 2/2 trials with best loss -0.792213
+2026-04-14 09:05:48,822 - build_posterior_wrapper took 0.001109 seconds
+2026-04-14 09:05:48,822 - TPE using 3/3 trials with best loss -0.792213
+2026-04-14 09:06:17,131 - build_posterior_wrapper took 0.001111 seconds
+2026-04-14 09:06:17,131 - TPE using 4/4 trials with best loss -0.792213
+2026-04-14 09:06:29,521 - Best Hyperparameters: {'bootstrap': False, 'class_weight': None, 'max_depth': 50, 'max_leaf_nodes': 50, 'min_samples_leaf': 0.008623211770943004, 'min_samples_split': 0.0064742424595402295, 'n_estimators': 500}
+2026-04-14 09:06:29,521 - Best Validation Score: 0.7922134003238597
+2026-04-14 09:06:29,521 - Hyperparameter Tuning Time: 89.65726590156555
+2026-04-14 09:10:00,698 - Final Test Score: 0.8221631839424849
+2026-04-14 09:10:00,698 - Final Validation Score: 0.7926486013829424
+2026-04-14 09:10:00,737 - Model Class: LogisticRegression
+2026-04-14 09:10:00,737 - Hyperparameter Space: {'C': <hyperopt.pyll.base.Apply object at 0x7d092eecda50>, 'penalty': <hyperopt.pyll.base.Apply object at 0x7d08f1905250>, 'solver': <hyperopt.pyll.base.Apply object at 0x7d08f19071d0>, 'max_iter': <hyperopt.pyll.base.Apply object at 0x7d08f1904850>, 'random_state': 42, 'class_weight': <hyperopt.pyll.base.Apply object at 0x7d08f19043d0>, 'normalize': <hyperopt.pyll.base.Apply object at 0x7d08f19049d0>}
+2026-04-14 09:10:00,739 - build_posterior_wrapper took 0.000546 seconds
+2026-04-14 09:10:00,739 - TPE using 0 trials
+2026-04-14 09:10:04,192 - build_posterior_wrapper took 0.000912 seconds
+2026-04-14 09:10:04,192 - TPE using 1/1 trials with best loss -0.779486
+2026-04-14 09:10:46,184 - build_posterior_wrapper took 0.000913 seconds
+2026-04-14 09:10:46,184 - TPE using 2/2 trials with best loss -0.779486
+2026-04-14 09:10:47,122 - build_posterior_wrapper took 0.000928 seconds
+2026-04-14 09:10:47,123 - TPE using 3/3 trials with best loss -0.779486
+2026-04-14 09:10:54,093 - build_posterior_wrapper took 0.000931 seconds
+2026-04-14 09:10:54,093 - TPE using 4/4 trials with best loss -0.779486
+2026-04-14 09:10:56,042 - Best Hyperparameters: {'C': 201.16839586877572, 'class_weight': 'balanced', 'max_iter': 400, 'normalize': False, 'penalty': 'l2', 'random_state': 42, 'solver': 'lbfgs'}
+2026-04-14 09:10:56,042 - Best Validation Score: 0.7794864629225338
+2026-04-14 09:10:56,042 - Hyperparameter Tuning Time: 55.30476260185242
+2026-04-14 09:11:02,326 - Final Test Score: 0.7986761165054055
+2026-04-14 09:11:02,326 - Final Validation Score: 0.7794863767969753
+2026-04-14 09:34:48,782 - Model Class: RandomForestClassifier
+2026-04-14 09:34:48,782 - Hyperparameter Space: {'n_estimators': <hyperopt.pyll.base.Apply object at 0x7d3b5055f9d0>, 'max_depth': <hyperopt.pyll.base.Apply object at 0x7d3b505c96d0>, 'max_leaf_nodes': <hyperopt.pyll.base.Apply object at 0x7d3b50610850>, 'min_samples_split': <hyperopt.pyll.base.Apply object at 0x7d3b50605130>, 'min_samples_leaf': <hyperopt.pyll.base.Apply object at 0x7d3b505758b0>, 'bootstrap': <hyperopt.pyll.base.Apply object at 0x7d3b5061d440>, 'class_weight': <hyperopt.pyll.base.Apply object at 0x7d3b5063f550>}
+2026-04-14 09:34:48,807 - build_posterior_wrapper took 0.017962 seconds
+2026-04-14 09:34:48,807 - TPE using 0 trials
+2026-04-14 09:34:54,321 - build_posterior_wrapper took 0.001062 seconds
+2026-04-14 09:34:54,321 - TPE using 1/1 trials with best loss -0.871452
+2026-04-14 09:35:27,343 - build_posterior_wrapper took 0.001092 seconds
+2026-04-14 09:35:27,343 - TPE using 2/2 trials with best loss -0.871698
+2026-04-14 09:35:34,786 - build_posterior_wrapper took 0.001071 seconds
+2026-04-14 09:35:34,786 - TPE using 3/3 trials with best loss -0.871698
+2026-04-14 09:36:00,957 - build_posterior_wrapper took 0.001047 seconds
+2026-04-14 09:36:00,957 - TPE using 4/4 trials with best loss -0.873609
+2026-04-14 09:36:12,104 - build_posterior_wrapper took 0.001051 seconds
+2026-04-14 09:36:12,104 - TPE using 5/5 trials with best loss -0.873609
+2026-04-14 09:36:35,443 - build_posterior_wrapper took 0.001052 seconds
+2026-04-14 09:36:35,443 - TPE using 6/6 trials with best loss -0.874625
+2026-04-14 09:37:05,916 - build_posterior_wrapper took 0.001081 seconds
+2026-04-14 09:37:05,916 - TPE using 7/7 trials with best loss -0.877042
+2026-04-14 09:37:21,123 - build_posterior_wrapper took 0.001062 seconds
+2026-04-14 09:37:21,123 - TPE using 8/8 trials with best loss -0.877042
+2026-04-14 09:37:28,732 - build_posterior_wrapper took 0.001054 seconds
+2026-04-14 09:37:28,732 - TPE using 9/9 trials with best loss -0.877042
+2026-04-14 09:37:54,974 - build_posterior_wrapper took 0.001059 seconds
+2026-04-14 09:37:54,974 - TPE using 10/10 trials with best loss -0.877042
+2026-04-14 09:38:04,344 - build_posterior_wrapper took 0.001051 seconds
+2026-04-14 09:38:04,344 - TPE using 11/11 trials with best loss -0.877042
+2026-04-14 09:38:33,607 - build_posterior_wrapper took 0.001059 seconds
+2026-04-14 09:38:33,607 - TPE using 12/12 trials with best loss -0.877042
+2026-04-14 09:38:46,702 - build_posterior_wrapper took 0.001079 seconds
+2026-04-14 09:38:46,702 - TPE using 13/13 trials with best loss -0.877042
+2026-04-14 09:39:25,082 - build_posterior_wrapper took 0.001066 seconds
+2026-04-14 09:39:25,082 - TPE using 14/14 trials with best loss -0.877042
+2026-04-14 09:39:54,259 - build_posterior_wrapper took 0.001071 seconds
+2026-04-14 09:39:54,259 - TPE using 15/15 trials with best loss -0.877042
+2026-04-14 09:40:00,284 - build_posterior_wrapper took 0.001041 seconds
+2026-04-14 09:40:00,284 - TPE using 16/16 trials with best loss -0.877042
+2026-04-14 09:40:21,220 - build_posterior_wrapper took 0.001057 seconds
+2026-04-14 09:40:21,220 - TPE using 17/17 trials with best loss -0.877042
+2026-04-14 09:40:42,474 - build_posterior_wrapper took 0.001054 seconds
+2026-04-14 09:40:42,474 - TPE using 18/18 trials with best loss -0.877042
+2026-04-14 09:41:22,193 - build_posterior_wrapper took 0.001076 seconds
+2026-04-14 09:41:22,193 - TPE using 19/19 trials with best loss -0.877042
+2026-04-14 09:41:27,739 - Best Hyperparameters: {'bootstrap': False, 'class_weight': {0: 0.005, 1: 1}, 'max_depth': None, 'max_leaf_nodes': 79, 'min_samples_leaf': 0.0009092947253263427, 'min_samples_split': 0.00997288488910095, 'n_estimators': 400}
+2026-04-14 09:41:27,739 - Best Validation Score: 0.877042153907059
+2026-04-14 09:41:27,739 - Hyperparameter Tuning Time: 398.9564759731293
+2026-04-14 09:44:32,920 - Final Test Score: 0.8683686217725086
+2026-04-14 09:44:32,920 - Final Validation Score: 0.8768611288750836
+2026-04-14 09:44:37,385 - Final External Test Score: 0.8112779292138514
+2026-04-14 09:44:37,444 - Model Class: LogisticRegression
+2026-04-14 09:44:37,444 - Hyperparameter Space: {'C': <hyperopt.pyll.base.Apply object at 0x7d3b4fba0c50>, 'penalty': <hyperopt.pyll.base.Apply object at 0x7d3b4fba2650>, 'solver': <hyperopt.pyll.base.Apply object at 0x7d3b4fba0350>, 'max_iter': <hyperopt.pyll.base.Apply object at 0x7d3b4fba2450>, 'random_state': 42, 'class_weight': <hyperopt.pyll.base.Apply object at 0x7d3b4fba2ad0>, 'normalize': <hyperopt.pyll.base.Apply object at 0x7d3b4fba33d0>}
+2026-04-14 09:44:37,446 - build_posterior_wrapper took 0.000550 seconds
+2026-04-14 09:44:37,446 - TPE using 0 trials
+2026-04-14 09:44:40,623 - build_posterior_wrapper took 0.001007 seconds
+2026-04-14 09:44:40,623 - TPE using 1/1 trials with best loss -0.826229
+2026-04-14 09:45:17,404 - build_posterior_wrapper took 0.000624 seconds
+2026-04-14 09:45:17,405 - TPE using 2/2 trials with best loss -0.826229
+2026-04-14 09:45:18,286 - build_posterior_wrapper took 0.000928 seconds
+2026-04-14 09:45:18,286 - TPE using 3/3 trials with best loss -0.826229
+2026-04-14 09:45:25,454 - build_posterior_wrapper took 0.001013 seconds
+2026-04-14 09:45:25,454 - TPE using 4/4 trials with best loss -0.826229
+2026-04-14 09:45:27,081 - build_posterior_wrapper took 0.001009 seconds
+2026-04-14 09:45:27,081 - TPE using 5/5 trials with best loss -0.826229
+2026-04-14 09:46:03,195 - build_posterior_wrapper took 0.000916 seconds
+2026-04-14 09:46:03,195 - TPE using 6/6 trials with best loss -0.826229
+2026-04-14 09:46:21,800 - build_posterior_wrapper took 0.001008 seconds
+2026-04-14 09:46:21,800 - TPE using 7/7 trials with best loss -0.831092
+2026-04-14 09:46:24,124 - build_posterior_wrapper took 0.000930 seconds
+2026-04-14 09:46:24,124 - TPE using 8/8 trials with best loss -0.831092
+2026-04-14 09:46:27,296 - build_posterior_wrapper took 0.001023 seconds
+2026-04-14 09:46:27,296 - TPE using 9/9 trials with best loss -0.831092
+2026-04-14 09:46:29,754 - build_posterior_wrapper took 0.003684 seconds
+2026-04-14 09:46:29,754 - TPE using 10/10 trials with best loss -0.831092
+2026-04-14 09:46:30,640 - build_posterior_wrapper took 0.000907 seconds
+2026-04-14 09:46:30,640 - TPE using 11/11 trials with best loss -0.831092
+2026-04-14 09:46:48,425 - build_posterior_wrapper took 0.000999 seconds
+2026-04-14 09:46:48,425 - TPE using 12/12 trials with best loss -0.831092
+2026-04-14 09:46:50,627 - build_posterior_wrapper took 0.000929 seconds
+2026-04-14 09:46:50,627 - TPE using 13/13 trials with best loss -0.831092
+2026-04-14 09:46:53,277 - build_posterior_wrapper took 0.000596 seconds
+2026-04-14 09:46:53,277 - TPE using 14/14 trials with best loss -0.831092
+2026-04-14 09:47:11,317 - build_posterior_wrapper took 0.000923 seconds
+2026-04-14 09:47:11,317 - TPE using 15/15 trials with best loss -0.831092
+2026-04-14 09:47:14,970 - build_posterior_wrapper took 0.000995 seconds
+2026-04-14 09:47:14,971 - TPE using 16/16 trials with best loss -0.831092
+2026-04-14 09:48:44,284 - build_posterior_wrapper took 0.000921 seconds
+2026-04-14 09:48:44,284 - TPE using 17/17 trials with best loss -0.831092
+2026-04-14 09:48:46,667 - build_posterior_wrapper took 0.000963 seconds
+2026-04-14 09:48:46,667 - TPE using 18/18 trials with best loss -0.831092
+2026-04-14 09:49:04,318 - build_posterior_wrapper took 0.001015 seconds
+2026-04-14 09:49:04,318 - TPE using 19/19 trials with best loss -0.831092
+2026-04-14 09:49:06,518 - Best Hyperparameters: {'C': 0.004255824420486441, 'class_weight': 'balanced', 'max_iter': 100, 'normalize': False, 'penalty': 'l2', 'random_state': 42, 'solver': 'saga'}
+2026-04-14 09:49:06,518 - Best Validation Score: 0.8310916164200012
+2026-04-14 09:49:06,518 - Hyperparameter Tuning Time: 269.0741732120514
+2026-04-14 09:49:24,236 - Final Test Score: 0.8280002305301088
+2026-04-14 09:49:24,236 - Final Validation Score: 0.8310916164200012
+2026-04-14 09:49:24,349 - Final External Test Score: 0.7542157340015336
+2026-04-14 09:49:26,389 - Model Class: RandomForestClassifier
+2026-04-14 09:49:26,389 - Hyperparameter Space: {'n_estimators': <hyperopt.pyll.base.Apply object at 0x7d3b4fbbf3d0>, 'max_depth': <hyperopt.pyll.base.Apply object at 0x7d3b4fbbc950>, 'max_leaf_nodes': <hyperopt.pyll.base.Apply object at 0x7d3b4fd066d0>, 'min_samples_split': <hyperopt.pyll.base.Apply object at 0x7d3b4fd051d0>, 'min_samples_leaf': <hyperopt.pyll.base.Apply object at 0x7d3b4fd04850>, 'bootstrap': <hyperopt.pyll.base.Apply object at 0x7d3b4fd04950>, 'class_weight': <hyperopt.pyll.base.Apply object at 0x7d3b4fd05ad0>}
+2026-04-14 09:49:26,393 - build_posterior_wrapper took 0.001017 seconds
+2026-04-14 09:49:26,393 - TPE using 0 trials
+2026-04-14 09:49:32,566 - build_posterior_wrapper took 0.001096 seconds
+2026-04-14 09:49:32,566 - TPE using 1/1 trials with best loss -0.791088
+2026-04-14 09:50:07,789 - build_posterior_wrapper took 0.001079 seconds
+2026-04-14 09:50:07,789 - TPE using 2/2 trials with best loss -0.793006
+2026-04-14 09:50:16,117 - build_posterior_wrapper took 0.001093 seconds
+2026-04-14 09:50:16,118 - TPE using 3/3 trials with best loss -0.793006
+2026-04-14 09:50:44,920 - build_posterior_wrapper took 0.001097 seconds
+2026-04-14 09:50:44,920 - TPE using 4/4 trials with best loss -0.793006
+2026-04-14 09:50:57,506 - build_posterior_wrapper took 0.001125 seconds
+2026-04-14 09:50:57,506 - TPE using 5/5 trials with best loss -0.793006
+2026-04-14 09:51:23,118 - build_posterior_wrapper took 0.001096 seconds
+2026-04-14 09:51:23,119 - TPE using 6/6 trials with best loss -0.795157
+2026-04-14 09:51:55,558 - build_posterior_wrapper took 0.001103 seconds
+2026-04-14 09:51:55,558 - TPE using 7/7 trials with best loss -0.796367
+2026-04-14 09:52:12,818 - build_posterior_wrapper took 0.001098 seconds
+2026-04-14 09:52:12,818 - TPE using 8/8 trials with best loss -0.796367
+2026-04-14 09:52:20,824 - build_posterior_wrapper took 0.001084 seconds
+2026-04-14 09:52:20,825 - TPE using 9/9 trials with best loss -0.796367
+2026-04-14 09:52:50,530 - build_posterior_wrapper took 0.001839 seconds
+2026-04-14 09:52:50,530 - TPE using 10/10 trials with best loss -0.796367
+2026-04-14 09:53:00,566 - build_posterior_wrapper took 0.001114 seconds
+2026-04-14 09:53:00,566 - TPE using 11/11 trials with best loss -0.796367
+2026-04-14 09:53:33,208 - build_posterior_wrapper took 0.001070 seconds
+2026-04-14 09:53:33,209 - TPE using 12/12 trials with best loss -0.796367
+2026-04-14 09:53:47,763 - build_posterior_wrapper took 0.001070 seconds
+2026-04-14 09:53:47,763 - TPE using 13/13 trials with best loss -0.796367
+2026-04-14 09:54:28,765 - build_posterior_wrapper took 0.001073 seconds
+2026-04-14 09:54:28,765 - TPE using 14/14 trials with best loss -0.797556
+2026-04-14 09:54:59,950 - build_posterior_wrapper took 0.001096 seconds
+2026-04-14 09:54:59,950 - TPE using 15/15 trials with best loss -0.798062
+2026-04-14 09:55:06,810 - build_posterior_wrapper took 0.001100 seconds
+2026-04-14 09:55:06,810 - TPE using 16/16 trials with best loss -0.798062
+2026-04-14 09:55:30,032 - build_posterior_wrapper took 0.001081 seconds
+2026-04-14 09:55:30,032 - TPE using 17/17 trials with best loss -0.798062
+2026-04-14 09:55:52,152 - build_posterior_wrapper took 0.001145 seconds
+2026-04-14 09:55:52,152 - TPE using 18/18 trials with best loss -0.798062
+2026-04-14 09:56:36,802 - build_posterior_wrapper took 0.001116 seconds
+2026-04-14 09:56:36,802 - TPE using 19/19 trials with best loss -0.798062
+2026-04-14 09:56:42,623 - Best Hyperparameters: {'bootstrap': False, 'class_weight': {0: 0.01, 1: 1}, 'max_depth': 50, 'max_leaf_nodes': None, 'min_samples_leaf': 0.0002692572304826705, 'min_samples_split': 0.009151584720707734, 'n_estimators': 300}
+2026-04-14 09:56:42,623 - Best Validation Score: 0.798061558277307
+2026-04-14 09:56:42,623 - Hyperparameter Tuning Time: 436.23415994644165
+2026-04-14 09:59:55,668 - Final Test Score: 0.8278521966681072
+2026-04-14 09:59:55,668 - Final Validation Score: 0.7981741932825648
+2026-04-14 09:59:55,804 - Model Class: LogisticRegression
+2026-04-14 09:59:55,804 - Hyperparameter Space: {'C': <hyperopt.pyll.base.Apply object at 0x7d3b4fcf0cd0>, 'penalty': <hyperopt.pyll.base.Apply object at 0x7d3b4fc77b50>, 'solver': <hyperopt.pyll.base.Apply object at 0x7d3b4fc76b50>, 'max_iter': <hyperopt.pyll.base.Apply object at 0x7d3b4fc77e50>, 'random_state': 42, 'class_weight': <hyperopt.pyll.base.Apply object at 0x7d3b4fc74ed0>, 'normalize': <hyperopt.pyll.base.Apply object at 0x7d3b4fc77250>}
+2026-04-14 09:59:55,806 - build_posterior_wrapper took 0.000530 seconds
+2026-04-14 09:59:55,806 - TPE using 0 trials
+2026-04-14 09:59:59,533 - build_posterior_wrapper took 0.000991 seconds
+2026-04-14 09:59:59,533 - TPE using 1/1 trials with best loss -0.779486
+2026-04-14 10:00:40,549 - build_posterior_wrapper took 0.000916 seconds
+2026-04-14 10:00:40,549 - TPE using 2/2 trials with best loss -0.779486
+2026-04-14 10:00:41,479 - build_posterior_wrapper took 0.000924 seconds
+2026-04-14 10:00:41,479 - TPE using 3/3 trials with best loss -0.779486
+2026-04-14 10:00:48,460 - build_posterior_wrapper took 0.000988 seconds
+2026-04-14 10:00:48,460 - TPE using 4/4 trials with best loss -0.779486
+2026-04-14 10:00:50,542 - build_posterior_wrapper took 0.000917 seconds
+2026-04-14 10:00:50,542 - TPE using 5/5 trials with best loss -0.779486
+2026-04-14 10:01:30,343 - build_posterior_wrapper took 0.001000 seconds
+2026-04-14 10:01:30,343 - TPE using 6/6 trials with best loss -0.779486
+2026-04-14 10:01:49,888 - build_posterior_wrapper took 0.000915 seconds
+2026-04-14 10:01:49,888 - TPE using 7/7 trials with best loss -0.779486
+2026-04-14 10:01:52,138 - build_posterior_wrapper took 0.000920 seconds
+2026-04-14 10:01:52,138 - TPE using 8/8 trials with best loss -0.779486
+2026-04-14 10:01:55,910 - build_posterior_wrapper took 0.001012 seconds
+2026-04-14 10:01:55,910 - TPE using 9/9 trials with best loss -0.780022
+2026-04-14 10:01:58,601 - build_posterior_wrapper took 0.000961 seconds
+2026-04-14 10:01:58,601 - TPE using 10/10 trials with best loss -0.780022
+2026-04-14 10:01:59,543 - build_posterior_wrapper took 0.001004 seconds
+2026-04-14 10:01:59,543 - TPE using 11/11 trials with best loss -0.780022
+2026-04-14 10:02:19,654 - build_posterior_wrapper took 0.000934 seconds
+2026-04-14 10:02:19,654 - TPE using 12/12 trials with best loss -0.780022
+2026-04-14 10:02:21,632 - build_posterior_wrapper took 0.000962 seconds
+2026-04-14 10:02:21,632 - TPE using 13/13 trials with best loss -0.780022
+2026-04-14 10:02:24,693 - build_posterior_wrapper took 0.000927 seconds
+2026-04-14 10:02:24,693 - TPE using 14/14 trials with best loss -0.780022
+2026-04-14 10:02:45,495 - build_posterior_wrapper took 0.000922 seconds
+2026-04-14 10:02:45,495 - TPE using 15/15 trials with best loss -0.780022
+2026-04-14 10:02:49,091 - build_posterior_wrapper took 0.000913 seconds
+2026-04-14 10:02:49,091 - TPE using 16/16 trials with best loss -0.780022
+2026-04-14 10:04:28,915 - build_posterior_wrapper took 0.000921 seconds
+2026-04-14 10:04:28,915 - TPE using 17/17 trials with best loss -0.780022
+2026-04-14 10:04:31,612 - build_posterior_wrapper took 0.000916 seconds
+2026-04-14 10:04:31,612 - TPE using 18/18 trials with best loss -0.780022
+2026-04-14 10:04:51,785 - build_posterior_wrapper took 0.000913 seconds
+2026-04-14 10:04:51,785 - TPE using 19/19 trials with best loss -0.780022
+2026-04-14 10:04:53,799 - Best Hyperparameters: {'C': 0.002110897991492277, 'class_weight': 'balanced', 'max_iter': 200, 'normalize': False, 'penalty': 'l2', 'random_state': 42, 'solver': 'lbfgs'}
+2026-04-14 10:04:53,799 - Best Validation Score: 0.7800224653351517
+2026-04-14 10:04:53,799 - Hyperparameter Tuning Time: 297.99423480033875
+2026-04-14 10:05:02,328 - Final Test Score: 0.7991834007342012
+2026-04-14 10:05:02,328 - Final Validation Score: 0.7800177542671081
+2026-04-14 10:07:05,068 - Model Class: RandomForestClassifier
+2026-04-14 10:07:05,068 - Hyperparameter Space: {'n_estimators': <hyperopt.pyll.base.Apply object at 0x7f4b390cf9d0>, 'max_depth': <hyperopt.pyll.base.Apply object at 0x7f4b38f3d6d0>, 'max_leaf_nodes': <hyperopt.pyll.base.Apply object at 0x7f4b38f84850>, 'min_samples_split': <hyperopt.pyll.base.Apply object at 0x7f4b38f79130>, 'min_samples_leaf': <hyperopt.pyll.base.Apply object at 0x7f4b390e58b0>, 'bootstrap': <hyperopt.pyll.base.Apply object at 0x7f4b38f91440>, 'class_weight': <hyperopt.pyll.base.Apply object at 0x7f4b38fb3650>}
+2026-04-14 10:07:05,074 - build_posterior_wrapper took 0.001382 seconds
+2026-04-14 10:07:05,074 - TPE using 0 trials
+2026-04-14 10:07:10,551 - build_posterior_wrapper took 0.001359 seconds
+2026-04-14 10:07:10,551 - TPE using 1/1 trials with best loss -0.872170
+2026-04-14 10:07:43,655 - build_posterior_wrapper took 0.001186 seconds
+2026-04-14 10:07:43,655 - TPE using 2/2 trials with best loss -0.872170
+2026-04-14 10:07:51,176 - build_posterior_wrapper took 0.018192 seconds
+2026-04-14 10:07:51,176 - TPE using 3/3 trials with best loss -0.872170
+2026-04-14 10:08:17,358 - build_posterior_wrapper took 0.001046 seconds
+2026-04-14 10:08:17,358 - TPE using 4/4 trials with best loss -0.873649
+2026-04-14 10:08:28,200 - build_posterior_wrapper took 0.001051 seconds
+2026-04-14 10:08:28,200 - TPE using 5/5 trials with best loss -0.873649
+2026-04-14 10:08:51,034 - build_posterior_wrapper took 0.001065 seconds
+2026-04-14 10:08:51,034 - TPE using 6/6 trials with best loss -0.874695
+2026-04-14 10:09:21,137 - build_posterior_wrapper took 0.001085 seconds
+2026-04-14 10:09:21,137 - TPE using 7/7 trials with best loss -0.876777
+2026-04-14 10:09:36,162 - build_posterior_wrapper took 0.001067 seconds
+2026-04-14 10:09:36,162 - TPE using 8/8 trials with best loss -0.876777
+2026-04-14 10:09:43,599 - build_posterior_wrapper took 0.001067 seconds
+2026-04-14 10:09:43,599 - TPE using 9/9 trials with best loss -0.876777
+2026-04-14 10:10:09,669 - build_posterior_wrapper took 0.001068 seconds
+2026-04-14 10:10:09,670 - TPE using 10/10 trials with best loss -0.876777
+2026-04-14 10:10:18,772 - build_posterior_wrapper took 0.001072 seconds
+2026-04-14 10:10:18,772 - TPE using 11/11 trials with best loss -0.876777
+2026-04-14 10:10:47,184 - build_posterior_wrapper took 0.001041 seconds
+2026-04-14 10:10:47,184 - TPE using 12/12 trials with best loss -0.876777
+2026-04-14 10:11:00,270 - build_posterior_wrapper took 0.001061 seconds
+2026-04-14 10:11:00,270 - TPE using 13/13 trials with best loss -0.876777
+2026-04-14 10:11:38,695 - build_posterior_wrapper took 0.001075 seconds
+2026-04-14 10:11:38,695 - TPE using 14/14 trials with best loss -0.876777
+2026-04-14 10:12:07,863 - build_posterior_wrapper took 0.001074 seconds
+2026-04-14 10:12:07,864 - TPE using 15/15 trials with best loss -0.876777
+2026-04-14 10:12:13,735 - build_posterior_wrapper took 0.001051 seconds
+2026-04-14 10:12:13,736 - TPE using 16/16 trials with best loss -0.876777
+2026-04-14 10:12:34,248 - build_posterior_wrapper took 0.001056 seconds
+2026-04-14 10:12:34,248 - TPE using 17/17 trials with best loss -0.876777
+2026-04-14 10:12:55,177 - build_posterior_wrapper took 0.001060 seconds
+2026-04-14 10:12:55,177 - TPE using 18/18 trials with best loss -0.876777
+2026-04-14 10:13:34,562 - build_posterior_wrapper took 0.001067 seconds
+2026-04-14 10:13:34,562 - TPE using 19/19 trials with best loss -0.876777
+2026-04-14 10:13:39,731 - Best Hyperparameters: {'bootstrap': False, 'class_weight': {0: 0.005, 1: 1}, 'max_depth': None, 'max_leaf_nodes': 79, 'min_samples_leaf': 0.0009092947253263427, 'min_samples_split': 0.00997288488910095, 'n_estimators': 400}
+2026-04-14 10:13:39,731 - Best Validation Score: 0.8767771941043911
+2026-04-14 10:13:39,731 - Hyperparameter Tuning Time: 394.66260600090027
+2026-04-14 10:16:48,681 - Final Test Score: 0.868653526190106
+2026-04-14 10:16:48,681 - Final Validation Score: 0.8774220643766368
+2026-04-14 10:16:53,133 - Final External Test Score: 0.8118805754988814
+2026-04-14 10:16:53,193 - Model Class: LogisticRegression
+2026-04-14 10:16:53,193 - Hyperparameter Space: {'C': <hyperopt.pyll.base.Apply object at 0x7f4b38503dd0>, 'penalty': <hyperopt.pyll.base.Apply object at 0x7f4b38501bd0>, 'solver': <hyperopt.pyll.base.Apply object at 0x7f4b38502ed0>, 'max_iter': <hyperopt.pyll.base.Apply object at 0x7f4b38503f50>, 'random_state': 42, 'class_weight': <hyperopt.pyll.base.Apply object at 0x7f4b38503350>, 'normalize': <hyperopt.pyll.base.Apply object at 0x7f4b38502950>}
+2026-04-14 10:16:53,195 - build_posterior_wrapper took 0.000558 seconds
+2026-04-14 10:16:53,195 - TPE using 0 trials
+2026-04-14 10:16:56,370 - build_posterior_wrapper took 0.001101 seconds
+2026-04-14 10:16:56,370 - TPE using 1/1 trials with best loss -0.826229
+2026-04-14 10:17:33,056 - build_posterior_wrapper took 0.000928 seconds
+2026-04-14 10:17:33,056 - TPE using 2/2 trials with best loss -0.826229
+2026-04-14 10:17:33,943 - build_posterior_wrapper took 0.000918 seconds
+2026-04-14 10:17:33,943 - TPE using 3/3 trials with best loss -0.826229
+2026-04-14 10:17:40,911 - build_posterior_wrapper took 0.001025 seconds
+2026-04-14 10:17:40,911 - TPE using 4/4 trials with best loss -0.826229
+2026-04-14 10:17:42,474 - build_posterior_wrapper took 0.000909 seconds
+2026-04-14 10:17:42,474 - TPE using 5/5 trials with best loss -0.826229
+2026-04-14 10:18:17,531 - build_posterior_wrapper took 0.000906 seconds
+2026-04-14 10:18:17,531 - TPE using 6/6 trials with best loss -0.826229
+2026-04-14 10:18:35,029 - build_posterior_wrapper took 0.000917 seconds
+2026-04-14 10:18:35,029 - TPE using 7/7 trials with best loss -0.831092
+2026-04-14 10:18:37,305 - build_posterior_wrapper took 0.001021 seconds
+2026-04-14 10:18:37,305 - TPE using 8/8 trials with best loss -0.831092
+2026-04-14 10:18:40,524 - build_posterior_wrapper took 0.000908 seconds
+2026-04-14 10:18:40,524 - TPE using 9/9 trials with best loss -0.831092
+2026-04-14 10:18:43,056 - build_posterior_wrapper took 0.001947 seconds
+2026-04-14 10:18:43,056 - TPE using 10/10 trials with best loss -0.831092
+2026-04-14 10:18:43,942 - build_posterior_wrapper took 0.000905 seconds
+2026-04-14 10:18:43,942 - TPE using 11/11 trials with best loss -0.831092
+2026-04-14 10:19:01,758 - build_posterior_wrapper took 0.000914 seconds
+2026-04-14 10:19:01,758 - TPE using 12/12 trials with best loss -0.831092
+2026-04-14 10:19:03,944 - build_posterior_wrapper took 0.001101 seconds
+2026-04-14 10:19:03,944 - TPE using 13/13 trials with best loss -0.831092
+2026-04-14 10:19:06,505 - build_posterior_wrapper took 0.000930 seconds
+2026-04-14 10:19:06,505 - TPE using 14/14 trials with best loss -0.831092
+2026-04-14 10:19:23,858 - build_posterior_wrapper took 0.000909 seconds
+2026-04-14 10:19:23,858 - TPE using 15/15 trials with best loss -0.831092
+2026-04-14 10:19:27,559 - build_posterior_wrapper took 0.000972 seconds
+2026-04-14 10:19:27,559 - TPE using 16/16 trials with best loss -0.831092
+2026-04-14 10:20:54,297 - build_posterior_wrapper took 0.000910 seconds
+2026-04-14 10:20:54,297 - TPE using 17/17 trials with best loss -0.831092
+2026-04-14 10:20:56,725 - build_posterior_wrapper took 0.000902 seconds
+2026-04-14 10:20:56,725 - TPE using 18/18 trials with best loss -0.831092
+2026-04-14 10:21:14,000 - build_posterior_wrapper took 0.000982 seconds
+2026-04-14 10:21:14,000 - TPE using 19/19 trials with best loss -0.831092
+2026-04-14 10:21:16,124 - Best Hyperparameters: {'C': 0.004255824420486441, 'class_weight': 'balanced', 'max_iter': 100, 'normalize': False, 'penalty': 'l2', 'random_state': 42, 'solver': 'saga'}
+2026-04-14 10:21:16,124 - Best Validation Score: 0.8310916164200012
+2026-04-14 10:21:16,124 - Hyperparameter Tuning Time: 262.93063139915466
+2026-04-14 10:21:33,513 - Final Test Score: 0.8280002305301088
+2026-04-14 10:21:33,513 - Final Validation Score: 0.8310916164200012
+2026-04-14 10:21:33,651 - Final External Test Score: 0.7542157340015336
+2026-04-14 10:21:35,713 - Model Class: RandomForestClassifier
+2026-04-14 10:21:35,713 - Hyperparameter Space: {'n_estimators': <hyperopt.pyll.base.Apply object at 0x7f4b3865a2d0>, 'max_depth': <hyperopt.pyll.base.Apply object at 0x7f4b386587d0>, 'max_leaf_nodes': <hyperopt.pyll.base.Apply object at 0x7f4b3850fe50>, 'min_samples_split': <hyperopt.pyll.base.Apply object at 0x7f4b3850f0d0>, 'min_samples_leaf': <hyperopt.pyll.base.Apply object at 0x7f4b3850ddd0>, 'bootstrap': <hyperopt.pyll.base.Apply object at 0x7f4b3850dad0>, 'class_weight': <hyperopt.pyll.base.Apply object at 0x7f4b3850ec50>}
+2026-04-14 10:21:35,717 - build_posterior_wrapper took 0.001031 seconds
+2026-04-14 10:21:35,717 - TPE using 0 trials
+2026-04-14 10:21:41,750 - build_posterior_wrapper took 0.001103 seconds
+2026-04-14 10:21:41,750 - TPE using 1/1 trials with best loss -0.792424
+2026-04-14 10:22:57,054 - Model Class: RandomForestClassifier
+2026-04-14 10:22:57,054 - Hyperparameter Space: {'n_estimators': <hyperopt.pyll.base.Apply object at 0x74c9882e7b10>, 'max_depth': <hyperopt.pyll.base.Apply object at 0x74c9881556d0>, 'max_leaf_nodes': <hyperopt.pyll.base.Apply object at 0x74c98819c850>, 'min_samples_split': <hyperopt.pyll.base.Apply object at 0x74c988191130>, 'min_samples_leaf': <hyperopt.pyll.base.Apply object at 0x74c9881058b0>, 'bootstrap': <hyperopt.pyll.base.Apply object at 0x74c9881a9440>, 'class_weight': <hyperopt.pyll.base.Apply object at 0x74c9881cb550>}
+2026-04-14 10:22:57,060 - build_posterior_wrapper took 0.001400 seconds
+2026-04-14 10:22:57,060 - TPE using 0 trials
+2026-04-14 10:23:02,501 - build_posterior_wrapper took 0.001405 seconds
+2026-04-14 10:23:02,501 - TPE using 1/1 trials with best loss -0.872443
+2026-04-14 10:23:35,453 - build_posterior_wrapper took 0.001190 seconds
+2026-04-14 10:23:35,453 - TPE using 2/2 trials with best loss -0.872443
+2026-04-14 10:23:42,892 - build_posterior_wrapper took 0.018029 seconds
+2026-04-14 10:23:42,892 - TPE using 3/3 trials with best loss -0.872443
+2026-04-14 10:24:08,599 - build_posterior_wrapper took 0.001041 seconds
+2026-04-14 10:24:08,599 - TPE using 4/4 trials with best loss -0.873583
+2026-04-14 10:24:19,495 - build_posterior_wrapper took 0.001062 seconds
+2026-04-14 10:24:19,495 - TPE using 5/5 trials with best loss -0.873583
+2026-04-14 10:24:42,064 - build_posterior_wrapper took 0.001060 seconds
+2026-04-14 10:24:42,064 - TPE using 6/6 trials with best loss -0.875178
+2026-04-14 10:25:11,710 - build_posterior_wrapper took 0.001083 seconds
+2026-04-14 10:25:11,710 - TPE using 7/7 trials with best loss -0.876592
+2026-04-14 10:25:26,910 - build_posterior_wrapper took 0.001066 seconds
+2026-04-14 10:25:26,910 - TPE using 8/8 trials with best loss -0.876592
+2026-04-14 10:25:34,335 - build_posterior_wrapper took 0.001091 seconds
+2026-04-14 10:25:34,335 - TPE using 9/9 trials with best loss -0.876592
+2026-04-14 10:26:00,046 - build_posterior_wrapper took 0.001064 seconds
+2026-04-14 10:26:00,046 - TPE using 10/10 trials with best loss -0.876592
+2026-04-14 10:26:09,306 - build_posterior_wrapper took 0.001104 seconds
+2026-04-14 10:26:09,307 - TPE using 11/11 trials with best loss -0.876592
+2026-04-14 10:26:37,474 - build_posterior_wrapper took 0.001057 seconds
+2026-04-14 10:26:37,474 - TPE using 12/12 trials with best loss -0.876592
+2026-04-14 10:26:50,891 - build_posterior_wrapper took 0.001035 seconds
+2026-04-14 10:26:50,891 - TPE using 13/13 trials with best loss -0.876592
+2026-04-14 10:27:28,801 - build_posterior_wrapper took 0.001085 seconds
+2026-04-14 10:27:28,801 - TPE using 14/14 trials with best loss -0.876592
+2026-04-14 10:27:57,933 - build_posterior_wrapper took 0.001073 seconds
+2026-04-14 10:27:57,933 - TPE using 15/15 trials with best loss -0.876742
+2026-04-14 10:28:03,820 - build_posterior_wrapper took 0.001069 seconds
+2026-04-14 10:28:03,820 - TPE using 16/16 trials with best loss -0.876742
+2026-04-14 10:28:24,350 - build_posterior_wrapper took 0.001051 seconds
+2026-04-14 10:28:24,350 - TPE using 17/17 trials with best loss -0.876742
+2026-04-14 10:28:45,110 - build_posterior_wrapper took 0.001081 seconds
+2026-04-14 10:28:45,110 - TPE using 18/18 trials with best loss -0.876742
+2026-04-14 10:29:24,351 - build_posterior_wrapper took 0.001052 seconds
+2026-04-14 10:29:24,351 - TPE using 19/19 trials with best loss -0.876742
+2026-04-14 10:29:29,600 - Best Hyperparameters: {'bootstrap': False, 'class_weight': {0: 0.01, 1: 1}, 'max_depth': 50, 'max_leaf_nodes': None, 'min_samples_leaf': 0.0002692572304826705, 'min_samples_split': 0.009151584720707734, 'n_estimators': 300}
+2026-04-14 10:29:29,600 - Best Validation Score: 0.8767416940739389
+2026-04-14 10:29:29,600 - Hyperparameter Tuning Time: 392.545414686203
+2026-04-14 10:32:34,509 - Final Test Score: 0.8698631202372964
+2026-04-14 10:32:34,509 - Final Validation Score: 0.8761684176868261
+2026-04-14 10:32:39,202 - Final External Test Score: 0.8120095451243273
+2026-04-14 10:32:39,257 - Model Class: LogisticRegression
+2026-04-14 10:32:39,257 - Hyperparameter Space: {'C': <hyperopt.pyll.base.Apply object at 0x74c98470a050>, 'penalty': <hyperopt.pyll.base.Apply object at 0x74c98470b9d0>, 'solver': <hyperopt.pyll.base.Apply object at 0x74c98470abd0>, 'max_iter': <hyperopt.pyll.base.Apply object at 0x74c98470bcd0>, 'random_state': 42, 'class_weight': <hyperopt.pyll.base.Apply object at 0x74c984709850>, 'normalize': <hyperopt.pyll.base.Apply object at 0x74c98470bed0>}
+2026-04-14 10:32:39,258 - build_posterior_wrapper took 0.000530 seconds
+2026-04-14 10:32:39,258 - TPE using 0 trials
+2026-04-14 10:32:42,380 - build_posterior_wrapper took 0.000991 seconds
+2026-04-14 10:32:42,380 - TPE using 1/1 trials with best loss -0.826229
+2026-04-14 10:33:18,104 - build_posterior_wrapper took 0.000911 seconds
+2026-04-14 10:33:18,104 - TPE using 2/2 trials with best loss -0.826229
+2026-04-14 10:33:19,011 - build_posterior_wrapper took 0.000920 seconds
+2026-04-14 10:33:19,011 - TPE using 3/3 trials with best loss -0.826229
+2026-04-14 10:33:25,879 - build_posterior_wrapper took 0.001048 seconds
+2026-04-14 10:33:25,879 - TPE using 4/4 trials with best loss -0.826229
+2026-04-14 10:33:27,461 - build_posterior_wrapper took 0.001053 seconds
+2026-04-14 10:33:27,462 - TPE using 5/5 trials with best loss -0.826229
+2026-04-14 10:34:02,530 - build_posterior_wrapper took 0.000912 seconds
+2026-04-14 10:34:02,530 - TPE using 6/6 trials with best loss -0.826229
+2026-04-14 10:34:20,012 - build_posterior_wrapper took 0.000908 seconds
+2026-04-14 10:34:20,013 - TPE using 7/7 trials with best loss -0.831092
+2026-04-14 10:34:22,302 - build_posterior_wrapper took 0.001048 seconds
+2026-04-14 10:34:22,302 - TPE using 8/8 trials with best loss -0.831092
+2026-04-14 10:34:25,502 - build_posterior_wrapper took 0.000908 seconds
+2026-04-14 10:34:25,502 - TPE using 9/9 trials with best loss -0.831092
+2026-04-14 10:34:27,875 - build_posterior_wrapper took 0.005342 seconds
+2026-04-14 10:34:27,875 - TPE using 10/10 trials with best loss -0.831092
+2026-04-14 10:34:28,764 - build_posterior_wrapper took 0.000928 seconds
+2026-04-14 10:34:28,764 - TPE using 11/11 trials with best loss -0.831092
+2026-04-14 10:34:46,093 - build_posterior_wrapper took 0.000901 seconds
+2026-04-14 10:34:46,093 - TPE using 12/12 trials with best loss -0.831092
+2026-04-14 10:34:48,251 - build_posterior_wrapper took 0.000987 seconds
+2026-04-14 10:34:48,251 - TPE using 13/13 trials with best loss -0.831092
+2026-04-14 10:34:50,770 - build_posterior_wrapper took 0.000898 seconds
+2026-04-14 10:34:50,770 - TPE using 14/14 trials with best loss -0.831092
+2026-04-14 10:35:08,236 - build_posterior_wrapper took 0.000917 seconds
+2026-04-14 10:35:08,236 - TPE using 15/15 trials with best loss -0.831092
+2026-04-14 10:35:11,960 - build_posterior_wrapper took 0.000589 seconds
+2026-04-14 10:35:11,960 - TPE using 16/16 trials with best loss -0.831092
+2026-04-14 10:36:40,083 - build_posterior_wrapper took 0.000910 seconds
+2026-04-14 10:36:40,083 - TPE using 17/17 trials with best loss -0.831092
+2026-04-14 10:36:42,517 - build_posterior_wrapper took 0.000919 seconds
+2026-04-14 10:36:42,517 - TPE using 18/18 trials with best loss -0.831092
+2026-04-14 10:36:59,840 - build_posterior_wrapper took 0.000936 seconds
+2026-04-14 10:36:59,841 - TPE using 19/19 trials with best loss -0.831092
+2026-04-14 10:37:01,994 - Best Hyperparameters: {'C': 0.004255824420486441, 'class_weight': 'balanced', 'max_iter': 100, 'normalize': False, 'penalty': 'l2', 'random_state': 42, 'solver': 'saga'}
+2026-04-14 10:37:01,994 - Best Validation Score: 0.8310916164200012
+2026-04-14 10:37:01,995 - Hyperparameter Tuning Time: 262.737806558609
+2026-04-14 10:37:19,633 - Final Test Score: 0.8280002305301088
+2026-04-14 10:37:19,633 - Final Validation Score: 0.8310916164200012
+2026-04-14 10:37:19,772 - Final External Test Score: 0.7542157340015336
+2026-04-14 10:37:21,750 - Model Class: RandomForestClassifier
+2026-04-14 10:37:21,750 - Hyperparameter Space: {'n_estimators': <hyperopt.pyll.base.Apply object at 0x74c9846ccfd0>, 'max_depth': <hyperopt.pyll.base.Apply object at 0x74c9846cea50>, 'max_leaf_nodes': <hyperopt.pyll.base.Apply object at 0x74c9846cc450>, 'min_samples_split': <hyperopt.pyll.base.Apply object at 0x74c9846ce4d0>, 'min_samples_leaf': <hyperopt.pyll.base.Apply object at 0x74c9846cccd0>, 'bootstrap': <hyperopt.pyll.base.Apply object at 0x74c9846ce7d0>, 'class_weight': <hyperopt.pyll.base.Apply object at 0x74c9846cf3d0>}
+2026-04-14 10:37:21,753 - build_posterior_wrapper took 0.001007 seconds
+2026-04-14 10:37:21,753 - TPE using 0 trials
+2026-04-14 10:37:27,879 - build_posterior_wrapper took 0.001078 seconds
+2026-04-14 10:37:27,879 - TPE using 1/1 trials with best loss -0.792119
+2026-04-14 10:38:02,965 - build_posterior_wrapper took 0.001082 seconds
+2026-04-14 10:38:02,965 - TPE using 2/2 trials with best loss -0.792958
+2026-04-14 10:38:11,149 - build_posterior_wrapper took 0.001077 seconds
+2026-04-14 10:38:11,149 - TPE using 3/3 trials with best loss -0.792958
+2026-04-14 10:38:39,446 - build_posterior_wrapper took 0.001091 seconds
+2026-04-14 10:38:39,446 - TPE using 4/4 trials with best loss -0.792958
+2026-04-14 10:38:51,826 - build_posterior_wrapper took 0.001085 seconds
+2026-04-14 10:38:51,826 - TPE using 5/5 trials with best loss -0.792958
+2026-04-14 10:39:17,487 - build_posterior_wrapper took 0.001101 seconds
+2026-04-14 10:39:17,487 - TPE using 6/6 trials with best loss -0.795546
+2026-04-14 10:39:49,786 - build_posterior_wrapper took 0.001111 seconds
+2026-04-14 10:39:49,786 - TPE using 7/7 trials with best loss -0.797493
+2026-04-14 10:40:07,021 - build_posterior_wrapper took 0.001140 seconds
+2026-04-14 10:40:07,021 - TPE using 8/8 trials with best loss -0.797493
+2026-04-14 10:40:15,006 - build_posterior_wrapper took 0.001102 seconds
+2026-04-14 10:40:15,006 - TPE using 9/9 trials with best loss -0.797493
+2026-04-14 10:40:44,564 - build_posterior_wrapper took 0.001115 seconds
+2026-04-14 10:40:44,564 - TPE using 10/10 trials with best loss -0.797493
+2026-04-14 10:40:54,472 - build_posterior_wrapper took 0.001114 seconds
+2026-04-14 10:40:54,472 - TPE using 11/11 trials with best loss -0.797493
+2026-04-14 10:41:26,790 - build_posterior_wrapper took 0.001080 seconds
+2026-04-14 10:41:26,790 - TPE using 12/12 trials with best loss -0.797493
+2026-04-14 10:41:41,103 - build_posterior_wrapper took 0.001108 seconds
+2026-04-14 10:41:41,103 - TPE using 13/13 trials with best loss -0.797493
+2026-04-14 10:42:21,784 - build_posterior_wrapper took 0.001091 seconds
+2026-04-14 10:42:21,784 - TPE using 14/14 trials with best loss -0.798441
+2026-04-14 10:42:52,522 - build_posterior_wrapper took 0.001098 seconds
+2026-04-14 10:42:52,522 - TPE using 15/15 trials with best loss -0.798441
+2026-04-14 10:42:59,306 - build_posterior_wrapper took 0.001143 seconds
+2026-04-14 10:42:59,306 - TPE using 16/16 trials with best loss -0.798441
+2026-04-14 10:43:22,147 - build_posterior_wrapper took 0.001110 seconds
+2026-04-14 10:43:22,147 - TPE using 17/17 trials with best loss -0.798441
+2026-04-14 10:43:43,948 - build_posterior_wrapper took 0.001086 seconds
+2026-04-14 10:43:43,948 - TPE using 18/18 trials with best loss -0.798441
+2026-04-14 10:44:27,824 - build_posterior_wrapper took 0.001103 seconds
+2026-04-14 10:44:27,824 - TPE using 19/19 trials with best loss -0.798441
+2026-04-14 10:44:33,750 - Best Hyperparameters: {'bootstrap': False, 'class_weight': {0: 0.01, 1: 1}, 'max_depth': 40, 'max_leaf_nodes': None, 'min_samples_leaf': 0.000979633295851791, 'min_samples_split': 0.005204337092518657, 'n_estimators': 400}
+2026-04-14 10:44:33,750 - Best Validation Score: 0.7984405882472098
+2026-04-14 10:44:33,750 - Hyperparameter Tuning Time: 432.00087666511536
+2026-04-14 10:48:43,154 - Final Test Score: 0.8255082736017479
+2026-04-14 10:48:43,154 - Final Validation Score: 0.7982920561092166
+2026-04-14 10:48:43,194 - Model Class: LogisticRegression
+2026-04-14 10:48:43,194 - Hyperparameter Space: {'C': <hyperopt.pyll.base.Apply object at 0x74c9849b2f50>, 'penalty': <hyperopt.pyll.base.Apply object at 0x74c9849b04d0>, 'solver': <hyperopt.pyll.base.Apply object at 0x74c9849b2bd0>, 'max_iter': <hyperopt.pyll.base.Apply object at 0x74c9849b24d0>, 'random_state': 42, 'class_weight': <hyperopt.pyll.base.Apply object at 0x74c9849b2b50>, 'normalize': <hyperopt.pyll.base.Apply object at 0x74c9849b39d0>}
+2026-04-14 10:48:43,196 - build_posterior_wrapper took 0.000543 seconds
+2026-04-14 10:48:43,196 - TPE using 0 trials
+2026-04-14 10:48:47,504 - build_posterior_wrapper took 0.000607 seconds
+2026-04-14 10:48:47,504 - TPE using 1/1 trials with best loss -0.779487
+2026-04-14 10:49:28,386 - build_posterior_wrapper took 0.001014 seconds
+2026-04-14 10:49:28,386 - TPE using 2/2 trials with best loss -0.779487
+2026-04-14 10:49:29,335 - build_posterior_wrapper took 0.000927 seconds
+2026-04-14 10:49:29,335 - TPE using 3/3 trials with best loss -0.779487
+2026-04-14 10:49:36,739 - build_posterior_wrapper took 0.000613 seconds
+2026-04-14 10:49:36,739 - TPE using 4/4 trials with best loss -0.779487
+2026-04-14 10:49:38,652 - build_posterior_wrapper took 0.000927 seconds
+2026-04-14 10:49:38,652 - TPE using 5/5 trials with best loss -0.779487
+2026-04-14 10:50:17,314 - build_posterior_wrapper took 0.000928 seconds
+2026-04-14 10:50:17,314 - TPE using 6/6 trials with best loss -0.779487
+2026-04-14 10:50:37,137 - build_posterior_wrapper took 0.000933 seconds
+2026-04-14 10:50:37,137 - TPE using 7/7 trials with best loss -0.779487
+2026-04-14 10:50:39,335 - build_posterior_wrapper took 0.001117 seconds
+2026-04-14 10:50:39,335 - TPE using 8/8 trials with best loss -0.779487
+2026-04-14 10:50:44,480 - build_posterior_wrapper took 0.000925 seconds
+2026-04-14 10:50:44,480 - TPE using 9/9 trials with best loss -0.780023
+2026-04-14 10:50:47,360 - build_posterior_wrapper took 0.000952 seconds
+2026-04-14 10:50:47,360 - TPE using 10/10 trials with best loss -0.780023
+2026-04-14 10:50:48,284 - build_posterior_wrapper took 0.000939 seconds
+2026-04-14 10:50:48,284 - TPE using 11/11 trials with best loss -0.780023
+2026-04-14 10:51:07,632 - build_posterior_wrapper took 0.000921 seconds
+2026-04-14 10:51:07,632 - TPE using 12/12 trials with best loss -0.780023
+2026-04-14 10:51:09,606 - build_posterior_wrapper took 0.000913 seconds
+2026-04-14 10:51:09,606 - TPE using 13/13 trials with best loss -0.780023
+2026-04-14 10:51:12,692 - build_posterior_wrapper took 0.000904 seconds
+2026-04-14 10:51:12,693 - TPE using 14/14 trials with best loss -0.780023
+2026-04-14 10:51:32,593 - build_posterior_wrapper took 0.000923 seconds
+2026-04-14 10:51:32,593 - TPE using 15/15 trials with best loss -0.780023
+2026-04-14 10:51:36,319 - build_posterior_wrapper took 0.000605 seconds
+2026-04-14 10:51:36,319 - TPE using 16/16 trials with best loss -0.780023
+2026-04-14 10:53:16,122 - build_posterior_wrapper took 0.000927 seconds
+2026-04-14 10:53:16,122 - TPE using 17/17 trials with best loss -0.780023
+2026-04-14 10:53:18,646 - build_posterior_wrapper took 0.000929 seconds
+2026-04-14 10:53:18,647 - TPE using 18/18 trials with best loss -0.780023
+2026-04-14 10:53:38,283 - build_posterior_wrapper took 0.001003 seconds
+2026-04-14 10:53:38,283 - TPE using 19/19 trials with best loss -0.780023
+2026-04-14 10:53:40,298 - Best Hyperparameters: {'C': 0.002110897991492277, 'class_weight': 'balanced', 'max_iter': 200, 'normalize': False, 'penalty': 'l2', 'random_state': 42, 'solver': 'lbfgs'}
+2026-04-14 10:53:40,298 - Best Validation Score: 0.7800228615127204
+2026-04-14 10:53:40,298 - Hyperparameter Tuning Time: 297.10335302352905
+2026-04-14 10:53:49,306 - Final Test Score: 0.798566284282561
+2026-04-14 10:53:49,306 - Final Validation Score: 0.778371421155772
+2026-04-14 11:18:00,029 - Model Class: RandomForestClassifier
+2026-04-14 11:18:00,029 - Hyperparameter Space: {'n_estimators': <hyperopt.pyll.base.Apply object at 0x7025c143fb10>, 'max_depth': <hyperopt.pyll.base.Apply object at 0x7025c14a95b0>, 'max_leaf_nodes': <hyperopt.pyll.base.Apply object at 0x7025c14f0650>, 'min_samples_split': <hyperopt.pyll.base.Apply object at 0x7025c14e54f0>, 'min_samples_leaf': <hyperopt.pyll.base.Apply object at 0x7025c1459980>, 'bootstrap': <hyperopt.pyll.base.Apply object at 0x7025c14fd4f0>, 'class_weight': <hyperopt.pyll.base.Apply object at 0x7025c03235d0>}
+2026-04-14 11:18:00,034 - build_posterior_wrapper took 0.001113 seconds
+2026-04-14 11:18:00,034 - TPE using 0 trials
+2026-04-14 11:18:05,555 - build_posterior_wrapper took 0.001372 seconds
+2026-04-14 11:18:05,556 - TPE using 1/1 trials with best loss -0.872870
+2026-04-14 11:18:53,726 - Model Class: RandomForestClassifier
+2026-04-14 11:18:53,726 - Hyperparameter Space: {'n_estimators': <hyperopt.pyll.base.Apply object at 0x7dbf3d92bb10>, 'max_depth': <hyperopt.pyll.base.Apply object at 0x7dbf3d9955b0>, 'max_leaf_nodes': <hyperopt.pyll.base.Apply object at 0x7dbf3d9dc650>, 'min_samples_split': <hyperopt.pyll.base.Apply object at 0x7dbf3d9d14f0>, 'min_samples_leaf': <hyperopt.pyll.base.Apply object at 0x7dbf3d941980>, 'bootstrap': <hyperopt.pyll.base.Apply object at 0x7dbf3d9e94f0>, 'class_weight': <hyperopt.pyll.base.Apply object at 0x7dbf3da0b550>}
+2026-04-14 11:18:53,750 - build_posterior_wrapper took 0.017806 seconds
+2026-04-14 11:18:53,750 - TPE using 0 trials
+2026-04-14 11:18:59,205 - build_posterior_wrapper took 0.001062 seconds
+2026-04-14 11:18:59,205 - TPE using 1/1 trials with best loss -0.870955
+2026-04-14 12:22:07,439 - Model Class: RandomForestClassifier
+2026-04-14 12:22:07,439 - Hyperparameter Space: {'n_estimators': <hyperopt.pyll.base.Apply object at 0x76846ebef9d0>, 'max_depth': <hyperopt.pyll.base.Apply object at 0x76846ec695b0>, 'max_leaf_nodes': <hyperopt.pyll.base.Apply object at 0x76846eca0850>, 'min_samples_split': <hyperopt.pyll.base.Apply object at 0x76846ec95130>, 'min_samples_leaf': <hyperopt.pyll.base.Apply object at 0x76846ec09bf0>, 'bootstrap': <hyperopt.pyll.base.Apply object at 0x76846ecad4f0>, 'class_weight': <hyperopt.pyll.base.Apply object at 0x76846eccb650>}
+2026-04-14 12:22:07,465 - build_posterior_wrapper took 0.017990 seconds
+2026-04-14 12:22:07,465 - TPE using 0 trials
+2026-04-14 12:22:12,883 - build_posterior_wrapper took 0.001055 seconds
+2026-04-14 12:22:12,883 - TPE using 1/1 trials with best loss -0.873042
+2026-04-14 12:22:45,194 - build_posterior_wrapper took 0.001100 seconds
+2026-04-14 12:22:45,194 - TPE using 2/2 trials with best loss -0.873042
+2026-04-14 12:22:52,650 - build_posterior_wrapper took 0.001087 seconds
+2026-04-14 12:22:52,651 - TPE using 3/3 trials with best loss -0.873042
+2026-04-14 12:23:18,077 - build_posterior_wrapper took 0.001066 seconds
+2026-04-14 12:23:18,077 - TPE using 4/4 trials with best loss -0.873237
+2026-04-14 12:23:28,462 - build_posterior_wrapper took 0.001164 seconds
+2026-04-14 12:23:28,463 - TPE using 5/5 trials with best loss -0.873237
+2026-04-14 12:23:49,999 - build_posterior_wrapper took 0.001126 seconds
+2026-04-14 12:23:49,999 - TPE using 6/6 trials with best loss -0.874769
+2026-04-14 12:24:18,109 - build_posterior_wrapper took 0.001123 seconds
+2026-04-14 12:24:18,109 - TPE using 7/7 trials with best loss -0.877228
+2026-04-14 12:24:32,576 - build_posterior_wrapper took 0.001112 seconds
+2026-04-14 12:24:32,576 - TPE using 8/8 trials with best loss -0.877228
+2026-04-14 12:24:39,386 - build_posterior_wrapper took 0.001088 seconds
+2026-04-14 12:24:39,386 - TPE using 9/9 trials with best loss -0.877228
+2026-04-14 12:25:04,127 - build_posterior_wrapper took 0.001125 seconds
+2026-04-14 12:25:04,127 - TPE using 10/10 trials with best loss -0.877228
+2026-04-14 12:25:12,626 - build_posterior_wrapper took 0.001071 seconds
+2026-04-14 12:25:12,626 - TPE using 11/11 trials with best loss -0.877228
+2026-04-14 12:25:39,420 - build_posterior_wrapper took 0.001060 seconds
+2026-04-14 12:25:39,420 - TPE using 12/12 trials with best loss -0.877228
+2026-04-14 12:25:51,732 - build_posterior_wrapper took 0.001094 seconds
+2026-04-14 12:25:51,732 - TPE using 13/13 trials with best loss -0.877228
+2026-04-14 12:26:27,105 - build_posterior_wrapper took 0.001135 seconds
+2026-04-14 12:26:27,105 - TPE using 14/14 trials with best loss -0.877228
+2026-04-14 12:26:54,317 - build_posterior_wrapper took 0.001098 seconds
+2026-04-14 12:26:54,317 - TPE using 15/15 trials with best loss -0.877228
+2026-04-14 12:27:00,016 - build_posterior_wrapper took 0.001098 seconds
+2026-04-14 12:27:00,016 - TPE using 16/16 trials with best loss -0.877228
+2026-04-14 12:27:19,201 - build_posterior_wrapper took 0.001099 seconds
+2026-04-14 12:27:19,201 - TPE using 17/17 trials with best loss -0.877228
+2026-04-14 12:27:38,540 - build_posterior_wrapper took 0.001061 seconds
+2026-04-14 12:27:38,540 - TPE using 18/18 trials with best loss -0.877228
+2026-04-14 12:28:15,101 - build_posterior_wrapper took 0.001097 seconds
+2026-04-14 12:28:15,101 - TPE using 19/19 trials with best loss -0.877228
+2026-04-14 12:28:20,058 - Best Hyperparameters: {'bootstrap': False, 'class_weight': {0: 0.005, 1: 1}, 'max_depth': None, 'max_leaf_nodes': 79, 'min_samples_leaf': 0.0009092947253263427, 'min_samples_split': 0.00997288488910095, 'n_estimators': 400}
+2026-04-14 12:28:20,058 - Best Validation Score: 0.877228028503563
+2026-04-14 12:28:20,058 - Hyperparameter Tuning Time: 372.6185154914856
+2026-04-14 12:31:00,729 - Final Test Score: 0.8684742488607115
+2026-04-14 12:31:00,729 - Final Validation Score: 0.8766376225714113
+2026-04-14 12:36:34,504 - Model Class: RandomForestClassifier
+2026-04-14 12:36:34,504 - Hyperparameter Space: {'n_estimators': <hyperopt.pyll.base.Apply object at 0x7d9bc0aab9d0>, 'max_depth': <hyperopt.pyll.base.Apply object at 0x7d9bc091d6d0>, 'max_leaf_nodes': <hyperopt.pyll.base.Apply object at 0x7d9bc0960750>, 'min_samples_split': <hyperopt.pyll.base.Apply object at 0x7d9bc0954f50>, 'min_samples_leaf': <hyperopt.pyll.base.Apply object at 0x7d9bc0ac18b0>, 'bootstrap': <hyperopt.pyll.base.Apply object at 0x7d9bc096d5a0>, 'class_weight': <hyperopt.pyll.base.Apply object at 0x7d9bc098f650>}
+2026-04-14 12:36:34,531 - build_posterior_wrapper took 0.016743 seconds
+2026-04-14 12:36:34,531 - TPE using 0 trials
+2026-04-14 12:36:39,701 - build_posterior_wrapper took 0.001111 seconds
+2026-04-14 12:36:39,702 - TPE using 1/1 trials with best loss -0.872361
+2026-04-14 12:37:10,852 - build_posterior_wrapper took 0.001084 seconds
+2026-04-14 12:37:10,852 - TPE using 2/2 trials with best loss -0.872361
+2026-04-14 12:37:17,873 - build_posterior_wrapper took 0.001111 seconds
+2026-04-14 12:37:17,873 - TPE using 3/3 trials with best loss -0.872778
+2026-04-14 12:37:42,476 - build_posterior_wrapper took 0.001120 seconds
+2026-04-14 12:37:42,476 - TPE using 4/4 trials with best loss -0.873243
+2026-04-14 12:37:52,794 - build_posterior_wrapper took 0.001099 seconds
+2026-04-14 12:37:52,794 - TPE using 5/5 trials with best loss -0.874203
+2026-04-14 12:38:14,160 - build_posterior_wrapper took 0.001117 seconds
+2026-04-14 12:38:14,160 - TPE using 6/6 trials with best loss -0.874422
+2026-04-14 12:38:42,295 - build_posterior_wrapper took 0.001093 seconds
+2026-04-14 12:38:42,295 - TPE using 7/7 trials with best loss -0.877440
+2026-04-14 12:38:56,513 - build_posterior_wrapper took 0.001094 seconds
+2026-04-14 12:38:56,513 - TPE using 8/8 trials with best loss -0.877440
+2026-04-14 12:39:03,540 - build_posterior_wrapper took 0.001106 seconds
+2026-04-14 12:39:03,540 - TPE using 9/9 trials with best loss -0.877440
+2026-04-14 12:39:28,200 - build_posterior_wrapper took 0.001122 seconds
+2026-04-14 12:39:28,200 - TPE using 10/10 trials with best loss -0.877440
+2026-04-14 12:39:36,728 - build_posterior_wrapper took 0.001063 seconds
+2026-04-14 12:39:36,728 - TPE using 11/11 trials with best loss -0.877440
+2026-04-14 12:40:03,353 - build_posterior_wrapper took 0.001092 seconds
+2026-04-14 12:40:03,353 - TPE using 12/12 trials with best loss -0.877440
+2026-04-14 12:40:15,687 - build_posterior_wrapper took 0.001055 seconds
+2026-04-14 12:40:15,687 - TPE using 13/13 trials with best loss -0.877440
+2026-04-14 12:40:51,081 - build_posterior_wrapper took 0.001096 seconds
+2026-04-14 12:40:51,082 - TPE using 14/14 trials with best loss -0.877440
+2026-04-14 12:41:18,173 - build_posterior_wrapper took 0.001131 seconds
+2026-04-14 12:41:18,173 - TPE using 15/15 trials with best loss -0.877440
+2026-04-14 12:41:23,783 - build_posterior_wrapper took 0.001069 seconds
+2026-04-14 12:41:23,783 - TPE using 16/16 trials with best loss -0.877440
+2026-04-14 12:41:42,831 - build_posterior_wrapper took 0.001110 seconds
+2026-04-14 12:41:42,831 - TPE using 17/17 trials with best loss -0.877440
+2026-04-14 12:42:02,400 - build_posterior_wrapper took 0.001108 seconds
+2026-04-14 12:42:02,400 - TPE using 18/18 trials with best loss -0.877440
+2026-04-14 12:42:39,270 - build_posterior_wrapper took 0.001088 seconds
+2026-04-14 12:42:39,270 - TPE using 19/19 trials with best loss -0.877440
+2026-04-14 12:42:44,282 - Best Hyperparameters: {'bootstrap': False, 'class_weight': {0: 0.005, 1: 1}, 'max_depth': None, 'max_leaf_nodes': 79, 'min_samples_leaf': 0.0009092947253263427, 'min_samples_split': 0.00997288488910095, 'n_estimators': 400}
+2026-04-14 12:42:44,282 - Best Validation Score: 0.8774396354832815
+2026-04-14 12:42:44,282 - Hyperparameter Tuning Time: 369.7782437801361
+2026-04-14 12:45:23,654 - Final Test Score: 0.8681536714151481
+2026-04-14 12:45:23,654 - Final Validation Score: 0.8764581734575796
+2026-04-14 12:45:27,907 - Final External Test Score: 0.811035375732478
+2026-04-14 12:45:28,052 - Model Class: LogisticRegression
+2026-04-14 12:45:28,052 - Hyperparameter Space: {'C': <hyperopt.pyll.base.Apply object at 0x7d9bbdeda6d0>, 'penalty': <hyperopt.pyll.base.Apply object at 0x7d9bbdeda050>, 'solver': <hyperopt.pyll.base.Apply object at 0x7d9bbdeda650>, 'max_iter': <hyperopt.pyll.base.Apply object at 0x7d9bbded9ed0>, 'random_state': 42, 'class_weight': <hyperopt.pyll.base.Apply object at 0x7d9bbdedbb50>, 'normalize': <hyperopt.pyll.base.Apply object at 0x7d9bbdeda550>}
+2026-04-14 12:45:28,058 - build_posterior_wrapper took 0.001705 seconds
+2026-04-14 12:45:28,059 - TPE using 0 trials
+2026-04-14 12:45:31,132 - build_posterior_wrapper took 0.000920 seconds
+2026-04-14 12:45:31,132 - TPE using 1/1 trials with best loss -0.826229
+2026-04-14 12:46:03,636 - build_posterior_wrapper took 0.000896 seconds
+2026-04-14 12:46:03,636 - TPE using 2/2 trials with best loss -0.826229
+2026-04-14 12:46:04,505 - build_posterior_wrapper took 0.000973 seconds
+2026-04-14 12:46:04,505 - TPE using 3/3 trials with best loss -0.826229
+2026-04-14 12:46:10,491 - build_posterior_wrapper took 0.000896 seconds
+2026-04-14 12:46:10,492 - TPE using 4/4 trials with best loss -0.826229
+2026-04-14 12:46:11,976 - build_posterior_wrapper took 0.000899 seconds
+2026-04-14 12:46:11,976 - TPE using 5/5 trials with best loss -0.826229
+2026-04-14 12:46:42,166 - build_posterior_wrapper took 0.000883 seconds
+2026-04-14 12:46:42,166 - TPE using 6/6 trials with best loss -0.826229
+2026-04-14 12:46:56,947 - build_posterior_wrapper took 0.000892 seconds
+2026-04-14 12:46:56,948 - TPE using 7/7 trials with best loss -0.831092
+2026-04-14 12:46:59,147 - build_posterior_wrapper took 0.000900 seconds
+2026-04-14 12:46:59,147 - TPE using 8/8 trials with best loss -0.831092
+2026-04-14 12:47:02,223 - build_posterior_wrapper took 0.000895 seconds
+2026-04-14 12:47:02,223 - TPE using 9/9 trials with best loss -0.831092
+2026-04-14 12:47:04,295 - build_posterior_wrapper took 0.000902 seconds
+2026-04-14 12:47:04,295 - TPE using 10/10 trials with best loss -0.831092
+2026-04-14 12:47:05,159 - build_posterior_wrapper took 0.000899 seconds
+2026-04-14 12:47:05,159 - TPE using 11/11 trials with best loss -0.831092
+2026-04-14 12:47:20,136 - build_posterior_wrapper took 0.000889 seconds
+2026-04-14 12:47:20,136 - TPE using 12/12 trials with best loss -0.831092
+2026-04-14 12:47:22,226 - build_posterior_wrapper took 0.000904 seconds
+2026-04-14 12:47:22,227 - TPE using 13/13 trials with best loss -0.831092
+2026-04-14 12:47:24,440 - build_posterior_wrapper took 0.000887 seconds
+2026-04-14 12:47:24,440 - TPE using 14/14 trials with best loss -0.831092
+2026-04-14 12:47:39,830 - build_posterior_wrapper took 0.000904 seconds
+2026-04-14 12:47:39,830 - TPE using 15/15 trials with best loss -0.831092
+2026-04-14 12:47:43,378 - build_posterior_wrapper took 0.000896 seconds
+2026-04-14 12:47:43,378 - TPE using 16/16 trials with best loss -0.831092
+2026-04-14 12:48:56,267 - build_posterior_wrapper took 0.000892 seconds
+2026-04-14 12:48:56,267 - TPE using 17/17 trials with best loss -0.831092
+2026-04-14 12:48:58,318 - build_posterior_wrapper took 0.000897 seconds
+2026-04-14 12:48:58,318 - TPE using 18/18 trials with best loss -0.831092
+2026-04-14 12:49:13,116 - build_posterior_wrapper took 0.000909 seconds
+2026-04-14 12:49:13,116 - TPE using 19/19 trials with best loss -0.831092
+2026-04-14 12:49:15,162 - Best Hyperparameters: {'C': 0.004255824420486441, 'class_weight': 'balanced', 'max_iter': 100, 'normalize': False, 'penalty': 'l2', 'random_state': 42, 'solver': 'saga'}
+2026-04-14 12:49:15,162 - Best Validation Score: 0.8310916164200012
+2026-04-14 12:49:15,162 - Hyperparameter Tuning Time: 227.11054921150208
+2026-04-14 12:49:29,969 - Final Test Score: 0.8280002305301088
+2026-04-14 12:49:29,969 - Final Validation Score: 0.8310916164200012
+2026-04-14 12:49:30,064 - Final External Test Score: 0.7542157340015336
+2026-04-14 12:49:31,976 - Model Class: RandomForestClassifier
+2026-04-14 12:49:31,976 - Hyperparameter Space: {'n_estimators': <hyperopt.pyll.base.Apply object at 0x7d9bbf847250>, 'max_depth': <hyperopt.pyll.base.Apply object at 0x7d9bbf846bd0>, 'max_leaf_nodes': <hyperopt.pyll.base.Apply object at 0x7d9bbf8471d0>, 'min_samples_split': <hyperopt.pyll.base.Apply object at 0x7d9bbf845cd0>, 'min_samples_leaf': <hyperopt.pyll.base.Apply object at 0x7d9bbf845ad0>, 'bootstrap': <hyperopt.pyll.base.Apply object at 0x7d9bbf8457d0>, 'class_weight': <hyperopt.pyll.base.Apply object at 0x7d9bc09bebd0>}
+2026-04-14 12:49:31,982 - build_posterior_wrapper took 0.001755 seconds
+2026-04-14 12:49:31,982 - TPE using 0 trials
+2026-04-14 12:49:37,693 - build_posterior_wrapper took 0.001125 seconds
+2026-04-14 12:49:37,693 - TPE using 1/1 trials with best loss -0.790882
+2026-04-14 12:50:10,583 - build_posterior_wrapper took 0.001138 seconds
+2026-04-14 12:50:10,583 - TPE using 2/2 trials with best loss -0.792672
+2026-04-14 12:50:18,258 - build_posterior_wrapper took 0.001141 seconds
+2026-04-14 12:50:18,258 - TPE using 3/3 trials with best loss -0.792672
+2026-04-14 12:50:45,158 - build_posterior_wrapper took 0.001140 seconds
+2026-04-14 12:50:45,158 - TPE using 4/4 trials with best loss -0.792672
+2026-04-14 12:50:56,835 - build_posterior_wrapper took 0.001165 seconds
+2026-04-14 12:50:56,836 - TPE using 5/5 trials with best loss -0.792672
+2026-04-14 12:51:20,722 - build_posterior_wrapper took 0.001157 seconds
+2026-04-14 12:51:20,722 - TPE using 6/6 trials with best loss -0.795171
+2026-04-14 12:51:50,979 - build_posterior_wrapper took 0.001154 seconds
+2026-04-14 12:51:50,979 - TPE using 7/7 trials with best loss -0.797037
+2026-04-14 12:52:06,862 - build_posterior_wrapper took 0.001105 seconds
+2026-04-14 12:52:06,862 - TPE using 8/8 trials with best loss -0.797037
+2026-04-14 12:52:14,304 - build_posterior_wrapper took 0.001191 seconds
+2026-04-14 12:52:14,305 - TPE using 9/9 trials with best loss -0.797037
+2026-04-14 12:52:41,734 - build_posterior_wrapper took 0.001138 seconds
+2026-04-14 12:52:41,734 - TPE using 10/10 trials with best loss -0.797037
+2026-04-14 12:52:50,869 - build_posterior_wrapper took 0.001243 seconds
+2026-04-14 12:52:50,869 - TPE using 11/11 trials with best loss -0.797037
+2026-04-14 12:53:20,942 - build_posterior_wrapper took 0.001152 seconds
+2026-04-14 12:53:20,942 - TPE using 12/12 trials with best loss -0.797037
+2026-04-14 12:53:34,374 - build_posterior_wrapper took 0.001170 seconds
+2026-04-14 12:53:34,375 - TPE using 13/13 trials with best loss -0.797037
+2026-04-14 12:54:13,040 - build_posterior_wrapper took 0.001151 seconds
+2026-04-14 12:54:13,040 - TPE using 14/14 trials with best loss -0.797416
+2026-04-14 12:54:42,276 - build_posterior_wrapper took 0.001158 seconds
+2026-04-14 12:54:42,276 - TPE using 15/15 trials with best loss -0.798099
+2026-04-14 12:54:48,570 - build_posterior_wrapper took 0.001135 seconds
+2026-04-14 12:54:48,571 - TPE using 16/16 trials with best loss -0.798099
+2026-04-14 12:55:09,898 - build_posterior_wrapper took 0.001120 seconds
+2026-04-14 12:55:09,898 - TPE using 17/17 trials with best loss -0.798099
+2026-04-14 12:55:30,434 - build_posterior_wrapper took 0.001146 seconds
+2026-04-14 12:55:30,434 - TPE using 18/18 trials with best loss -0.798099
+2026-04-14 12:56:12,005 - build_posterior_wrapper took 0.001205 seconds
+2026-04-14 12:56:12,005 - TPE using 19/19 trials with best loss -0.798099
+2026-04-14 12:56:17,490 - Best Hyperparameters: {'bootstrap': False, 'class_weight': {0: 0.01, 1: 1}, 'max_depth': 50, 'max_leaf_nodes': None, 'min_samples_leaf': 0.0002692572304826705, 'min_samples_split': 0.009151584720707734, 'n_estimators': 300}
+2026-04-14 12:56:17,490 - Best Validation Score: 0.7980993071095478
+2026-04-14 12:56:17,490 - Hyperparameter Tuning Time: 405.5144245624542
+2026-04-14 12:59:05,636 - Final Test Score: 0.8272999452415576
+2026-04-14 12:59:05,636 - Final Validation Score: 0.7982816090789843
+2026-04-14 12:59:05,685 - Model Class: LogisticRegression
+2026-04-14 12:59:05,685 - Hyperparameter Space: {'C': <hyperopt.pyll.base.Apply object at 0x7d9bbc3421d0>, 'penalty': <hyperopt.pyll.base.Apply object at 0x7d9bbc3419d0>, 'solver': <hyperopt.pyll.base.Apply object at 0x7d9bbc342bd0>, 'max_iter': <hyperopt.pyll.base.Apply object at 0x7d9bbc340950>, 'random_state': 42, 'class_weight': <hyperopt.pyll.base.Apply object at 0x7d9bbc342a50>, 'normalize': <hyperopt.pyll.base.Apply object at 0x7d9bbc3418d0>}
+2026-04-14 12:59:05,687 - build_posterior_wrapper took 0.000639 seconds
+2026-04-14 12:59:05,687 - TPE using 0 trials
+2026-04-14 12:59:09,538 - build_posterior_wrapper took 0.000906 seconds
+2026-04-14 12:59:09,538 - TPE using 1/1 trials with best loss -0.779487
+2026-04-14 12:59:45,589 - build_posterior_wrapper took 0.000899 seconds
+2026-04-14 12:59:45,589 - TPE using 2/2 trials with best loss -0.779487
+2026-04-14 12:59:46,480 - build_posterior_wrapper took 0.000914 seconds
+2026-04-14 12:59:46,480 - TPE using 3/3 trials with best loss -0.779487
+2026-04-14 12:59:52,606 - build_posterior_wrapper took 0.000902 seconds
+2026-04-14 12:59:52,606 - TPE using 4/4 trials with best loss -0.779487
+2026-04-14 12:59:54,412 - build_posterior_wrapper took 0.000900 seconds
+2026-04-14 12:59:54,412 - TPE using 5/5 trials with best loss -0.779487
+2026-04-14 13:00:28,127 - build_posterior_wrapper took 0.000908 seconds
+2026-04-14 13:00:28,127 - TPE using 6/6 trials with best loss -0.779487
+2026-04-14 13:00:45,129 - build_posterior_wrapper took 0.001062 seconds
+2026-04-14 13:00:45,129 - TPE using 7/7 trials with best loss -0.779487
+2026-04-14 13:00:47,271 - build_posterior_wrapper took 0.000908 seconds
+2026-04-14 13:00:47,271 - TPE using 8/8 trials with best loss -0.779487
+2026-04-14 13:00:52,414 - build_posterior_wrapper took 0.000916 seconds
+2026-04-14 13:00:52,415 - TPE using 9/9 trials with best loss -0.780025
+2026-04-14 13:00:54,588 - build_posterior_wrapper took 0.000916 seconds
+2026-04-14 13:00:54,588 - TPE using 10/10 trials with best loss -0.780025
+2026-04-14 13:00:55,470 - build_posterior_wrapper took 0.000906 seconds
+2026-04-14 13:00:55,470 - TPE using 11/11 trials with best loss -0.780025
+2026-04-14 13:01:13,062 - build_posterior_wrapper took 0.000911 seconds
+2026-04-14 13:01:13,062 - TPE using 12/12 trials with best loss -0.780025
+2026-04-14 13:01:14,966 - build_posterior_wrapper took 0.000911 seconds
+2026-04-14 13:01:14,966 - TPE using 13/13 trials with best loss -0.780025
+2026-04-14 13:01:17,231 - build_posterior_wrapper took 0.000895 seconds
+2026-04-14 13:01:17,231 - TPE using 14/14 trials with best loss -0.780025
+2026-04-14 13:01:34,858 - build_posterior_wrapper took 0.000913 seconds
+2026-04-14 13:01:34,858 - TPE using 15/15 trials with best loss -0.780025
+2026-04-14 13:01:38,095 - build_posterior_wrapper took 0.000997 seconds
+2026-04-14 13:01:38,095 - TPE using 16/16 trials with best loss -0.780025
+2026-04-14 13:03:02,923 - build_posterior_wrapper took 0.000917 seconds
+2026-04-14 13:03:02,923 - TPE using 17/17 trials with best loss -0.780025
+2026-04-14 13:03:05,318 - build_posterior_wrapper took 0.000901 seconds
+2026-04-14 13:03:05,318 - TPE using 18/18 trials with best loss -0.780025
+2026-04-14 13:03:22,309 - build_posterior_wrapper took 0.000918 seconds
+2026-04-14 13:03:22,309 - TPE using 19/19 trials with best loss -0.780025
+2026-04-14 13:03:24,263 - Best Hyperparameters: {'C': 0.002110897991492277, 'class_weight': 'balanced', 'max_iter': 200, 'normalize': False, 'penalty': 'l2', 'random_state': 42, 'solver': 'lbfgs'}
+2026-04-14 13:03:24,263 - Best Validation Score: 0.7800248165628958
+2026-04-14 13:03:24,263 - Hyperparameter Tuning Time: 258.5773732662201
+2026-04-14 13:03:33,162 - Final Test Score: 0.7991558559605423
+2026-04-14 13:03:33,162 - Final Validation Score: 0.7800129053981708
+2026-06-18 10:00:07,872 - Model Class: RandomForestClassifier
+2026-06-18 10:00:07,873 - Hyperparameter Space: {'n_estimators': <hyperopt.pyll.base.Apply object at 0x72e20180fb10>, 'max_depth': <hyperopt.pyll.base.Apply object at 0x72e20187d6d0>, 'max_leaf_nodes': <hyperopt.pyll.base.Apply object at 0x72e2018c0950>, 'min_samples_split': <hyperopt.pyll.base.Apply object at 0x72e2018b5040>, 'min_samples_leaf': <hyperopt.pyll.base.Apply object at 0x72e2018298b0>, 'bootstrap': <hyperopt.pyll.base.Apply object at 0x72e2018cd4f0>, 'class_weight': <hyperopt.pyll.base.Apply object at 0x72e2018ef4d0>}
+2026-06-18 10:00:07,888 - build_posterior_wrapper took 0.002461 seconds
+2026-06-18 10:00:07,888 - TPE using 0 trials
+2026-06-18 10:00:13,014 - build_posterior_wrapper took 0.001345 seconds
+2026-06-18 10:00:13,014 - TPE using 1/1 trials with best loss -0.871517
+2026-06-18 10:00:44,058 - build_posterior_wrapper took 0.001282 seconds
+2026-06-18 10:00:44,058 - TPE using 2/2 trials with best loss -0.871517
+2026-06-18 10:00:51,034 - build_posterior_wrapper took 0.001375 seconds
+2026-06-18 10:00:51,034 - TPE using 3/3 trials with best loss -0.871715
+2026-06-18 10:01:15,703 - build_posterior_wrapper took 0.001414 seconds
+2026-06-18 10:01:15,704 - TPE using 4/4 trials with best loss -0.873195
+2026-06-18 10:01:26,108 - build_posterior_wrapper took 0.001367 seconds
+2026-06-18 10:01:26,108 - TPE using 5/5 trials with best loss -0.874060
+2026-06-18 10:01:47,509 - build_posterior_wrapper took 0.001153 seconds
+2026-06-18 10:01:47,509 - TPE using 6/6 trials with best loss -0.874571
+2026-06-18 10:02:15,564 - build_posterior_wrapper took 0.001099 seconds
+2026-06-18 10:02:15,564 - TPE using 7/7 trials with best loss -0.877132
+2026-06-18 10:02:29,876 - build_posterior_wrapper took 0.001095 seconds
+2026-06-18 10:02:29,876 - TPE using 8/8 trials with best loss -0.877132
+2026-06-18 10:02:36,851 - build_posterior_wrapper took 0.001102 seconds
+2026-06-18 10:02:36,851 - TPE using 9/9 trials with best loss -0.877132
+2026-06-18 10:03:01,415 - build_posterior_wrapper took 0.001092 seconds
+2026-06-18 10:03:01,415 - TPE using 10/10 trials with best loss -0.877132
+2026-06-18 10:03:10,118 - build_posterior_wrapper took 0.001085 seconds
+2026-06-18 10:03:10,118 - TPE using 11/11 trials with best loss -0.877132
+2026-06-18 10:03:36,897 - build_posterior_wrapper took 0.001196 seconds
+2026-06-18 10:03:36,897 - TPE using 12/12 trials with best loss -0.877132
+2026-06-18 10:03:49,361 - build_posterior_wrapper took 0.001044 seconds
+2026-06-18 10:03:49,361 - TPE using 13/13 trials with best loss -0.877132
+2026-06-18 10:04:24,887 - build_posterior_wrapper took 0.001045 seconds
+2026-06-18 10:04:24,887 - TPE using 14/14 trials with best loss -0.877132
+2026-06-18 10:04:52,085 - build_posterior_wrapper took 0.001087 seconds
+2026-06-18 10:04:52,085 - TPE using 15/15 trials with best loss -0.877132
+2026-06-18 10:04:57,775 - build_posterior_wrapper took 0.001069 seconds
+2026-06-18 10:04:57,775 - TPE using 16/16 trials with best loss -0.877132
+2026-06-18 10:05:17,091 - build_posterior_wrapper took 0.001069 seconds
+2026-06-18 10:05:17,091 - TPE using 17/17 trials with best loss -0.877132
+2026-06-18 10:05:36,760 - build_posterior_wrapper took 0.001083 seconds
+2026-06-18 10:05:36,760 - TPE using 18/18 trials with best loss -0.877132
+2026-06-18 10:06:13,647 - build_posterior_wrapper took 0.001075 seconds
+2026-06-18 10:06:13,647 - TPE using 19/19 trials with best loss -0.877132
+2026-06-18 10:06:18,727 - Best Hyperparameters: {'bootstrap': False, 'class_weight': {0: 0.005, 1: 1}, 'max_depth': None, 'max_leaf_nodes': 79, 'min_samples_leaf': 0.0009092947253263427, 'min_samples_split': 0.00997288488910095, 'n_estimators': 400}
+2026-06-18 10:06:18,727 - Best Validation Score: 0.8771318442048844
+2026-06-18 10:06:18,727 - Hyperparameter Tuning Time: 370.8546905517578
+2026-06-18 10:09:05,304 - Final Test Score: 0.8687469377489484
+2026-06-18 10:09:05,304 - Final Validation Score: 0.8765503989280713
+2026-06-18 10:09:09,547 - Final External Test Score: 0.8114754194518319
+2026-06-18 10:09:09,694 - Model Class: LogisticRegression
+2026-06-18 10:09:09,695 - Hyperparameter Space: {'C': <hyperopt.pyll.base.Apply object at 0x72e2007a83d0>, 'penalty': <hyperopt.pyll.base.Apply object at 0x72e2007a9c50>, 'solver': <hyperopt.pyll.base.Apply object at 0x72e2007a9850>, 'max_iter': <hyperopt.pyll.base.Apply object at 0x72e2007a96d0>, 'random_state': 42, 'class_weight': <hyperopt.pyll.base.Apply object at 0x72e2007a8050>, 'normalize': <hyperopt.pyll.base.Apply object at 0x72e2007abd50>}
+2026-06-18 10:09:09,700 - build_posterior_wrapper took 0.002040 seconds
+2026-06-18 10:09:09,700 - TPE using 0 trials
+2026-06-18 10:09:12,759 - build_posterior_wrapper took 0.000940 seconds
+2026-06-18 10:09:12,759 - TPE using 1/1 trials with best loss -0.826229
+2026-06-18 10:09:45,282 - build_posterior_wrapper took 0.000912 seconds
+2026-06-18 10:09:45,282 - TPE using 2/2 trials with best loss -0.826229
+2026-06-18 10:09:46,143 - build_posterior_wrapper took 0.000902 seconds
+2026-06-18 10:09:46,143 - TPE using 3/3 trials with best loss -0.826229
+2026-06-18 10:09:52,361 - build_posterior_wrapper took 0.000920 seconds
+2026-06-18 10:09:52,361 - TPE using 4/4 trials with best loss -0.826229
+2026-06-18 10:09:53,844 - build_posterior_wrapper took 0.000905 seconds
+2026-06-18 10:09:53,844 - TPE using 5/5 trials with best loss -0.826229
+2026-06-18 10:10:23,751 - build_posterior_wrapper took 0.000910 seconds
+2026-06-18 10:10:23,751 - TPE using 6/6 trials with best loss -0.826229
+2026-06-18 10:10:39,045 - build_posterior_wrapper took 0.000991 seconds
+2026-06-18 10:10:39,045 - TPE using 7/7 trials with best loss -0.831092
+2026-06-18 10:10:41,248 - build_posterior_wrapper took 0.000900 seconds
+2026-06-18 10:10:41,248 - TPE using 8/8 trials with best loss -0.831092
+2026-06-18 10:10:44,299 - build_posterior_wrapper took 0.000893 seconds
+2026-06-18 10:10:44,299 - TPE using 9/9 trials with best loss -0.831092
+2026-06-18 10:10:46,433 - build_posterior_wrapper took 0.000900 seconds
+2026-06-18 10:10:46,433 - TPE using 10/10 trials with best loss -0.831092
+2026-06-18 10:10:47,399 - build_posterior_wrapper took 0.000607 seconds
+2026-06-18 10:10:47,399 - TPE using 11/11 trials with best loss -0.831092
+2026-06-18 10:11:03,895 - build_posterior_wrapper took 0.000895 seconds
+2026-06-18 10:11:03,895 - TPE using 12/12 trials with best loss -0.831092
+2026-06-18 10:11:05,940 - build_posterior_wrapper took 0.000918 seconds
+2026-06-18 10:11:05,940 - TPE using 13/13 trials with best loss -0.831092
+2026-06-18 10:11:08,274 - build_posterior_wrapper took 0.000918 seconds
+2026-06-18 10:11:08,275 - TPE using 14/14 trials with best loss -0.831092
+2026-06-18 10:11:24,321 - build_posterior_wrapper took 0.000905 seconds
+2026-06-18 10:11:24,321 - TPE using 15/15 trials with best loss -0.831092
+2026-06-18 10:11:27,843 - build_posterior_wrapper took 0.000917 seconds
+2026-06-18 10:11:27,843 - TPE using 16/16 trials with best loss -0.831092
+2026-06-18 10:12:43,328 - build_posterior_wrapper took 0.000904 seconds
+2026-06-18 10:12:43,328 - TPE using 17/17 trials with best loss -0.831092
+2026-06-18 10:12:45,406 - build_posterior_wrapper took 0.000914 seconds
+2026-06-18 10:12:45,406 - TPE using 18/18 trials with best loss -0.831092
+2026-06-18 10:13:02,282 - build_posterior_wrapper took 0.000894 seconds
+2026-06-18 10:13:02,282 - TPE using 19/19 trials with best loss -0.831092
+2026-06-18 10:13:04,334 - Best Hyperparameters: {'C': 0.004255824420486441, 'class_weight': 'balanced', 'max_iter': 100, 'normalize': False, 'penalty': 'l2', 'random_state': 42, 'solver': 'saga'}
+2026-06-18 10:13:04,334 - Best Validation Score: 0.8310916164200012
+2026-06-18 10:13:04,334 - Hyperparameter Tuning Time: 234.639413356781
+2026-06-18 10:13:18,840 - Final Test Score: 0.8280002305301088
+2026-06-18 10:13:18,840 - Final Validation Score: 0.8310916164200012
+2026-06-18 10:13:18,935 - Final External Test Score: 0.7542157340015336
+2026-06-18 10:13:20,879 - Model Class: RandomForestClassifier
+2026-06-18 10:13:20,879 - Hyperparameter Space: {'n_estimators': <hyperopt.pyll.base.Apply object at 0x72e20072a2d0>, 'max_depth': <hyperopt.pyll.base.Apply object at 0x72e20072b350>, 'max_leaf_nodes': <hyperopt.pyll.base.Apply object at 0x72e2007293d0>, 'min_samples_split': <hyperopt.pyll.base.Apply object at 0x72e20072b850>, 'min_samples_leaf': <hyperopt.pyll.base.Apply object at 0x72e200729450>, 'bootstrap': <hyperopt.pyll.base.Apply object at 0x72e2006c42d0>, 'class_weight': <hyperopt.pyll.base.Apply object at 0x72e2006a1e50>}
+2026-06-18 10:13:20,884 - build_posterior_wrapper took 0.001744 seconds
+2026-06-18 10:13:20,884 - TPE using 0 trials
+2026-06-18 10:13:26,506 - build_posterior_wrapper took 0.001132 seconds
+2026-06-18 10:13:26,506 - TPE using 1/1 trials with best loss -0.791829
+2026-06-18 10:13:59,126 - build_posterior_wrapper took 0.001112 seconds
+2026-06-18 10:13:59,126 - TPE using 2/2 trials with best loss -0.792646
+2026-06-18 10:14:06,906 - build_posterior_wrapper took 0.001138 seconds
+2026-06-18 10:14:06,906 - TPE using 3/3 trials with best loss -0.792646
+2026-06-18 10:14:33,959 - build_posterior_wrapper took 0.001143 seconds
+2026-06-18 10:14:33,959 - TPE using 4/4 trials with best loss -0.792650
+2026-06-18 10:14:45,730 - build_posterior_wrapper took 0.001142 seconds
+2026-06-18 10:14:45,730 - TPE using 5/5 trials with best loss -0.792650
+2026-06-18 10:15:09,941 - build_posterior_wrapper took 0.001126 seconds
+2026-06-18 10:15:09,941 - TPE using 6/6 trials with best loss -0.795751
+2026-06-18 10:15:40,537 - build_posterior_wrapper took 0.001149 seconds
+2026-06-18 10:15:40,537 - TPE using 7/7 trials with best loss -0.796130
+2026-06-18 10:15:56,478 - build_posterior_wrapper took 0.001152 seconds
+2026-06-18 10:15:56,479 - TPE using 8/8 trials with best loss -0.796130
+2026-06-18 10:16:03,996 - build_posterior_wrapper took 0.001114 seconds
+2026-06-18 10:16:03,996 - TPE using 9/9 trials with best loss -0.796130
+2026-06-18 10:16:31,483 - build_posterior_wrapper took 0.001128 seconds
+2026-06-18 10:16:31,483 - TPE using 10/10 trials with best loss -0.796130
+2026-06-18 10:16:40,857 - build_posterior_wrapper took 0.001168 seconds
+2026-06-18 10:16:40,857 - TPE using 11/11 trials with best loss -0.796130
+2026-06-18 10:17:11,012 - build_posterior_wrapper took 0.001168 seconds
+2026-06-18 10:17:11,013 - TPE using 12/12 trials with best loss -0.796130
+2026-06-18 10:17:24,514 - build_posterior_wrapper took 0.001151 seconds
+2026-06-18 10:17:24,514 - TPE using 13/13 trials with best loss -0.796130
+2026-06-18 10:18:03,038 - build_posterior_wrapper took 0.001164 seconds
+2026-06-18 10:18:03,038 - TPE using 14/14 trials with best loss -0.797342
+2026-06-18 10:18:32,162 - build_posterior_wrapper took 0.001077 seconds
+2026-06-18 10:18:32,162 - TPE using 15/15 trials with best loss -0.797510
+2026-06-18 10:18:38,544 - build_posterior_wrapper took 0.001091 seconds
+2026-06-18 10:18:38,545 - TPE using 16/16 trials with best loss -0.797510
+2026-06-18 10:19:00,006 - build_posterior_wrapper took 0.001141 seconds
+2026-06-18 10:19:00,006 - TPE using 17/17 trials with best loss -0.797510
+2026-06-18 10:19:20,417 - build_posterior_wrapper took 0.001141 seconds
+2026-06-18 10:19:20,417 - TPE using 18/18 trials with best loss -0.797510
+2026-06-18 10:20:02,098 - build_posterior_wrapper took 0.001135 seconds
+2026-06-18 10:20:02,098 - TPE using 19/19 trials with best loss -0.797510
+2026-06-18 10:20:07,571 - Best Hyperparameters: {'bootstrap': False, 'class_weight': {0: 0.01, 1: 1}, 'max_depth': 50, 'max_leaf_nodes': None, 'min_samples_leaf': 0.0002692572304826705, 'min_samples_split': 0.009151584720707734, 'n_estimators': 300}
+2026-06-18 10:20:07,571 - Best Validation Score: 0.7975096054112757
+2026-06-18 10:20:07,571 - Hyperparameter Tuning Time: 406.6918270587921
+2026-06-18 10:23:01,633 - Final Test Score: 0.8284002698662539
+2026-06-18 10:23:01,633 - Final Validation Score: 0.7984101600874319
+2026-06-18 10:23:01,671 - Model Class: LogisticRegression
+2026-06-18 10:23:01,671 - Hyperparameter Space: {'C': <hyperopt.pyll.base.Apply object at 0x72e20064abd0>, 'penalty': <hyperopt.pyll.base.Apply object at 0x72e2007298d0>, 'solver': <hyperopt.pyll.base.Apply object at 0x72e2006a26d0>, 'max_iter': <hyperopt.pyll.base.Apply object at 0x72e2004e68d0>, 'random_state': 42, 'class_weight': <hyperopt.pyll.base.Apply object at 0x72e2004e7750>, 'normalize': <hyperopt.pyll.base.Apply object at 0x72e2004e4ed0>}
+2026-06-18 10:23:01,674 - build_posterior_wrapper took 0.000769 seconds
+2026-06-18 10:23:01,674 - TPE using 0 trials
+2026-06-18 10:23:05,567 - build_posterior_wrapper took 0.000905 seconds
+2026-06-18 10:23:05,567 - TPE using 1/1 trials with best loss -0.779479
+2026-06-18 10:23:40,095 - build_posterior_wrapper took 0.000900 seconds
+2026-06-18 10:23:40,095 - TPE using 2/2 trials with best loss -0.779479
+2026-06-18 10:23:40,984 - build_posterior_wrapper took 0.000915 seconds
+2026-06-18 10:23:40,984 - TPE using 3/3 trials with best loss -0.779479
+2026-06-18 10:23:46,784 - build_posterior_wrapper took 0.000910 seconds
+2026-06-18 10:23:46,784 - TPE using 4/4 trials with best loss -0.779479
+2026-06-18 10:23:48,688 - build_posterior_wrapper took 0.000911 seconds
+2026-06-18 10:23:48,688 - TPE using 5/5 trials with best loss -0.779479
+2026-06-18 10:24:22,506 - build_posterior_wrapper took 0.000999 seconds
+2026-06-18 10:24:22,507 - TPE using 6/6 trials with best loss -0.779479
+2026-06-18 10:24:39,634 - build_posterior_wrapper took 0.000908 seconds
+2026-06-18 10:24:39,634 - TPE using 7/7 trials with best loss -0.779479
+2026-06-18 10:24:41,743 - build_posterior_wrapper took 0.000922 seconds
+2026-06-18 10:24:41,743 - TPE using 8/8 trials with best loss -0.779479
+2026-06-18 10:24:46,095 - build_posterior_wrapper took 0.000927 seconds
+2026-06-18 10:24:46,095 - TPE using 9/9 trials with best loss -0.780023
+2026-06-18 10:24:48,348 - build_posterior_wrapper took 0.000914 seconds
+2026-06-18 10:24:48,348 - TPE using 10/10 trials with best loss -0.780023
+2026-06-18 10:24:49,299 - build_posterior_wrapper took 0.000920 seconds
+2026-06-18 10:24:49,299 - TPE using 11/11 trials with best loss -0.780023
+2026-06-18 10:25:06,517 - build_posterior_wrapper took 0.000916 seconds
+2026-06-18 10:25:06,518 - TPE using 12/12 trials with best loss -0.780023
+2026-06-18 10:25:08,402 - build_posterior_wrapper took 0.000916 seconds
+2026-06-18 10:25:08,402 - TPE using 13/13 trials with best loss -0.780023
+2026-06-18 10:25:10,721 - build_posterior_wrapper took 0.000899 seconds
+2026-06-18 10:25:10,721 - TPE using 14/14 trials with best loss -0.780023
+2026-06-18 10:25:28,027 - build_posterior_wrapper took 0.000915 seconds
+2026-06-18 10:25:28,027 - TPE using 15/15 trials with best loss -0.780023
+2026-06-18 10:25:31,540 - build_posterior_wrapper took 0.000914 seconds
+2026-06-18 10:25:31,540 - TPE using 16/16 trials with best loss -0.780023
+2026-06-18 10:26:55,291 - build_posterior_wrapper took 0.000897 seconds
+2026-06-18 10:26:55,291 - TPE using 17/17 trials with best loss -0.780023
+2026-06-18 10:26:57,602 - build_posterior_wrapper took 0.001048 seconds
+2026-06-18 10:26:57,602 - TPE using 18/18 trials with best loss -0.780023
+2026-06-18 10:27:14,875 - build_posterior_wrapper took 0.000894 seconds
+2026-06-18 10:27:14,875 - TPE using 19/19 trials with best loss -0.780023
+2026-06-18 10:27:16,795 - Best Hyperparameters: {'C': 0.002110897991492277, 'class_weight': 'balanced', 'max_iter': 200, 'normalize': False, 'penalty': 'l2', 'random_state': 42, 'solver': 'lbfgs'}
+2026-06-18 10:27:16,795 - Best Validation Score: 0.780022663423936
+2026-06-18 10:27:16,795 - Hyperparameter Tuning Time: 255.1231598854065
+2026-06-18 10:27:25,880 - Final Test Score: 0.7991872478577119
+2026-06-18 10:27:25,880 - Final Validation Score: 0.7800098651659598
