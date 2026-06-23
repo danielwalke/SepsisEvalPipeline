@@ -1,0 +1,41 @@
+services:
+  ml_pipeline:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: gnn_pipeline
+    user: "${UID:-1000}:${GID:-1000}" 
+    
+    # Connect to both the default internal network and the shared MLflow network
+    networks:
+      - default
+      - mlflow-network
+      
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+              
+    volumes:
+      # Mount your submodule code
+      - ..:/app
+      - ../../0_mimic_preprocess:/app/0_mimic_preprocess:ro
+      
+      # Mount the SQLite database
+      - ../../4_db_upload/sqlite/sqlite_data:/app/db_data
+      
+      # Mount the root config.ini directly into /app/config/
+      - ../../config.ini:/app/config/config.ini:ro
+      
+      # Notice we DO NOT need to mount mlflow_data here anymore!
+      
+    environment:
+      DB_PATH: /app/db_data/mimic_sbc_graph.db
+
+# Tell Docker Compose this network was created externally via the shell script
+networks:
+  mlflow-network:
+    external: true
