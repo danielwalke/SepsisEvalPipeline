@@ -24,3 +24,7 @@ __pycache__/
 */__pycache__/*
 2_baseline/training_logs.log
 .env
+*.db*
+4_db_upload/sqlite/sqlite_data
+4_db_upload/neo4j/neo4j_data
+mlflow.db
