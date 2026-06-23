@@ -1,6 +1,7 @@
 from GNN_Model import GNNModel
 from ModelEvaluation import ModelEvaluation
 import torch
+from tqdm import tqdm
 from torch import nn
 
 class ModelTraining:

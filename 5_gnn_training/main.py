@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from Neo4jDataset import Neo4jGraphDataset
+
 from sklearn.model_selection import train_test_split
 from ModelTraining import ModelTraining
 from ModelEvaluation import ModelEvaluation
@@ -26,6 +26,19 @@ def seed_everything(seed=42):
     torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
+
+def cross_evaluate(dataloader_containers, model_evaluation, model_training):
+    for dataloader_container in dataloader_containers:
+        _, _, test_loaders = dataloader_container.get_dataloaders()            
+        for test_loader in test_loaders:
+            inference_start_time = time.time()
+            test_auroc = model_evaluation.eval_model(model_training.model, test_loader)
+            inference_end_time = time.time()
+            print(f"EVALUATING {test_loader.name} --- AUROC: {test_auroc:.4f}")
+            
+            mlflow.log_metric(f"{test_loader.name}__AUROC", test_auroc)
+            mlflow.log_metric(f"{test_loader.name}__inference_time_seconds", inference_end_time - inference_start_time)
+
 
 if __name__ == '__main__':
     
@@ -124,12 +137,12 @@ if __name__ == '__main__':
         print(f"Using lr={lr}, weight_decay={weight_decay}, hidden_channels={hidden_channels}, out_channels={out_channels}, num_layers={num_layers}, dropout={dropout}, heads={heads}, activation={activation}, skip_connections={skip_connections}")
         training_start_time = time.time()
         model_training = ModelTraining(device=device, model_evaluation = model_evaluation, lr=lr, weight_decay=weight_decay, in_channels=in_channels, hidden_channels=hidden_channels, out_channels=out_channels, num_layers=num_layers, dropout=dropout, heads=heads, activation=activation, skip_connections=skip_connections)
-        model_training.train(train_loader, val_loader, num_epochs=100)
+        model_training.train(train_loader, val_loader, num_epochs=100) ## TODO change to large number like 100 early stopping will prevent overfitting and reduce runtime for testing 
         model_training.save_checkpoint(filepath=os.path.join(checkpoint_exp_path, "best_model.pth"))
         
         training_end_time = time.time()
 
-        mlflow.set_tracking_uri("http://host.docker.internal:5000")
+        mlflow.set_tracking_uri("http://mlflow-server:5000")
         mlflow.set_experiment(f"evaluations_{feature_set_name}")
 
         with mlflow.start_run(run_name=f"GNN_{dataloader_container.name}"):
@@ -137,15 +150,6 @@ if __name__ == '__main__':
             mlflow.set_tag("approach", "Graph-based")
             mlflow.set_tag("feature_set", feature_set_name)
             mlflow.log_params(best_hyperparams)
-
-            
-            for test_loader in test_loaders:
-                inference_start_time = time.time()
-                test_auroc = model_evaluation.eval_model(model_training.model, test_loader)
-                inference_end_time = time.time()
-                print(f"EVALUATING {test_loader.name} --- AUROC: {test_auroc:.4f}")
-                
-                mlflow.log_metric(f"{test_loader.name}__AUROC", test_auroc)
-                mlflow.log_metric(f"{test_loader.name}__inference_time_seconds", inference_end_time - inference_start_time)
             mlflow.log_metric(f"hyperparameter_tuning_time_seconds", hyperparam_tuning_end_time - hyperparam_tuning_start_time)
             mlflow.log_metric(f"training_time_seconds", training_end_time - training_start_time)
+            cross_evaluate(dataloader_containers, model_evaluation, model_training)    
