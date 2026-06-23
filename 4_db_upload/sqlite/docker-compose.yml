@@ -1,0 +1,17 @@
+services:
+  data_uploader:
+    build: .
+    container_name: python_uploader
+    # Uses UID/GID from your shell to ensure the created .db file has your host user's permissions
+    user: "${UID}:${GID}" 
+    volumes:
+      # 1. Mount the shell-provided CSV directory (Read-Only for safety)
+      - "${GRAPH_DIR}:/app/csv_data:ro"
+      
+      # 2. Mount your specific absolute path for persistent SQLite database storage
+      - /home/daniel.walke/git/SepsisEvalPipeline/4_db_upload/sqlite/sqlite_data:/app/db
+      
+    environment:
+      # Pass the container-side paths to your Python script
+      CSV_DIR: /app/csv_data
+      DB_PATH: /app/db/mimic_sbc_graph.db

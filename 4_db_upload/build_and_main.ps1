@@ -1,1 +1,0 @@
-docker-compose -f .\4_db_upload\docker-compose.yml up --build
