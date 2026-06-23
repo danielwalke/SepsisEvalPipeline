@@ -1,0 +1,46 @@
+services:
+  ml_pipeline:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: graphaware_pipeline
+    user: "${UID:-1000}:${GID:-1000}" 
+    
+    # Connect to both the default internal network and the shared MLflow network
+    networks:
+      - default
+      - mlflow-network
+      
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+              
+    volumes:
+      # Mount your core pipeline code
+      - ..:/app
+      
+      # Mount related processing scripts (Read-Only)
+      - ../../0_mimic_preprocess:/app/0_mimic_preprocess:ro
+      
+      # Mount the local SQLite database directory
+      - ../../4_db_upload/sqlite/sqlite_data:/app/db_data
+      
+      # Mount the configuration setup directly into /app/config/ (Read-Only)
+      - ../../config.ini:/app/config/config.ini:ro
+      
+    environment:
+      # Directs the internal SQLiteConnector to the correct persistent database file
+      - DB_PATH=/app/db_data/mimic_sbc_graph.db
+      # Ensures Python logs transfer cleanly to the console out in real time
+      - PYTHONUNBUFFERED=1
+      # FIX: Assign a writable cache directory for Matplotlib
+      - MPLCONFIGDIR=/tmp/matplotlib
+
+# External network connection for logging metrics and parameters to MLflow
+networks:
+  mlflow-network:
+    external: true
