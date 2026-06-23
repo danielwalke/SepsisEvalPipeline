@@ -1,6 +1,6 @@
 import xgboost as xgb
 
-class Neo4jDataIter(xgb.DataIter):
+class GraphDataLoader(xgb.DataIter):
     def __init__(self, connector, node_label, condition, framework, batch_size=100000, target_ids=None):
         self.connector = connector
         self.node_label = node_label
