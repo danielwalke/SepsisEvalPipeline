@@ -114,7 +114,7 @@ class GraphPreprocesser:
             "y": y,
             "patientId": dataset["Id"],
             "time": dataset["Time"],
-            "hadmId": dataset.get("hadm_id")
+            "hadmId": dataset.get("hadm_id") if "hadm_id" in dataset.columns else dataset.index  # Use index as fallback if hadm_id is missing
         })
         df.index.name = "idx"
         df.to_csv(path, index=True)
