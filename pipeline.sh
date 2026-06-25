@@ -11,6 +11,10 @@ PRE_PROCESS_DIR="${PWD}/1_preprocess/data/preprocessed_data/${PANEL_NAME}"
 GRAPH_CONSTRUCTION_DIR="${PWD}/3_graph_construction/data/${PANEL_NAME}"
 METRICS_DIR="${PWD}/3_graph_construction/metrics"
 
+# Change these two lines:
+export HOST_UID=$(id -u)
+export HOST_GID=$(id -g)
+
 echo "PANEL_NAME: $PANEL_NAME, R_PREPROCESS_DIR: $R_PREPROCESS_DIR, PRE_PROCESS_DIR: $PRE_PROCESS_DIR, GRAPH_CONSTRUCTION_DIR: $GRAPH_CONSTRUCTION_DIR"
 
 mkdir -p "$R_PREPROCESS_DIR"
@@ -48,6 +52,8 @@ docker run --rm \
   -v "${PWD}/2_baseline/models:/app/models" \
   2_baseline
 
+
+
 echo "--- STEP 3: GRAPH CONSTRUCTION ---"
 docker build -f "${PWD}/3_graph_construction/Dockerfile" -t 3_graph_construction "${PWD}/3_graph_construction"
 docker run --rm \
@@ -58,17 +64,10 @@ docker run --rm \
   3_graph_construction
 
 echo "--- STEP 4: DATABASE UPLOAD ---"
-GRAPH_DIR="${GRAPH_CONSTRUCTION_DIR}" docker compose -f ./4_db_upload/docker-compose.yml up --build --abort-on-container-exit
+GRAPH_DIR="${GRAPH_CONSTRUCTION_DIR}" docker compose -f ./4_db_upload/sqlite/docker-compose.yml up --build --abort-on-container-exit
 
 echo "--- STEPS 5 & 6: DB STARTUP & TRAINING ---"
-docker compose -f ./5_gnn_training/docker-compose.yml up --build --wait
-docker compose -f ./6_graphaware/docker-compose.yml up --build --wait
+docker compose -f ./5_gnn_training/docker/docker-compose.yml up --build
+docker compose -f ./6_graphaware/docker/docker-compose.yml up --build
 
-
-# python ./5_gnn_training/main.py >> gnn_training.log
-
-# python ./6_graphaware/main.py >> graphaware_training.log
-# python 6_graphaware/Interpretability.py 
-
-# docker compose -f ./6_graphaware/docker-compose.yml down
 echo "--- PIPELINE COMPLETE ---"

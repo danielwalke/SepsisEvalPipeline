@@ -4,7 +4,8 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
     container_name: gnn_pipeline
-    user: "${UID:-1000}:${GID:-1000}" 
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}" 
+    shm_size: "32gb"
     
     # Connect to both the default internal network and the shared MLflow network
     networks:

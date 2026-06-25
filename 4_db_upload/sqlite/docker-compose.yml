@@ -3,7 +3,7 @@ services:
     build: .
     container_name: python_uploader
     # Uses UID/GID from your shell to ensure the created .db file has your host user's permissions
-    user: "${UID}:${GID}" 
+    user: "${HOST_UID}:${HOST_GID}" 
     volumes:
       # 1. Mount the shell-provided CSV directory (Read-Only for safety)
       - "${GRAPH_DIR}:/app/csv_data:ro"
