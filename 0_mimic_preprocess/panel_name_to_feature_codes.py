@@ -67,6 +67,12 @@ KIDNEY_FUNCTION = {
     "Estimated GFR (MDRD equation) (Blood)": 52026
 }
 
+HIL_INDICES = {
+    "H (Blood)": 50934,  # Hemolysis
+    "L (Blood)": 51678,  # Lipemia
+    "I (Blood)": 50947   # Icterus
+}
+
 panel_name_to_feature_codes = {
     "CBC": [CBC[lab] for lab in CBC],
     "EXTCBC": [EXTCBC[lab] for lab in EXTCBC],
@@ -75,7 +81,8 @@ panel_name_to_feature_codes = {
     "EXTELECT": [EXTENDED_ELECTROLYTES[lab] for lab in EXTENDED_ELECTROLYTES],
     "LIVER": [LIVER_PANEL[lab] for lab in LIVER_PANEL],
     "COAG": [COAGULATION[lab] for lab in COAGULATION],
-    "KIDNEY": [KIDNEY_FUNCTION[lab] for lab in KIDNEY_FUNCTION]
+    "KIDNEY": [KIDNEY_FUNCTION[lab] for lab in KIDNEY_FUNCTION],
+    "HIL": [HIL_INDICES[lab] for lab in HIL_INDICES]
 }
 
 config = configparser.ConfigParser()

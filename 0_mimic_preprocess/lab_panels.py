@@ -74,7 +74,6 @@ LAB_PANELS = {
 }
 
 
-## This is just LLM guessed but mostly works lol (no i didnt leaked any data to the LLM)
 mimic_iv_lab_itemids = {
     "Hematocrit (Blood)": 51221,
     "Hemoglobin (Blood)": 51222,
@@ -111,7 +110,7 @@ mimic_iv_lab_itemids = {
     "INR(PT) (Blood)": 51237,
     "PTT (Blood)": 51275,
     "Estimated GFR (MDRD equation) (Blood)": 52026,
-    "H (Blood)": None,
-    "L (Blood)": None,
-    "I (Blood)": None
+    "H (Blood)": 50934,
+    "L (Blood)": 51678,
+    "I (Blood)": 50947
 }
