@@ -111,7 +111,7 @@ class SQLiteConnector:
         
         # 2. Extract Seed/Target Nodes
         seed_query = f"""
-            SELECT id, coalesce(features_scaled, features), label, patientId 
+            SELECT id, features, label, patientId 
             FROM {nodes_table}
             {sql_condition}
             ORDER BY patientId
@@ -148,7 +148,7 @@ class SQLiteConnector:
                 chunk = neighbor_ids[i:i+900]
                 placeholders = ','.join(['?'] * len(chunk))
                 self.cursor.execute(f"""
-                    SELECT id, coalesce(features_scaled, features) 
+                    SELECT id, features
                     FROM {nodes_table} WHERE id IN ({placeholders})
                 """, chunk)
                 neighbor_rows.extend(self.cursor.fetchall())
