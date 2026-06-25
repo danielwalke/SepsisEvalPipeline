@@ -1,5 +1,6 @@
 from LogisticRegression import LogisticRegressionModel
 from RandomForest import RandomForestModel
+from XGBoost import XGBoostModel
 from sklearn.metrics import roc_auc_score
 import os
 from Data import Data
@@ -16,18 +17,22 @@ if __name__ == "__main__":
     maximize_metric = True
     metric_pred_proba = True
     include_sbc = config['PANEL'].getboolean('include_sbc', fallback=False)
-    if "sbc_processed.csv" in os.listdir(input_dir) and include_sbc:
-        print("Found SBC data, training on SBC dataset")
-        sbc_data = SbcData(input_dir)
-        rf_model = RandomForestModel(data=sbc_data, metric=metric, maximize_metric=maximize_metric, metric_pred_proba=metric_pred_proba)
-        rf_model.evaluate()
-        lr_model = LogisticRegressionModel(data=sbc_data, metric=metric, maximize_metric=maximize_metric, metric_pred_proba=metric_pred_proba)
-        lr_model.evaluate()
-    print("Training on MIMIC dataset")
     mimic_data = Data(input_dir)
+    sbc_data = SbcData(input_dir) if "sbc_processed.csv" in os.listdir(input_dir) and include_sbc else None
+    if sbc_data is not None:
+        print("Found SBC data, training on SBC dataset")
+        
+        rf_model = RandomForestModel(data=sbc_data, metric=metric, maximize_metric=maximize_metric, metric_pred_proba=metric_pred_proba)
+        rf_model.evaluate(sbc_data, mimic_data)
+        lr_model = LogisticRegressionModel(data=sbc_data, metric=metric, maximize_metric=maximize_metric, metric_pred_proba=metric_pred_proba)
+        lr_model.evaluate(sbc_data, mimic_data)
+        xgb_model = XGBoostModel(data=sbc_data, metric=metric, maximize_metric=maximize_metric, metric_pred_proba=metric_pred_proba)
+        xgb_model.evaluate(sbc_data, mimic_data)
+    print("Training on MIMIC dataset")    
     rf_model = RandomForestModel(data=mimic_data, metric=metric, maximize_metric=maximize_metric, metric_pred_proba=metric_pred_proba)
-    rf_model.evaluate()
+    rf_model.evaluate(sbc_data, mimic_data)
     lr_model = LogisticRegressionModel(data=mimic_data, metric=metric, maximize_metric=maximize_metric, metric_pred_proba=metric_pred_proba)
-    lr_model.evaluate()
-    
+    lr_model.evaluate(sbc_data, mimic_data)
+    xgb_model = XGBoostModel(data=mimic_data, metric=metric, maximize_metric=maximize_metric, metric_pred_proba=metric_pred_proba)
+    xgb_model.evaluate(sbc_data, mimic_data)
     
