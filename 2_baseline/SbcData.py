@@ -18,6 +18,7 @@ class SbcData:
         
         self.test_X, self.test_y, _ = self.load_test_data()
         self.ext_test_X, self.ext_test_y, _ = self.load_ext_test_data()
+        self.test_data_containers = [("SBC_TEST", self.test_X, self.test_y), ("SBC_EXT_TEST", self.ext_test_X, self.ext_test_y)]
         
     def load_data(self, path):
         data_path = os.path.join(self.input_dir, path)

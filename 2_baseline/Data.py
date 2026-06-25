@@ -7,6 +7,7 @@ class Data:
         self.train_X, self.train_y = self.load_train_data()
         self.val_X, self.val_y = self.load_val_data()
         self.test_X, self.test_y = self.load_test_data()
+        self.test_data_containers = [("MIMIC_TEST", self.test_X, self.test_y)]
         
     def load_data(self, path):
         data_path = os.path.join(self.input_dir, path)
