@@ -42,6 +42,7 @@ class BaseModel:
 
         def objective(params):
             normalize = params.pop("normalize", False)
+            scaler = None
             
             if normalize:
                 scaler = MinMaxScaler()
@@ -89,12 +90,10 @@ class BaseModel:
     def normalize_data(self, train_X, val_X, test_X):
         scaler = MinMaxScaler()
         train_X_scaled = scaler.fit_transform(train_X.copy())
-        val_X_scaled = scaler.transform(val_X.copy())
-        test_X_scaled = scaler.transform(test_X.copy())
-        return train_X_scaled, val_X_scaled, test_X_scaled
+        return scaler, train_X_scaled
 
     
-    def get_score(self, best_params, seed = None):
+    def log_scores(self, best_params, *test_datasets, seed = None):
         exp_name = f"{self.data.name}_{self.feature_set_name}"
 
         if seed is None:
@@ -103,9 +102,9 @@ class BaseModel:
         ## Scaling
         normalize = best_params.pop("normalize", False)            
         if normalize:
-            train_X, val_X, test_X = self.normalize_data(self.data.train_X, self.data.val_X, self.data.test_X)
+            scaler, train_X = self.normalize_data(self.data.train_X, self.data.val_X, self.data.test_X)
         else:
-            train_X, val_X, test_X = self.data.train_X, self.data.val_X, self.data.test_X
+            train_X= self.data.train_X
 
         ## Retrain with best params
         train_start_time = time.time()
@@ -117,45 +116,23 @@ class BaseModel:
         mlflow.log_metric(f"training_time_seconds", train_end_time - train_start_time)
         
         ## Inference and Scoring
-        inference_test_start_time = time.time()
-        if self.metric_pred_proba:
-            test_preds = model.predict_proba(test_X)[:, 1]
-        else:
-            test_preds = model.predict(test_X)
-        score = self.metric(self.data.test_y, test_preds)
-        inference_test_end_time = time.time()
-        mlflow.log_metric(f"{self.data.name}_TEST__inference_time_seconds", inference_test_end_time - inference_test_start_time)
+        for test_data in test_datasets:
+            if test_data is None: continue
+            for test_data_set in test_data.test_data_containers:
+                test_name, test_X, test_y = test_data_set
+                print(f"Evaluating on test dataset: {test_name}")
+                print(test_X.head())
 
-        inference_val_start_time = time.time()
-        if self.metric_pred_proba:
-            val_preds = model.predict_proba(val_X)[:, 1]
-        else:
-            val_preds = model.predict(val_X)
-        val_score = self.metric(self.data.val_y, val_preds)
-        inference_val_end_time = time.time()
-        mlflow.log_metric(f"{self.data.name}_VAL__inference_time_seconds", inference_val_end_time - inference_val_start_time)
+                inference_test_start_time = time.time()
+                if self.metric_pred_proba:
+                    test_preds = model.predict_proba(test_X)[:, 1]
+                else:
+                    test_preds = model.predict(test_X)
+                score = self.metric(test_y, test_preds)
+                inference_test_end_time = time.time()
+                mlflow.log_metric(f"{test_name}__inference_time_seconds", inference_test_end_time - inference_test_start_time)
+                mlflow.log_metric(f"{test_name}__AUROC", score)
+                print(f"Test Score on {test_name}: {score} with inference time {inference_test_end_time - inference_test_start_time} seconds")
 
-
-        self.logger.info(f"Final Test Score: {score}")
-        self.logger.info(f"Final Validation Score: {val_score}")
-        if self.data.name == "SBC":
-            ext_test_X = self.data.ext_test_X
-            ext_test_y = self.data.ext_test_y
-            if normalize:
-                ext_test_X = scaler.transform(ext_test_X.copy())
-            inference_ext_test_start_time = time.time()
-            ext_preds = model.predict_proba(ext_test_X)[:, 1] if self.metric_pred_proba else model.predict(ext_test_X)
-            inference_ext_test_end_time = time.time()
-            ext_score = self.metric(ext_test_y, ext_preds)
-            mlflow.log_metric(f"{self.data.name}_EXT_TEST__inference_time_seconds", inference_ext_test_end_time - inference_ext_test_start_time)
-            self.logger.info(f"Final External Test Score: {ext_score}")
-              
-        if self.data.name == "SBC":
-            mlflow.log_metric(f"{self.data.name}_TEST__AUROC", score)
-            mlflow.log_metric(f"{self.data.name}_EXT_TEST__AUROC", ext_score)
-            mlflow.log_metric(f"{self.data.name}_VAL__AUROC", val_score)
-        else:
-            mlflow.log_metric(f"{self.data.name}_TEST__AUROC", score)
-            mlflow.log_metric(f"{self.data.name}_VAL__AUROC", val_score)
-        mlflow.end_run()
+                mlflow.end_run()
         return score

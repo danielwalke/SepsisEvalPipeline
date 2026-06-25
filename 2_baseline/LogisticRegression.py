@@ -8,7 +8,7 @@ class LogisticRegressionModel(BaseModel):
     def __init__(self, data, metric, maximize_metric, metric_pred_proba):
         super().__init__(data, LogisticRegression, metric=metric, maximize_metric=maximize_metric, metric_pred_proba=metric_pred_proba)
     
-    def evaluate(self):
+    def evaluate(self, *test_data):
         search_space = {
             "C": hp.hp.loguniform("C", np.log(0.001), np.log(1000)),
             "penalty": hp.hp.choice("penalty", ["l2"]),
@@ -19,5 +19,5 @@ class LogisticRegressionModel(BaseModel):
             "normalize": hp.hp.choice("normalize", [True, False])
         }
         best_params = self.tune_params(search_space)
-        test_score = self.get_score(best_params)
-        return best_params, test_score
+        self.log_scores(best_params, *test_data)
+        return best_params

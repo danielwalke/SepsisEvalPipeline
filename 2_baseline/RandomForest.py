@@ -7,7 +7,7 @@ class RandomForestModel(BaseModel):
     def __init__(self, data, metric, maximize_metric, metric_pred_proba):
         super().__init__(data, RandomForestClassifier, metric=metric, maximize_metric=maximize_metric, metric_pred_proba=metric_pred_proba)
     
-    def evaluate(self):
+    def evaluate(self, *test_data):
         search_space = {
             "n_estimators": hp.hp.choice("n_estimators", [100, 200, 300, 400, 500]),
             "max_depth": hp.hp.choice("max_depth", [None, 10, 20, 30, 40, 50]),
@@ -27,5 +27,5 @@ class RandomForestModel(BaseModel):
             ])
         }
         best_params = self.tune_params(search_space)
-        test_score = self.get_score(best_params)
-        return best_params, test_score
+        self.log_scores(best_params, *test_data)
+        return best_params
