@@ -42,6 +42,34 @@ RETURN
     [n IN uniqueNodes | toInteger(n.label)] AS labels,
     [e IN uniqueEdges | [startNode(e).id, endNode(e).id, coalesce(e.weight,1.0)]] AS edge_data
     """
+def get_full_graph_query(split='train'):
+    """
+    Retrieves all nodes and edges for a full-batch approach.
+    Replaces the multi-hop sampler with a global MATCH.
+    """
+    split = split.upper()
+    return f"""
+    // 1. Match all valid nodes in the requested split
+    MATCH (n:{split})
+    WHERE n.id > -1
+    
+    // 2. Optionally match all intra-split relationships
+    // OPTIONAL MATCH ensures we still retrieve isolated nodes
+    OPTIONAL MATCH (n)-[r]->(m:{split})
+    WHERE m.id > -1
+    
+    // 3. Aggregate nodes and edges into distinct collections
+    WITH 
+        collect(DISTINCT n) AS uniqueNodes, 
+        collect(DISTINCT r) AS uniqueEdges
+        
+    // 4. Format and return lists to exactly match the PyG extraction logic
+    RETURN 
+        [node IN uniqueNodes | node.id] AS node_ids,
+        [node IN uniqueNodes | node.features_scaled] AS features,
+        [node IN uniqueNodes | toInteger(node.label)] AS labels,
+        [edge IN uniqueEdges WHERE edge IS NOT NULL | [startNode(edge).id, endNode(edge).id, coalesce(edge.weight, 1.0)]] AS edge_data
+    """
     
 
 class Neo4jConnector:
@@ -135,6 +163,51 @@ class Neo4jConnector:
 
         return Data(x=x, edge_index=edge_index, edge_attr=weights, y=y, batch_mask=batch_mask)
     
+    import numpy as np
+import torch
+from torch_geometric.data import Data
+
+def get_full_graph(self):
+    """
+    Retrieves the entire graph for full-batch GNN training.
+    """
+    with self.driver.session() as session:
+        result = session.run(get_full_graph_query())
+        record = result.single()
+
+    if not record or not record.get('node_ids'): 
+        return Data() 
+    all_node_ids = torch.tensor(record['node_ids'], dtype=torch.long)
+    x = torch.tensor(record['features'], dtype=torch.float)
+    y = torch.tensor(record['labels'], dtype=torch.float).unsqueeze(1)
+    
+    sorted_ids, sort_idx = torch.sort(all_node_ids)
+    x = x[sort_idx]
+    y = y[sort_idx]
+    edge_np = np.array(record.get('edge_data', []), dtype=np.float64)
+    
+    if edge_np.size > 0:
+        global_src = torch.from_numpy(edge_np[:, 0].astype(np.int64))
+        global_dst = torch.from_numpy(edge_np[:, 1].astype(np.int64))
+        weights    = torch.from_numpy(edge_np[:, 2].astype(np.float32)).unsqueeze(1)
+
+        # Map global Neo4j IDs to local PyG indices (0 to N-1)
+        src_local = torch.searchsorted(sorted_ids, global_src)
+        dst_local = torch.searchsorted(sorted_ids, global_dst)
+        edge_index = torch.stack([src_local, dst_local], dim=0)
+    else:
+        # Handle edge case where the graph has nodes but no edges
+        edge_index = torch.empty((2, 0), dtype=torch.long)
+        weights = torch.empty((0, 1), dtype=torch.float32)
+
+    return Data(
+        x=x, 
+        edge_index=edge_index, 
+        edge_attr=weights, 
+        y=y,
+        batch_mask=torch.ones(x.size(0), dtype=torch.bool) 
+    )
+
     def scale_and_add_pos_enc_to_features(self, train_split_name, *test_split_names):
         with self.driver.session() as session:
             result = session.run(f"""
@@ -176,3 +249,8 @@ class Neo4jConnector:
         with self.driver.session() as session:
             result = session.run("MATCH (n:MIMIC_TRAIN) RETURN COUNT(n) AS count").single()
             return result["count"] > 0
+        
+    def get_node_count(self, split_name):
+        with self.driver.session() as session:
+            result = session.run(f"MATCH (n:{split_name}) RETURN COUNT(n) AS count").single()
+            return result["count"] if result else 0

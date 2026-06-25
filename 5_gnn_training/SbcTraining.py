@@ -5,15 +5,16 @@ from sklearn.model_selection import train_test_split
 from Dataloader import Dataloader
 
 class SBC_Training:
-    def __init__(self, hops, MAX_RAM_GB, BATCH_SIZE, NUM_WORKERS, LIMIT):
-        db = "sqlite"
-        self.connector = SQLiteConnector() if db == "sqlite" else Neo4jConnector()
+    def __init__(self, hops, db_type, MAX_RAM_GB, BATCH_SIZE, NUM_WORKERS, LIMIT, use_full_batch=True):
+        self.db_type = db_type
+        self.connector = SQLiteConnector() if db_type == "sqlite" else Neo4jConnector()
         self.has_sbc_nodes = self.connector.has_sbc_nodes()
         self.MAX_RAM_GB = MAX_RAM_GB
         self.BATCH_SIZE = BATCH_SIZE
         self.NUM_WORKERS = NUM_WORKERS
         self.LIMIT = LIMIT
         self.hops = hops
+        self.use_full_batch = use_full_batch
 
     def get_dataloaders(self):
         self.connector.scale_and_add_pos_enc_to_features('SBC_TRAIN', 'SBC_TEST', 'SBC_EXT_TEST')
@@ -29,12 +30,11 @@ class SBC_Training:
         test_ids = self.connector.get_sbc_test_ids(test_seed_patient_ids)
         ext_test_ids = self.connector.get_sbc_ext_test_ids(ext_test_seed_patient_ids)
         
-        
-        train_dataset = GraphDataset(self.connector, train_ids, hops_limits=[self.LIMIT, self.LIMIT], batch_size=self.BATCH_SIZE, split='SBC_TRAIN')
-        val_dataset = GraphDataset(self.connector, val_ids, hops_limits=[self.LIMIT, self.LIMIT], batch_size=self.BATCH_SIZE, split='SBC_TRAIN')
-        test_dataset = GraphDataset(self.connector, test_ids, hops_limits=[self.LIMIT, self.LIMIT], batch_size=self.BATCH_SIZE, split='SBC_TEST')
-        ext_test_dataset = GraphDataset(self.connector, ext_test_ids, hops_limits=[self.LIMIT, self.LIMIT], batch_size=self.BATCH_SIZE, split='SBC_EXT_TEST')
-        
+        train_dataset = GraphDataset(self.db_type, train_ids, hops_limits=[self.LIMIT, self.LIMIT], batch_size=self.BATCH_SIZE, split='SBC_TRAIN', use_full_batch=self.use_full_batch)
+        val_dataset = GraphDataset(self.db_type, val_ids, hops_limits=[self.LIMIT, self.LIMIT], batch_size=self.BATCH_SIZE, split='SBC_TRAIN', use_full_batch=self.use_full_batch)
+        test_dataset = GraphDataset(self.db_type, test_ids, hops_limits=[self.LIMIT, self.LIMIT], batch_size=self.BATCH_SIZE, split='SBC_TEST', use_full_batch=self.use_full_batch)
+        ext_test_dataset = GraphDataset(self.db_type, ext_test_ids, hops_limits=[self.LIMIT, self.LIMIT], batch_size=self.BATCH_SIZE, split='SBC_EXT_TEST', use_full_batch=self.use_full_batch)
+
         dataloader = Dataloader(self.MAX_RAM_GB, self.BATCH_SIZE, self.NUM_WORKERS, self.hops, self.LIMIT)
         train_loader = dataloader.get_train_loader(train_dataset)
         train_loader.name = "SBC_TRAIN"

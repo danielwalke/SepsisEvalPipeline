@@ -146,16 +146,75 @@ class SQLiteConnector:
         batch_mask = torch.isin(sorted_ids, batch_seeds_tensor)        
 
         return Data(x=x, edge_index=edge_index, edge_attr=weights, y=y, batch_mask=batch_mask)
+    
+    def get_full_batch_graph(self, split_name):
+        """
+        Retrieves the entire graph for a given split without neighbor sampling.
+        Useful for full-batch GNN training/evaluation.
+        """
+        nodes_table = f"{split_name}_nodes"
+        edges_table = f"{split_name}_edges"
+
+        # 1. Fetch All Edges for the split
+        self.cursor.execute(f"""
+            SELECT source, target, coalesce(weight, 1.0) 
+            FROM {edges_table}
+        """)
+        edge_data = self.cursor.fetchall()
+
+        # 2. Fetch All Nodes for the split
+        self.cursor.execute(f"""
+            SELECT id, coalesce(features_scaled, features), label 
+            FROM {nodes_table}
+            WHERE id > -1
+        """)
+        node_data = self.cursor.fetchall()
+
+        # If there are no nodes, return an empty Data object
+        if not node_data:
+            return Data()
+
+        # 3. Parse Node Data
+        node_ids = [row[0] for row in node_data]
+        features = [np.frombuffer(row[1], dtype=np.float32) for row in node_data]
+        labels = [int(row[2]) for row in node_data]
+
+        # Convert to PyTorch tensors
+        all_node_ids = torch.tensor(node_ids, dtype=torch.long)
+        x = torch.from_numpy(np.stack(features))
+        y = torch.tensor(labels, dtype=torch.float).unsqueeze(1)
+
+        # Sort nodes so we can use searchsorted for O(log N) global-to-local ID mapping
+        sorted_ids, sort_idx = torch.sort(all_node_ids)
+        x = x[sort_idx]
+        y = y[sort_idx]
+
+        # 4. Parse Edge Data and Create Edge Index
+        if edge_data:
+            edge_np = np.array(edge_data, dtype=np.float64)
+            global_src = torch.from_numpy(edge_np[:, 0].astype(np.int64))
+            global_dst = torch.from_numpy(edge_np[:, 1].astype(np.int64))
+            weights    = torch.from_numpy(edge_np[:, 2].astype(np.float32)).unsqueeze(1)
+
+            # Map the global DB IDs to the local index (0 to N-1)
+            src_local = torch.searchsorted(sorted_ids, global_src)
+            dst_local = torch.searchsorted(sorted_ids, global_dst)
+            edge_index = torch.stack([src_local, dst_local], dim=0)
+        else:
+            # Handle the edge case where a graph has nodes but completely isolated components (no edges)
+            edge_index = torch.empty((2, 0), dtype=torch.long)
+            weights = torch.empty((0, 1), dtype=torch.float32)
+
+        # In a full batch scenario, all nodes belong to the batch
+        batch_mask = torch.ones(x.size(0), dtype=torch.bool)
+
+        return Data(x=x, edge_index=edge_index, edge_attr=weights, y=y, batch_mask=batch_mask)
 
     def scale_and_add_pos_enc_to_features(self, train_split_name, *test_split_names, chunk_size=10000):
         """
         Scales features and adds positional encodings using memory-efficient chunking 
         and high-speed NumPy vectorization.
         """
-        
-        # --- OPTIONAL PRAGMAS FOR FASTER DISK WRITES ---
-        # self.cursor.execute("PRAGMA journal_mode = WAL;")
-        # self.cursor.execute("PRAGMA synchronous = NORMAL;")
         
         print(f"Calculating global mins and maxs from {train_split_name} in chunks...")
         
@@ -256,3 +315,7 @@ class SQLiteConnector:
         
     def has_sbc_nodes(self): return self.has_nodes('SBC_TRAIN')
     def has_mimic_nodes(self): return self.has_nodes('MIMIC_TRAIN')
+
+    def get_node_count(self, split_name):
+        self.cursor.execute(f"SELECT COUNT(1) FROM {split_name}_nodes")
+        return self.cursor.fetchone()[0]

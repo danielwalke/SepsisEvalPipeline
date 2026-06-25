@@ -1,7 +1,7 @@
 import torch
 from torch import nn
-
-from sklearn.model_selection import train_test_split
+from connectors.Neo4jConnector import Neo4jConnector
+from connectors.SQLiteConnector import SQLiteConnector
 from ModelTraining import ModelTraining
 from ModelEvaluation import ModelEvaluation
 from sklearn.metrics import roc_auc_score
@@ -29,8 +29,9 @@ def seed_everything(seed=42):
 
 def cross_evaluate(dataloader_containers, model_evaluation, model_training):
     for dataloader_container in dataloader_containers:
-        _, _, test_loaders = dataloader_container.get_dataloaders()            
+        _, _, test_loaders = dataloader_container.get_dataloaders()
         for test_loader in test_loaders:
+            print(f"Evaluating model trained on {dataloader_container.name} using test set: {test_loader.name}")
             inference_start_time = time.time()
             test_auroc = model_evaluation.eval_model(model_training.model, test_loader)
             inference_end_time = time.time()
@@ -39,12 +40,24 @@ def cross_evaluate(dataloader_containers, model_evaluation, model_training):
             mlflow.log_metric(f"{test_loader.name}__AUROC", test_auroc)
             mlflow.log_metric(f"{test_loader.name}__inference_time_seconds", inference_end_time - inference_start_time)
 
+def get_connector():
+    db = "sqlite"
+    if db == "neo4j":
+        connector = Neo4jConnector(uri="bolt://localhost:7687", user="neo4j", password="password")
+    elif db == "sqlite":
+         db_path = os.environ.get("DB_PATH", "/app/db_data/mimic_sbc_graph.db")
+         connector = SQLiteConnector(db_path=db_path)
+    else:
+        raise ValueError("Unsupported database type. Please choose 'neo4j' or 'sqlite'.")
+    return connector
 
 if __name__ == '__main__':
-    
+    print("Starting GNN training and evaluation pipeline...")
     ## Load configuration parameters    
     config = configparser.ConfigParser()
+    use_full_batch = False ## True doesnt work for 40gib VRAM
     print(os.listdir("/app/config/"))
+    db_type = "sqlite"  
     config_path = '/app/config/config.ini'
     # config.read('/app/config/config.ini')
     
@@ -61,8 +74,9 @@ if __name__ == '__main__':
     checkpoint_path = os.path.expanduser("/app/checkpoints")
     os.makedirs(checkpoint_path, exist_ok=True)
     
-    BATCH_SIZE = int(eval(config['TRAINING']['batch_size']))
-    NUM_WORKERS = int(config['TRAINING']['num_workers_for_loading'])
+    connector = get_connector()
+    BATCH_SIZE = 100_000_000 if use_full_batch else int(eval(config['TRAINING']['batch_size']))
+    NUM_WORKERS = 3 if use_full_batch else int(config['TRAINING']['num_workers_for_loading'])
     LIMIT = int(config['TRAINING']['limit_neighbors'])
     MAX_RAM_GB = int(config['TRAINING']['max_ram_gb'])
     
@@ -80,10 +94,10 @@ if __name__ == '__main__':
     print(f"Using BATCH_SIZE={BATCH_SIZE}, NUM_WORKERS={NUM_WORKERS}, LIMIT={LIMIT}, MAX_RAM_GB={MAX_RAM_GB}, IN_CHANNELS={in_channels}, OUT_CHANNELS={out_channels}, DEVICE={device}")
 
     dataloader_containers = []
-    sbc_training = SBC_Training(hops, MAX_RAM_GB, BATCH_SIZE, NUM_WORKERS, LIMIT)
+    sbc_training = SBC_Training(hops, db_type, MAX_RAM_GB, BATCH_SIZE, NUM_WORKERS, LIMIT, use_full_batch=use_full_batch)
     if sbc_training.has_sbc_nodes and include_sbc:
         dataloader_containers.append(sbc_training)
-    mimic_training = Mimic_Training(hops, MAX_RAM_GB, BATCH_SIZE, NUM_WORKERS, LIMIT)
+    mimic_training = Mimic_Training(hops, db_type, MAX_RAM_GB, BATCH_SIZE, NUM_WORKERS, LIMIT, use_full_batch=use_full_batch)
     if mimic_training.has_mimic_nodes:
         dataloader_containers.append(mimic_training)
 
@@ -111,19 +125,19 @@ if __name__ == '__main__':
         hyperparam_tuning_start_time = time.time()
         model_tuning = ModelTuning(device=device, model_evaluation=model_evaluation)
         ##TODO: Enable tuning
-        # best_hyperparams = model_tuning.eval_hyperparameters(space, train_loader, val_loader, in_channels=in_channels, out_channels=out_channels, max_evals=20, verbosity=True)
+        best_hyperparams = model_tuning.eval_hyperparameters(space, train_loader, val_loader, in_channels=in_channels, out_channels=out_channels, max_evals=20, verbosity=True)
         hyperparam_tuning_end_time = time.time() 
-        # print("Best hyperparameters:", best_hyperparams)
-        best_hyperparams = {
-            'lr': 0.001,
-            'weight_decay': 1e-5,
-            'hidden_channels': 128,
-            'num_layers': 2,
-            'dropout': 0.2,
-            'heads': 4,
-            'activation': nn.ReLU(),
-            'skip_connections': False
-        }
+        print("Best hyperparameters:", best_hyperparams)
+        # best_hyperparams = {
+        #     'lr': 0.001,
+        #     'weight_decay': 1e-5,
+        #     'hidden_channels': 128,
+        #     'num_layers': 2,
+        #     'dropout': 0.2,
+        #     'heads': 4,
+        #     'activation': nn.ReLU(),
+        #     'skip_connections': False
+        # }
         
         lr = best_hyperparams['lr']
         weight_decay = best_hyperparams['weight_decay']
@@ -137,7 +151,7 @@ if __name__ == '__main__':
         print(f"Using lr={lr}, weight_decay={weight_decay}, hidden_channels={hidden_channels}, out_channels={out_channels}, num_layers={num_layers}, dropout={dropout}, heads={heads}, activation={activation}, skip_connections={skip_connections}")
         training_start_time = time.time()
         model_training = ModelTraining(device=device, model_evaluation = model_evaluation, lr=lr, weight_decay=weight_decay, in_channels=in_channels, hidden_channels=hidden_channels, out_channels=out_channels, num_layers=num_layers, dropout=dropout, heads=heads, activation=activation, skip_connections=skip_connections)
-        model_training.train(train_loader, val_loader, num_epochs=100) ## TODO change to large number like 100 early stopping will prevent overfitting and reduce runtime for testing 
+        model_training.train(train_loader, val_loader, num_epochs=2)
         model_training.save_checkpoint(filepath=os.path.join(checkpoint_exp_path, "best_model.pth"))
         
         training_end_time = time.time()
