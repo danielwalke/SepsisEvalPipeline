@@ -153,6 +153,7 @@ class PreprocessWrapper:
             print("SBC data inclusion is disabled in the config. Skipping writing SBC processed data.")
             return
         train_data = self.sbc.get_data()
+        
         features = sorted(train_data.filter(regex="^f__").columns.tolist()) # train_data.filter(regex="^f__").columns.tolist()
         with open(os.path.join(self.feature_input_dir_path, "sbc_feature_names.txt"), "w") as f:
             print(f"Features: {features}")
@@ -179,7 +180,7 @@ def process_mimic_data(input_dir_path, feature_input_dir_path, extdata_input_dir
 
 def process_sbc_data(input_dir_path, feature_input_dir_path, extdata_input_dir_path):
     sbc_data = pd.read_csv(
-        os.path.join(input_dir_path, "sbc_processed.csv"), header=0
+        os.path.join(input_dir_path, "sbcdata.csv"), header=0
     )
     preprocess_wrapper = PreprocessWrapper(feature_input_dir_path, extdata_input_dir_path,
         sbc_data=sbc_data, print_logs=True
@@ -206,7 +207,7 @@ if __name__ == "__main__":
     else:
         print(f"Could not find {mimic_path}")
     
-    sbc_path = os.path.join(input_dir_path, "sbc_processed.csv")
+    sbc_path = os.path.join(input_dir_path, "sbcdata.csv")
     if os.path.exists(sbc_path):
         print(f"Found {sbc_path}, processing...")
         process_sbc_data(input_dir_path, feature_input_dir_path, extdata_input_dir_path)

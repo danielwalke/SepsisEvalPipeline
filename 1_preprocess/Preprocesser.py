@@ -129,7 +129,7 @@ class Preprocesser:
     def get_data(self):
         rename_map = self.get_rename_map()
         
-        return self.pre_processed_data.rename(columns=rename_map)
+        return self.pre_processed_data.rename(columns=rename_map).sort_index(axis=1)
     
     def get_X(self):
         data = self.get_data()
