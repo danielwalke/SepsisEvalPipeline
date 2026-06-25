@@ -17,40 +17,38 @@ def diff_user_fun(kwargs):
     return kwargs["original_features"] - kwargs["mean_neighbors"]
 
 def cross_evaluate(final_model, connector, training_container):
+    
     for container in training_container:
         print(f"Starting evaluation for {container.name}...")
         node_split_container = container.get_node_split_containers(connector)
-        with mlflow.start_run(run_name=f"GraphAwareXGBoost_{container.name}"):
-                mlflow.set_tag("model", "GraphAware XGBoost")
-                mlflow.set_tag("approach", "Graph-based")
-                mlflow.set_tag("feature_set", feature_set_name)
-                mlflow.log_params(final_params)           
-                for test_info in node_split_container.test_split_information_list:
-                    inference_start_time = time.time()
-                    if use_full_batch:
-                        auroc = manager.evaluate_model_full_batch(connector, final_model, test_info.label_name, test_info.condition, framework, test_info.node_ids)
-                    else:
-                        auroc = manager.evaluate_model_mini_batch(connector, final_model, test_info.label_name, test_info.condition, framework, test_info.node_ids)
-                    inference_end_time = time.time()
-                    print(f"{test_info.name} AUROC: {auroc}")
-                    mlflow.log_metric(f"{test_info.name}__inference_time_seconds", inference_end_time - inference_start_time)
-                    mlflow.log_metric(f"{test_info.name}__AUROC", auroc)
-                mlflow.log_metric(f"hyperparameter_tuning_time_seconds", hyperparam_tuning_end_time - hyperparam_tuning_start_time)
-                mlflow.log_metric(f"training_time_seconds", train_end_time - train_start_time)
+        
+        mlflow.set_tag("model", "GraphAware XGBoost")
+        mlflow.set_tag("approach", "Graph-based")
+        mlflow.set_tag("feature_set", feature_set_name)
+        mlflow.log_params(final_params)           
+        for test_info in node_split_container.test_split_information_list:
+            inference_start_time = time.time()
+            if use_full_batch:
+                auroc = manager.evaluate_model_full_batch(connector, final_model, test_info.label_name, test_info.condition, framework, test_info.node_ids)
+            else:
+                auroc = manager.evaluate_model_mini_batch(connector, final_model, test_info.label_name, test_info.condition, framework, test_info.node_ids)
+            inference_end_time = time.time()
+            print(f"{test_info.name} AUROC: {auroc}")
+            mlflow.log_metric(f"{test_info.name}__inference_time_seconds", inference_end_time - inference_start_time)
+            mlflow.log_metric(f"{test_info.name}__AUROC", auroc)
+        mlflow.log_metric(f"hyperparameter_tuning_time_seconds", hyperparam_tuning_end_time - hyperparam_tuning_start_time)
+        mlflow.log_metric(f"training_time_seconds", train_end_time - train_start_time)
 
 
 if __name__ == "__main__":
-    run_hyperparameter_tuning = False
-    use_full_batch = True
+    run_hyperparameter_tuning = True
+    use_full_batch = False
     config = configparser.ConfigParser()
     config.read('/app/config/config.ini')
     RANDOM_SEED = int(config['RANDOM']['seed'])
     feature_set_name = config['PANEL']['panel_name']
     include_sbc = config['PANEL'].getboolean('include_sbc', fallback=False)
-
-    
     hops = [0, 1]
-
     framework = Framework(user_functions=[diff_user_fun for _ in hops], 
                         hops_list=hops,
                         clfs=[None for _ in hops],
@@ -65,7 +63,7 @@ if __name__ == "__main__":
          connector = SQLiteConnector(db_path=db_path)
     else:
         raise ValueError("Unsupported database type. Please choose 'neo4j' or 'sqlite'.")
-    BATCH_SIZE = 100000 # connector.get_node_count() if use_full_batch else 100000
+    BATCH_SIZE = connector.get_node_count() if use_full_batch else int(eval(config['TRAINING']['batch_size']))
     print(f"Using batch size of {BATCH_SIZE} for training.")
 
     training_container = []
@@ -87,8 +85,6 @@ if __name__ == "__main__":
         val_condition = node_split_container.val_split_information.condition
         exp_name = f"{train_label_name.split('_')[0]}_{feature_set_name}"
 
-        ## TODO scaler to improve geenralizability
-        
         model_exp_path = os.path.join("/app", "models", exp_name)
         hyperparams_path = os.path.join("/app", "hyperparameters", exp_name)
         os.makedirs(model_exp_path, exist_ok=True)
@@ -99,7 +95,7 @@ if __name__ == "__main__":
         hyperparam_tuning_start_time = time.time()
         if run_hyperparameter_tuning:
             mode_str = 'full_batch' if use_full_batch else 'mini_batch'
-            final_params = manager.optimize_hyperparams(connector, train_condition, val_condition, train_seed_ids, val_seed_ids, framework, mode=mode_str, max_evals=30)
+            final_params = manager.optimize_hyperparams(connector, train_condition, val_condition, train_seed_ids, val_seed_ids, framework, mode=mode_str, max_evals=20)
         else:
             # final_params = {'alpha': 9.538284629683702, 'booster': 'gbtree', 'colsample_bytree': 0.9080724508103653, 'gamma': 0.8284271722786946, 'lambda': 0.00906801548010611, 'learning_rate': 0.15996292193138167, 'max_depth': 3, 'min_child_weight': 3.3449149107880025, 'n_estimators': 150, 'n_jobs': -1, 'objective': 'binary:logistic', 'random_state': RANDOM_SEED, 'scale_pos_weight': 1, 'subsample': 0.8923516991674396}
             with open(os.path.join(hyperparams_path, "best_params.json"), "r") as f:
@@ -124,5 +120,6 @@ if __name__ == "__main__":
 
         mlflow.set_tracking_uri("http://mlflow-server:5000")
         mlflow.set_experiment(f"evaluations_{feature_set_name}")
-        cross_evaluate(final_model, connector, training_container)
+        with mlflow.start_run(run_name=f"GraphAwareXGBoost_{container.name}"):
+            cross_evaluate(final_model, connector, training_container)
     connector.close()
