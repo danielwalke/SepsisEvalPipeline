@@ -7,9 +7,12 @@ from sklearn.metrics import roc_auc_score
 import shap
 import matplotlib.pyplot as plt
 from GraphAware.EnsembleFramework import Framework
-from Neo4jConnector import Neo4jConnector
-from SBCTraining import SBCTraining
-from MIMICTraining import MIMICTraining
+from connectors.Neo4jConnector import Neo4jConnector ## TODO Test if this also works with sqlite connector
+from connectors.SQLiteConnector import SQLiteConnector
+from training_containers.SBCTraining import SBCTraining
+from training_containers.MIMICTraining import MIMICTraining
+from training_containers.SBCTrainingSQLite import SBCTraining as SBCTrainingSQLite
+from training_containers.MIMICTrainingSQLite import MIMICTraining as MIMICTrainingSQLite
 
 def diff_user_fun(kwargs):
     return kwargs["original_features"] - kwargs["mean_neighbors"]
@@ -18,16 +21,17 @@ def diff_user_fun(kwargs):
 """
 IMPORT COMMENT: Diff to sex is not zero across the same patient because of the weighted avergaing based on the time difference to previous measurements (if the edge weight is indeed 1 for each edge and all are equally weighted then it would be zero, but the edge weights are not all 1 and they are not all the same, so the weighted average of neighbors can differ from the original features even for static features)
 """
-if __name__ == "__main__":
+def interpret_and_visualize():
     config = configparser.ConfigParser()
-    config.read('config.ini')
+    config.read('/app/config/config.ini')
     feature_set_name = config['PANEL']['panel_name']
     include_sbc = config['PANEL'].getboolean('include_sbc', fallback=False)
+    db = "sqlite"
     
     BATCH_SIZE = 100000
     hops = [0, 1]
-    
-    with open("./0_mimic_preprocess/features/feature_names.txt", "r") as f:
+    ##TODO adopt paths for docker
+    with open("/app/0_mimic_preprocess/features/feature_names.txt", "r") as f:
         base_feature_names = [n.strip() for n in f.read().replace("[", "").replace("]", "").replace("'", "").split(",")]
     
     framework = Framework(user_functions=[diff_user_fun for _ in hops], 
@@ -37,20 +41,26 @@ if __name__ == "__main__":
                         handle_nan=0.0,
                         attention_configs=[None for _ in hops], classifier_on_device=False)
                         
-    connector = Neo4jConnector(uri="bolt://localhost:7687", user="neo4j", password="password")
+    connector = SQLiteConnector(db_path = "/app/db_data/mimic_sbc_graph.db") if db == "sqlite" else Neo4jConnector(uri="bolt://localhost:7687", user="neo4j", password="password")
     
     training_container = []
     if connector.has_sbc_nodes() and include_sbc:
-        training_container.append(SBCTraining())
+        sbc_training = SBCTraining() if db == "neo4j" else SBCTrainingSQLite()
+        training_container.append(sbc_training)
     if connector.has_mimic_nodes():
-        training_container.append(MIMICTraining())
+        mimic_training = MIMICTraining() if db == "neo4j" else MIMICTrainingSQLite()
+        training_container.append(mimic_training)
+
 
     for container in training_container:
         node_split_container = container.get_node_split_containers(connector)
         train_label_name = node_split_container.train_split_information.label_name
         exp_name = f"{train_label_name.split('_')[0]}_{feature_set_name}"
-        model_exp_path = os.path.join(os.path.expanduser("~"), "git", "SepsisEvalPipeline", "6_graphaware", "models", exp_name)
-        figure_exp_path = os.path.join(os.path.expanduser("~"), "git", "SepsisEvalPipeline", "6_graphaware", "figures", exp_name)
+
+
+        ##TODO adopt paths for docker -> TODO test
+        model_exp_path = os.path.join("/app", "models", exp_name)
+        figure_exp_path = os.path.join("/app", "figures", exp_name)
         os.makedirs(model_exp_path, exist_ok=True)
         os.makedirs(figure_exp_path, exist_ok=True)
         
