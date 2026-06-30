@@ -16,7 +16,7 @@ class Mimic_Training:
         self.use_full_batch = use_full_batch
 
     def get_dataloaders(self):
-        self.connector.scale_and_add_pos_enc_to_features('MIMIC_TRAIN', 'MIMIC_VAL', 'MIMIC_TEST')
+        self.connector.scale_and_add_positional_encodings('MIMIC_TRAIN', 'MIMIC_VAL', 'MIMIC_TEST')
 
         train_seed_patient_ids = self.connector.get_mimic_patient_train_ids()
         val_seed_patient_ids = self.connector.get_mimic_patient_val_ids()

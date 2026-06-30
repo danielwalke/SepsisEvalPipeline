@@ -210,7 +210,7 @@ class SQLiteConnector:
 
         return Data(x=x, edge_index=edge_index, edge_attr=weights, y=y, batch_mask=batch_mask)
 
-    def scale_and_add_pos_enc_to_features(self, train_split_name, *test_split_names, chunk_size=10000):
+    def scale_and_add_positional_encodings(self, train_split_name, *test_split_names, chunk_size=10000):
         """
         Scales features and adds positional encodings using memory-efficient chunking 
         and high-speed NumPy vectorization.
@@ -272,7 +272,7 @@ class SQLiteConnector:
                 print(f"No rows need updating for {split_name}.")
                 continue
                 
-            self.cursor.execute(f"SELECT id, features, pos_encodings FROM {split_name}_nodes WHERE id > -1 AND features_scaled IS NULL")
+            self.cursor.execute(f"SELECT id, features, pos_encodings FROM {split_name}_nodes WHERE id > -1 AND features_scaled IS NULL") #, pos_encodings
             
             with tqdm(total=total_split_nodes, desc=f"Scaling {split_name}") as pbar:
                 while True:

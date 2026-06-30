@@ -208,7 +208,7 @@ def get_full_graph(self):
         batch_mask=torch.ones(x.size(0), dtype=torch.bool) 
     )
 
-    def scale_and_add_pos_enc_to_features(self, train_split_name, *test_split_names):
+    def scale_and_add_positional_encodings(self, train_split_name, *test_split_names):
         with self.driver.session() as session:
             result = session.run(f"""
                 MATCH (n:{train_split_name})

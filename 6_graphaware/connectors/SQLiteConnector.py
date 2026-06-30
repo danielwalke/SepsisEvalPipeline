@@ -111,7 +111,7 @@ class SQLiteConnector:
         
         # 2. Extract Seed/Target Nodes
         seed_query = f"""
-            SELECT id, features, label, patientId 
+            SELECT id, features, label, patientId
             FROM {nodes_table}
             {sql_condition}
             ORDER BY patientId
@@ -160,9 +160,11 @@ class SQLiteConnector:
         # Fast tuple unpacking using comprehensions
         seed_feats = [np.frombuffer(r[1], dtype=np.float32) if r[1] else [] for r in seed_rows]
         seed_labels = [r[2] if r[2] is not None else np.nan for r in seed_rows]
-        
+
         neigh_feats = [np.frombuffer(r[1], dtype=np.float32) if r[1] else [] for r in neighbor_rows]
         neigh_labels = [np.nan] * len(neighbor_rows)
+
+
 
         # Concatenate nodes directly into memory
         features_arr = np.array(seed_feats + neigh_feats, dtype=np.float32)

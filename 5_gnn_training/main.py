@@ -68,7 +68,7 @@ if __name__ == '__main__':
     
     # 3. Read the seed
     seed_everything(int(config['RANDOM']['seed']))
-    seed_everything(int(config['RANDOM']['seed']))
+
     feature_set_name = config['PANEL']['panel_name']
     include_sbc = config['PANEL'].getboolean('include_sbc', fallback=False)
     checkpoint_path = os.path.expanduser("/app/checkpoints")
@@ -103,16 +103,16 @@ if __name__ == '__main__':
 
     model_evaluation = ModelEvaluation(device = device, evaluation_fun=roc_auc_score, is_evaluation_fun_probabilistic=True)
     
-        
+   
     space = {
-                'lr': hp.loguniform('lr', -3, -2),
-                'weight_decay': hp.loguniform('weight_decay', -12, -4),
+                'lr': hp.loguniform('lr',np.log(0.0005), np.log(0.005)),
+                'weight_decay': hp.loguniform('weight_decay', np.log(1e-6), np.log(1e-4)),
                 'hidden_channels': hp.choice('hidden_channels', [64, 128, 256]),
                 'num_layers': hp.choice('num_layers', [2, 3, 4]),
-                'dropout': hp.uniform('dropout', 0.0, 0.5),
+                'dropout': hp.uniform('dropout', 0.0, 0.3),
                 'heads': hp.choice('heads', [2, 4, 8]),
-                'activation': hp.choice('activation', [nn.ReLU(), nn.ELU(), nn.Tanh()]),
-                'skip_connections': hp.choice('skip_connections', [False, True])
+                'activation': hp.choice('activation', [nn.ReLU(), nn.ELU()]),
+                'skip_connections': hp.choice('skip_connections', [False])
     }
     
     for dataloader_container in dataloader_containers:
@@ -123,21 +123,22 @@ if __name__ == '__main__':
 
         train_loader, val_loader, test_loaders = dataloader_container.get_dataloaders()
         hyperparam_tuning_start_time = time.time()
-        model_tuning = ModelTuning(device=device, model_evaluation=model_evaluation)
-        ##TODO: Enable tuning
-        best_hyperparams = model_tuning.eval_hyperparameters(space, train_loader, val_loader, in_channels=in_channels, out_channels=out_channels, max_evals=20, verbosity=True)
+        
+        # model_tuning = ModelTuning(device=device, model_evaluation=model_evaluation)
+        # best_hyperparams = model_tuning.eval_hyperparameters(space, train_loader, val_loader, in_channels=in_channels, out_channels=out_channels, max_evals=20, verbosity=True)
         hyperparam_tuning_end_time = time.time() 
-        print("Best hyperparameters:", best_hyperparams)
-        # best_hyperparams = {
-        #     'lr': 0.001,
-        #     'weight_decay': 1e-5,
-        #     'hidden_channels': 128,
-        #     'num_layers': 2,
-        #     'dropout': 0.2,
-        #     'heads': 4,
-        #     'activation': nn.ReLU(),
-        #     'skip_connections': False
-        # }
+        
+        
+        best_hyperparams = {
+            'lr': 0.001,
+            'weight_decay': 1e-5,
+            'hidden_channels': 128,
+            'num_layers': 2,
+            'dropout': 0.2,
+            'heads': 4,
+            'activation': nn.ReLU(),
+            'skip_connections': False
+        }
         
         lr = best_hyperparams['lr']
         weight_decay = best_hyperparams['weight_decay']
@@ -151,7 +152,7 @@ if __name__ == '__main__':
         print(f"Using lr={lr}, weight_decay={weight_decay}, hidden_channels={hidden_channels}, out_channels={out_channels}, num_layers={num_layers}, dropout={dropout}, heads={heads}, activation={activation}, skip_connections={skip_connections}")
         training_start_time = time.time()
         model_training = ModelTraining(device=device, model_evaluation = model_evaluation, lr=lr, weight_decay=weight_decay, in_channels=in_channels, hidden_channels=hidden_channels, out_channels=out_channels, num_layers=num_layers, dropout=dropout, heads=heads, activation=activation, skip_connections=skip_connections)
-        model_training.train(train_loader, val_loader, num_epochs=2)
+        model_training.train(train_loader, val_loader, num_epochs=100)
         model_training.save_checkpoint(filepath=os.path.join(checkpoint_exp_path, "best_model.pth"))
         
         training_end_time = time.time()
@@ -161,6 +162,7 @@ if __name__ == '__main__':
 
         with mlflow.start_run(run_name=f"GNN_{dataloader_container.name}"):
             mlflow.set_tag("model", "GNN")
+            mlflow.set_tag("dataset", dataloader_container.name)
             mlflow.set_tag("approach", "Graph-based")
             mlflow.set_tag("feature_set", feature_set_name)
             mlflow.log_params(best_hyperparams)

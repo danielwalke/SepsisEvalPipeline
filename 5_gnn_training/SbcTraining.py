@@ -17,7 +17,7 @@ class SBC_Training:
         self.use_full_batch = use_full_batch
 
     def get_dataloaders(self):
-        self.connector.scale_and_add_pos_enc_to_features('SBC_TRAIN', 'SBC_TEST', 'SBC_EXT_TEST')
+        self.connector.scale_and_add_positional_encodings('SBC_TRAIN', 'SBC_TEST', 'SBC_EXT_TEST')
 
         train_seed_patient_ids = self.connector.get_sbc_patient_train_ids()
         test_seed_patient_ids = self.connector.get_sbc_patient_test_ids()
@@ -50,6 +50,4 @@ class SBC_Training:
     @property
     def name(self):
         return "SBC"
-        
-        
         
