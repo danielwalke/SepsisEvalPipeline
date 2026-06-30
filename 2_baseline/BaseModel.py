@@ -134,5 +134,5 @@ class BaseModel:
                 mlflow.log_metric(f"{test_name}__AUROC", score)
                 print(f"Test Score on {test_name}: {score} with inference time {inference_test_end_time - inference_test_start_time} seconds")
 
-                mlflow.end_run()
+        mlflow.end_run()
         return score
