@@ -16,7 +16,7 @@ class LogisticRegressionModel(BaseModel):
             "max_iter": hp.hp.choice("max_iter", [100, 200, 300, 400, 500]),
             "random_state": self.seed,
             "class_weight": hp.hp.choice("class_weight", [None, "balanced"]),
-            "normalize": hp.hp.choice("normalize", [True, False])
+            "normalize": hp.hp.choice("normalize", [True])
         }
         best_params = self.tune_params(search_space)
         self.log_scores(best_params, *test_data)

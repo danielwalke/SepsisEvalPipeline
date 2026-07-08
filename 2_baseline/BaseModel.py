@@ -120,8 +120,8 @@ class BaseModel:
             if test_data is None: continue
             for test_data_set in test_data.test_data_containers:
                 test_name, test_X, test_y = test_data_set
+                test_X = scaler.transform(test_X.copy()) if normalize else test_X
                 print(f"Evaluating on test dataset: {test_name}")
-                print(test_X.head())
 
                 inference_test_start_time = time.time()
                 if self.metric_pred_proba:
