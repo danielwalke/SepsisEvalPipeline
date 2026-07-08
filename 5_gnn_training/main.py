@@ -119,26 +119,26 @@ if __name__ == '__main__':
         print(f"Processing dataset: {dataloader_container.name}")
         exp_name = f"{dataloader_container.name}_{feature_set_name}"
         checkpoint_exp_path = os.path.join(checkpoint_path, exp_name)
+        pos_weight = dataloader_container.get_pos_weight()
         os.makedirs(checkpoint_exp_path, exist_ok=True)
 
         train_loader, val_loader, test_loaders = dataloader_container.get_dataloaders()
         hyperparam_tuning_start_time = time.time()
         
-        # model_tuning = ModelTuning(device=device, model_evaluation=model_evaluation)
-        # best_hyperparams = model_tuning.eval_hyperparameters(space, train_loader, val_loader, in_channels=in_channels, out_channels=out_channels, max_evals=20, verbosity=True)
-        hyperparam_tuning_end_time = time.time() 
+        model_tuning = ModelTuning(device=device, model_evaluation=model_evaluation, pos_weight= pos_weight)
+        best_hyperparams = model_tuning.eval_hyperparameters(space, train_loader, val_loader, in_channels=in_channels, out_channels=out_channels, max_evals=20, verbosity=True)
+        hyperparam_tuning_end_time = time.time()        
         
-        
-        best_hyperparams = {
-            'lr': 0.001,
-            'weight_decay': 1e-5,
-            'hidden_channels': 128,
-            'num_layers': 2,
-            'dropout': 0.2,
-            'heads': 4,
-            'activation': nn.ReLU(),
-            'skip_connections': False
-        }
+        # best_hyperparams = {
+        #     'lr': 0.001,
+        #     'weight_decay': 1e-5,
+        #     'hidden_channels': 128,
+        #     'num_layers': 2,
+        #     'dropout': 0.2,
+        #     'heads': 4,
+        #     'activation': nn.ReLU(),
+        #     'skip_connections': False
+        # }
         
         lr = best_hyperparams['lr']
         weight_decay = best_hyperparams['weight_decay']
@@ -151,7 +151,7 @@ if __name__ == '__main__':
         
         print(f"Using lr={lr}, weight_decay={weight_decay}, hidden_channels={hidden_channels}, out_channels={out_channels}, num_layers={num_layers}, dropout={dropout}, heads={heads}, activation={activation}, skip_connections={skip_connections}")
         training_start_time = time.time()
-        model_training = ModelTraining(device=device, model_evaluation = model_evaluation, lr=lr, weight_decay=weight_decay, in_channels=in_channels, hidden_channels=hidden_channels, out_channels=out_channels, num_layers=num_layers, dropout=dropout, heads=heads, activation=activation, skip_connections=skip_connections)
+        model_training = ModelTraining(device=device, model_evaluation = model_evaluation, pos_weight=pos_weight, lr=lr, weight_decay=weight_decay, in_channels=in_channels, hidden_channels=hidden_channels, out_channels=out_channels, num_layers=num_layers, dropout=dropout, heads=heads, activation=activation, skip_connections=skip_connections)
         model_training.train(train_loader, val_loader, num_epochs=100)
         model_training.save_checkpoint(filepath=os.path.join(checkpoint_exp_path, "best_model.pth"))
         

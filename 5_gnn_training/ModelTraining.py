@@ -5,9 +5,10 @@ from tqdm import tqdm
 from torch import nn
 
 class ModelTraining:
-    def __init__(self, device, model_evaluation:ModelEvaluation, lr, weight_decay, in_channels, hidden_channels=128, out_channels=1, num_layers=3, dropout=0.3, heads=4, activation=nn.ReLU(), skip_connections=False):
+    def __init__(self, device, model_evaluation:ModelEvaluation, pos_weight, lr, weight_decay, in_channels, hidden_channels=128, out_channels=1, num_layers=3, dropout=0.3, heads=4, activation=nn.ReLU(), skip_connections=False):
         assert isinstance(model_evaluation, ModelEvaluation), "model_evaluation must be an instance of the ModelEvaluation class."
         assert isinstance(device, torch.device), "device must be a torch.device object indicating the device to run training on."
+        assert isinstance(pos_weight, float), "Pos weight must be a float."
         assert isinstance(lr, float) and lr > 0, "Learning rate must be a positive float."
         assert isinstance(weight_decay, float) and weight_decay >= 0, "Weight decay must be a non-negative float."
         assert isinstance(in_channels, int) and in_channels > 0, "Input channels must be a positive integer."
@@ -31,7 +32,7 @@ class ModelTraining:
         self.skip_connections = skip_connections
         
         self.model = GNNModel(in_channels=self.in_channels, hidden_channels=self.hidden_channels, out_channels=self.out_channels, num_layers=self.num_layers, dropout=self.dropout, heads=self.heads, activation=self.activation, skip_connections=self.skip_connections).to(self.device)
-        pos_weight = torch.tensor([664.0]).to(self.device) #525.0 for mimic, 664.0 for sbc
+        pos_weight = torch.tensor([pos_weight]).to(self.device) #525.0 for mimic, 664.0 for sbc
         self.criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, weight_decay=weight_decay)
 

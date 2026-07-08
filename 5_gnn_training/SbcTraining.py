@@ -46,6 +46,10 @@ class SBC_Training:
         ext_test_loader.name = "SBC_EXT_TEST"
 
         return train_loader, val_loader, [val_loader, test_loader, ext_test_loader]
+    
+    def get_pos_weight(self):
+        pos_weight = self.connector.get_pos_weight('SBC_TRAIN')
+        return pos_weight
 
     @property
     def name(self):

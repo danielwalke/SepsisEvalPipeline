@@ -4,12 +4,14 @@ from ModelEvaluation import ModelEvaluation
 from ModelTraining import ModelTraining
 
 class ModelTuning:
-    def __init__(self, device, model_evaluation: ModelEvaluation):
+    def __init__(self, device, model_evaluation: ModelEvaluation, pos_weight):
         assert isinstance(model_evaluation, ModelEvaluation)
         assert isinstance(device, torch.device)
+        assert isinstance(pos_weight, float), "Pos weight must be a float."
         
         self.device = device
         self.model_evaluation = model_evaluation
+        self.pos_weight = pos_weight
         
     def eval_hyperparameters(self, space, train_loader, val_loader, in_channels, out_channels, max_evals=20, verbosity=True):
         ## TODO seed init
@@ -31,6 +33,7 @@ class ModelTuning:
             model_training = ModelTraining(
                 device=self.device, 
                 model_evaluation=self.model_evaluation, 
+                pos_weight=self.pos_weight,
                 lr=lr, 
                 weight_decay=weight_decay, 
                 in_channels=in_channels, 

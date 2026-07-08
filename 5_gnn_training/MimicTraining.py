@@ -40,6 +40,10 @@ class Mimic_Training:
         test_loader.name = "MIMIC_TEST"
 
         return train_loader, val_loader, [val_loader, test_loader]
+    
+    def get_pos_weight(self):
+        pos_weight = self.connector.get_pos_weight('MIMIC_TRAIN')
+        return pos_weight
 
     @property
     def name(self):
