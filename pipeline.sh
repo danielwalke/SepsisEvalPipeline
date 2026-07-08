@@ -1,4 +1,4 @@
-#!/bin/bash
+!/bin/bash
 set -e
 
 python -m 0_mimic_preprocess.panel_name_to_feature_codes
@@ -11,7 +11,6 @@ PRE_PROCESS_DIR="${PWD}/1_preprocess/data/preprocessed_data/${PANEL_NAME}"
 GRAPH_CONSTRUCTION_DIR="${PWD}/3_graph_construction/data/${PANEL_NAME}"
 METRICS_DIR="${PWD}/3_graph_construction/metrics"
 
-# Change these two lines:
 export HOST_UID=$(id -u)
 export HOST_GID=$(id -g)
 
@@ -43,7 +42,7 @@ docker run --rm \
 
 echo "--- STEP 2: BASELINE ---"
 ls -l "$PRE_PROCESS_DIR"
-docker build -f "${PWD}/2_baseline/Dockerfile" -t 2_baseline "${PWD}/2_baseline"
+docker build --no-cache -f "${PWD}/2_baseline/Dockerfile" -t 2_baseline "${PWD}/2_baseline" 
 docker run --rm \
   --add-host=host.docker.internal:host-gateway \
   -v "${PRE_PROCESS_DIR}:/app/input" \
