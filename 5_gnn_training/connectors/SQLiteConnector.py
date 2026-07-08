@@ -319,3 +319,10 @@ class SQLiteConnector:
     def get_node_count(self, split_name):
         self.cursor.execute(f"SELECT COUNT(1) FROM {split_name}_nodes")
         return self.cursor.fetchone()[0]
+    
+    def get_pos_weight(self, split_name):
+        self.cursor.execute(f"SELECT SUM(CASE WHEN label = 1 THEN 1 ELSE 0 END), SUM(CASE WHEN label = 0 THEN 1 ELSE 0 END) FROM {split_name}_nodes")
+        pos_count, neg_count = self.cursor.fetchone()
+        if pos_count == 0:
+            return float('inf')  
+        return neg_count / pos_count
