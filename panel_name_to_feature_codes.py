@@ -85,18 +85,31 @@ panel_name_to_feature_codes = {
     "HIL": [HIL_INDICES[lab] for lab in HIL_INDICES]
 }
 
+def write_feature_codes_to_csv(panel_name):
+
+    
+    feature_codes = []
+    for panel in panel_name.split("_"):
+        panel = panel.strip()
+        if panel in panel_name_to_feature_codes:
+            feature_codes.extend(panel_name_to_feature_codes[panel])
+        else:
+            raise ValueError(f"Panel name '{panel}' not found in panel_name_to_feature_codes mapping.")
+
+    with open("0_mimic_preprocess/features/feature_codes.csv", "w") as f:
+        f.write("itemid\n")
+        for code in feature_codes:
+            f.write(f"{code}\n")
+
+def write_config_to_env(config, env_file_path):
+
+    with open(env_file_path, 'w') as env_file:
+        for section in config.sections() + ['DEFAULT']:
+            for key, value in config[section].items():
+                clean_value = value.strip('"\' ')
+                env_file.write(f"{key.upper()}={clean_value}\n")
 config = configparser.ConfigParser()
 config.read('config.ini')
 panel_name = config["PANEL"]["panel_name"]
-feature_codes = []
-for panel in config["PANEL"]["panel_name"].split("_"):
-    panel = panel.strip()
-    if panel in panel_name_to_feature_codes:
-        feature_codes.extend(panel_name_to_feature_codes[panel])
-    else:
-        raise ValueError(f"Panel name '{panel}' not found in panel_name_to_feature_codes mapping.")
-
-with open("0_mimic_preprocess/features/feature_codes.csv", "w") as f:
-    f.write("itemid\n")
-    for code in feature_codes:
-        f.write(f"{code}\n")
+write_feature_codes_to_csv(panel_name)
+write_config_to_env(config, '.env')
