@@ -3,3 +3,4 @@ scikit-learn==1.7.2
 hyperopt==0.2.7
 setuptools<82
 mlflow==3.10.1
+xgboost==3.3.0
