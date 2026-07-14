@@ -1,0 +1,73 @@
+services:
+  mimic-preprocessor:
+    build: 
+      context: ./0_mimic_preprocess
+    volumes:
+      - ./mimic:/app/input
+      - ./0_mimic_preprocess/preprocessed_file/${PANEL_NAME}:/app/output
+      - ./0_mimic_preprocess/features:/app/features
+
+  1-datapreprocess:
+    build: 
+      context: ./1_preprocess
+    depends_on:
+      mimic-preprocessor:
+        condition: service_completed_successfully
+    volumes:
+      - ./0_mimic_preprocess/preprocessed_file/${PANEL_NAME}:/app/input
+      - ./0_mimic_preprocess/features:/app/features
+      - ./0_mimic_preprocess/extdata:/app/extdata
+      - ./1_preprocess/data/preprocessed_data/${PANEL_NAME}:/app/output
+      - ./config.ini:/app/config/config.ini
+
+  2-baseline:
+    build: 
+      context: ./2_baseline
+    depends_on:
+      1-datapreprocess:
+        condition: service_completed_successfully
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./1_preprocess/data/preprocessed_data/${PANEL_NAME}:/app/input
+      - ./2_baseline:/app/output
+      - ./config.ini:/app/config/config.ini
+      - ./2_baseline/models:/app/models
+
+  3-graph-construction:
+    build: 
+      context: ./3_graph_construction
+    depends_on:
+      1-datapreprocess:
+        condition: service_completed_successfully
+    volumes:
+      - ./1_preprocess/data/preprocessed_data/${PANEL_NAME}:/app/input
+      - ./3_graph_construction/data/${PANEL_NAME}:/app/output
+      - ./3_graph_construction/metrics:/app/metrics
+      - ./config.ini:/app/config/config.ini
+
+  4-db-upload:
+    build:
+      context: ./4_db_upload
+      dockerfile: sqlite/Dockerfile
+    depends_on:
+      3-graph-construction:
+        condition: service_completed_successfully
+    environment:
+      - GRAPH_DIR=./3_graph_construction/data/${PANEL_NAME}
+
+  5-gnn-training:
+    build:
+      context: ./5_gnn_training
+      dockerfile: docker/Dockerfile
+    depends_on:
+      4-db-upload:
+        condition: service_completed_successfully
+
+  6-graphaware:
+    build:
+      context: ./6_graphaware
+      dockerfile: docker/Dockerfile
+    depends_on:
+      4-db-upload:
+        condition: service_completed_successfully
