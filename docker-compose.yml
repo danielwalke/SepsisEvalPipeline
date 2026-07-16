@@ -1,17 +1,39 @@
 services:
-  mimic-preprocessor:
+  mlflow-server:
+    image: ghcr.io/mlflow/mlflow:latest
+    container_name: mlflow_container
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlflow_data:/mlflow
+    command: >
+      mlflow server 
+      --host 0.0.0.0 
+      --allowed-hosts "*" 
+      --backend-store-uri sqlite:////mlflow/mlflow.db 
+      --serve-artifacts 
+      --default-artifact-root mlflow-artifacts:/
+    networks:
+      mlflow-network:
+        aliases:
+          - mlflow-server
+
+  mimic-preprocessor-and-sbc-extractor:
     build: 
       context: ./0_mimic_preprocess
+    environment:
+      - PYTHONUNBUFFERED=1
     volumes:
       - ./mimic:/app/input
       - ./0_mimic_preprocess/preprocessed_file/${PANEL_NAME}:/app/output
       - ./0_mimic_preprocess/features:/app/features
+    command: ["https://github.com/ampel-leipzig/sbcdata/raw/main/inst/extdata/sbcdata.csv.zip", "/app/output"]
 
   1-datapreprocess:
     build: 
       context: ./1_preprocess
     depends_on:
-      mimic-preprocessor:
+      mimic-preprocessor-and-sbc-extractor:
         condition: service_completed_successfully
     volumes:
       - ./0_mimic_preprocess/preprocessed_file/${PANEL_NAME}:/app/input
@@ -26,6 +48,8 @@ services:
     depends_on:
       1-datapreprocess:
         condition: service_completed_successfully
+      mlflow-server:
+        condition: service_started
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
@@ -33,6 +57,9 @@ services:
       - ./2_baseline:/app/output
       - ./config.ini:/app/config/config.ini
       - ./2_baseline/models:/app/models
+    networks:
+      - default
+      - mlflow-network
 
   3-graph-construction:
     build: 
@@ -63,6 +90,11 @@ services:
     depends_on:
       4-db-upload:
         condition: service_completed_successfully
+      mlflow-server:
+        condition: service_started
+    networks:
+      - default
+      - mlflow-network
 
   6-graphaware:
     build:
@@ -71,3 +103,19 @@ services:
     depends_on:
       4-db-upload:
         condition: service_completed_successfully
+      mlflow-server:
+        condition: service_started
+    networks:
+      - default
+      - mlflow-network
+
+networks:
+  default:
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: "1400"
+  mlflow-network:
+    name: mlflow-network
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: "1400"
