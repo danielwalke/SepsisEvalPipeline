@@ -75,13 +75,19 @@ services:
 
   4-db-upload:
     build:
-      context: ./4_db_upload
-      dockerfile: sqlite/Dockerfile
+      context: ./4_db_upload/sqlite
+      dockerfile: Dockerfile
     depends_on:
       3-graph-construction:
         condition: service_completed_successfully
+    user: "${HOST_UID}:${HOST_GID}" 
+    volumes:
+      - "./3_graph_construction/data/${PANEL_NAME}:/app/csv_data:ro"
+      - "./4_db_upload/sqlite/sqlite_data:/app/db"
+      
     environment:
-      - GRAPH_DIR=./3_graph_construction/data/${PANEL_NAME}
+      CSV_DIR: /app/csv_data
+      DB_PATH: /app/db/mimic_sbc_graph.db
 
   5-gnn-training:
     build:
@@ -92,6 +98,24 @@ services:
         condition: service_completed_successfully
       mlflow-server:
         condition: service_started
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}" 
+    shm_size: "32gb"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+              
+    volumes:
+      - ./5_gnn_training:/app
+      - ./0_mimic_preprocess:/app/0_mimic_preprocess:ro
+      - ./4_db_upload/sqlite/sqlite_data:/app/db_data
+      - ./config.ini:/app/config/config.ini:ro
+      
+    environment:
+      DB_PATH: /app/db_data/mimic_sbc_graph.db
     networks:
       - default
       - mlflow-network
@@ -105,6 +129,35 @@ services:
         condition: service_completed_successfully
       mlflow-server:
         condition: service_started
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}" 
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+              
+    volumes:
+      # Mount your core pipeline code
+      - ..:/app
+      
+      # Mount related processing scripts (Read-Only)
+      - ../../0_mimic_preprocess:/app/0_mimic_preprocess:ro
+      
+      # Mount the local SQLite database directory
+      - ../../4_db_upload/sqlite/sqlite_data:/app/db_data
+      
+      # Mount the configuration setup directly into /app/config/ (Read-Only)
+      - ../../config.ini:/app/config/config.ini:ro
+      
+    environment:
+      # Directs the internal SQLiteConnector to the correct persistent database file
+      - DB_PATH=/app/db_data/mimic_sbc_graph.db
+      # Ensures Python logs transfer cleanly to the console out in real time
+      - PYTHONUNBUFFERED=1
+      # FIX: Assign a writable cache directory for Matplotlib
+      - MPLCONFIGDIR=/tmp/matplotlib
     networks:
       - default
       - mlflow-network
