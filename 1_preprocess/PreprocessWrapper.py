@@ -7,7 +7,7 @@ import configparser
 class PreprocessWrapper:
     def __init__(self, feature_input_dir_path, extdata_input_dir_path, sbc_data=None, mimic_data=None, print_logs=False):
         self.config = configparser.ConfigParser()
-        self.config.read('config/config.ini')
+        self.config.read('/app/config/config.ini')
         self.include_sbc = self.config['PANEL'].getboolean('include_sbc', fallback=False)
         self.feature_input_dir_path = feature_input_dir_path
         self.extdata_input_dir_path = extdata_input_dir_path
@@ -191,11 +191,17 @@ def process_sbc_data(input_dir_path, feature_input_dir_path, extdata_input_dir_p
 
 if __name__ == "__main__":
     print(os.getcwd())
-
-    input_dir_path = "/app/input" 
+    config = configparser.ConfigParser()
+    config.read('/app/config/config.ini')
+    panel_name = config['PANEL']["panel_name"]
+    input_dir_path = f"/app/input/{panel_name}" 
     feature_input_dir_path = "/app/features"
-    output_dir_path = "/app/output" 
+    output_dir_path = f"/app/output/{panel_name}" 
     extdata_input_dir_path = "/app/extdata"
+
+    os.makedirs(output_dir_path, exist_ok=True)
+    os.makedirs(feature_input_dir_path, exist_ok=True)
+    os.makedirs(extdata_input_dir_path, exist_ok=True)
     
     if not os.path.exists(output_dir_path):
         os.makedirs(output_dir_path)    

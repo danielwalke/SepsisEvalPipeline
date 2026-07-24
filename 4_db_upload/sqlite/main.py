@@ -1,3 +1,4 @@
+import configparser
 import sqlite3
 import csv
 import os
@@ -81,8 +82,13 @@ def process_and_upload_split(conn, csv_dir, cursor, split_label, file_prefix):
 
 
 if __name__ == "__main__":
-    csv_dir = os.environ.get("CSV_DIR", ".")
-    db_path = os.environ.get("DB_PATH", "mimic_sbc_graph.db")
+    config = configparser.ConfigParser()
+    config.read('/app/config/config.ini')
+    panel_name = config['PANEL']["panel_name"]
+    csv_dir = f"/app/csv_data/{panel_name}"
+    db_dir = f"/app/db/{panel_name}"
+    db_path = f"{db_dir}/mimic_sbc_graph.db"
+    os.makedirs(db_dir, exist_ok=True)
     
     print(f"Connecting to SQLite database at: {db_path}")
     conn = sqlite3.connect(db_path)

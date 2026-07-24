@@ -23,6 +23,9 @@
 #' mimic <- import_mimic("path/to/mimic-iv-1.0")
 #' }
 library(data.table)
+library(ini)
+
+
 import_mimic <- function(path, out_dir_path, verbose = interactive()) {
     message("Starting MIMIC-IV preprocessing")
     extdata_path <- "extdata"
@@ -289,5 +292,12 @@ import_mimic <- function(path, out_dir_path, verbose = interactive()) {
     print(paste("Processing complete. Saved to:", output_file))
 }
 
-import_mimic("/app/input", "/app/output") #'C:\\Users\\danie\\Downloads\\mimic-iv-3.1\\mimic-iv-3.1\\'
+config <- read.ini("/app/config/config.ini")
+
+panel_name <- config$PANEL$panel_name
+output_dir <- paste0("/app/output/", panel_name, "/")
+
+dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
+
+import_mimic("/app/input", output_dir)
 

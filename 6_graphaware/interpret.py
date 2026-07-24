@@ -30,7 +30,6 @@ def interpret_and_visualize():
     
     BATCH_SIZE = 100000
     hops = [0, 1]
-    ##TODO adopt paths for docker
     with open("/app/0_mimic_preprocess/features/feature_names.txt", "r") as f:
         base_feature_names = [n.strip() for n in f.read().replace("[", "").replace("]", "").replace("'", "").split(",")]
     
@@ -41,7 +40,7 @@ def interpret_and_visualize():
                         handle_nan=0.0,
                         attention_configs=[None for _ in hops], classifier_on_device=False)
                         
-    connector = SQLiteConnector(db_path = "/app/db_data/mimic_sbc_graph.db") if db == "sqlite" else Neo4jConnector(uri="bolt://localhost:7687", user="neo4j", password="password")
+    connector = SQLiteConnector(db_path = f"/app/db/{feature_set_name}/mimic_sbc_graph.db") if db == "sqlite" else Neo4jConnector(uri="bolt://localhost:7687", user="neo4j", password="password")
     
     training_container = []
     if connector.has_sbc_nodes() and include_sbc:
@@ -58,7 +57,6 @@ def interpret_and_visualize():
         exp_name = f"{train_label_name.split('_')[0]}_{feature_set_name}"
 
 
-        ##TODO adopt paths for docker -> TODO test
         model_exp_path = os.path.join("/app", "models", exp_name)
         figure_exp_path = os.path.join("/app", "figures", exp_name)
         os.makedirs(model_exp_path, exist_ok=True)

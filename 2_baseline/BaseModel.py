@@ -27,7 +27,7 @@ class BaseModel:
                             filemode='a',
                             level=logging.INFO, format='%(asctime)s - %(message)s')
         self.logger = logging.getLogger(__name__)
-        mlflow.set_tracking_uri("http://host.docker.internal:5000")
+        mlflow.set_tracking_uri("http://mlflow-server:5000")
         mlflow.set_experiment(f"evaluations_{self.feature_set_name}")
         mlflow.start_run(run_name=f"{self.ModelClass.__name__}_Baseline_{data.name}")
         mlflow.set_tag("feature_set", self.feature_set_name)

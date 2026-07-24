@@ -56,10 +56,13 @@ def train_and_evaluate():
                         handle_nan=0.0,
                         attention_configs=[None for _ in hops], classifier_on_device=False)
     db = "sqlite"
+    config = configparser.ConfigParser()
+    config.read('/app/config/config.ini')
+    panel_name = config['PANEL']["panel_name"]
     if db == "neo4j":
         connector = Neo4jConnector(uri="bolt://localhost:7687", user="neo4j", password="password")
     elif db == "sqlite":
-         db_path = "/app/db_data/mimic_sbc_graph.db"
+         db_path = f"/app/db/{panel_name}/mimic_sbc_graph.db"
          connector = SQLiteConnector(db_path=db_path)
     else:
         raise ValueError("Unsupported database type. Please choose 'neo4j' or 'sqlite'.")

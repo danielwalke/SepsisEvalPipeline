@@ -6,7 +6,8 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 RUN install2.r --error \
-    data.table
+    data.table \
+    ini
 
 WORKDIR /app
 RUN mkdir -p /app/input /app/output /app/extdata /app/features

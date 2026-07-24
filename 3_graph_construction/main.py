@@ -150,11 +150,13 @@ if __name__ == "__main__":
     config.read('/app/config/config.ini')
     panel_name = config["PANEL"]["panel_name"]
 
-    data_input_dir = "/app/input"
-    data_output_dir = "/app/output"
-    metrics_dir = "/app/metrics"
+    data_input_dir = f"/app/input/{panel_name}"
+    data_output_dir = f"/app/output/{panel_name}"
+    metrics_dir = f"/app/metrics/{panel_name}"
     
     os.makedirs(metrics_dir, exist_ok=True)
+    os.makedirs(data_output_dir, exist_ok=True)
+    os.makedirs(data_input_dir, exist_ok=True)
     metrics_path = os.path.join(metrics_dir, f"{panel_name}.csv")
     
     metrics_list = []

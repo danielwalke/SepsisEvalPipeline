@@ -42,10 +42,16 @@ def cross_evaluate(dataloader_containers, model_evaluation, model_training):
 
 def get_connector():
     db = "sqlite"
+    config = configparser.ConfigParser()
+    config.read('/app/config/config.ini')
+    panel_name = config['PANEL']["panel_name"]
+    print(f"Using panel: {panel_name}")
     if db == "neo4j":
         connector = Neo4jConnector(uri="bolt://localhost:7687", user="neo4j", password="password")
     elif db == "sqlite":
-         db_path = os.environ.get("DB_PATH", "/app/db_data/mimic_sbc_graph.db")
+         db_path = f"/app/db/{panel_name}/mimic_sbc_graph.db"
+         print(db_path)
+         print(os.listdir(f"/app/db/{panel_name}"))
          connector = SQLiteConnector(db_path=db_path)
     else:
         raise ValueError("Unsupported database type. Please choose 'neo4j' or 'sqlite'.")
@@ -56,7 +62,7 @@ if __name__ == '__main__':
     ## Load configuration parameters    
     config = configparser.ConfigParser()
     use_full_batch = False ## True doesnt work for 40gib VRAM
-    print(os.listdir("/app/config/"))
+    
     db_type = "sqlite"  
     config_path = '/app/config/config.ini'
     # config.read('/app/config/config.ini')

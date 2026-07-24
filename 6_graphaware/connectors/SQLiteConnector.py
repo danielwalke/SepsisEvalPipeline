@@ -1,3 +1,4 @@
+import configparser
 import os
 import sqlite3
 import re
@@ -9,8 +10,11 @@ class SQLiteConnector:
         Initializes the SQLite connector.
         Reads the database path from the environment variable if not provided.
         """
+        config = configparser.ConfigParser()
+        config.read('/app/config/config.ini')
+        panel_name = config['PANEL']["panel_name"]
         if db_path is None:
-            db_path = os.environ.get("DB_PATH", "/app/db_data/mimic_sbc_graph.db")
+            db_path = f"/app/db/{panel_name}/mimic_sbc_graph.db"
         
         # timeout=60.0 ensures concurrent workers wait instead of immediately locking out
         self.conn = sqlite3.connect(db_path, timeout=60.0)
