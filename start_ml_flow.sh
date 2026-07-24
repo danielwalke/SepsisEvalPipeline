@@ -12,7 +12,7 @@ docker run -d -p 5000:5000 \
   --name mlflow_container \
   --network mlflow-network \
   --network-alias mlflow-server \
-  -v /home/daniel.walke/git/SepsisEvalPipeline/mlflow_data:/mlflow \
+  -v $(pwd)/mlflow_data:/mlflow \
   ghcr.io/mlflow/mlflow:latest \
   mlflow server \
   --host 0.0.0.0 \
