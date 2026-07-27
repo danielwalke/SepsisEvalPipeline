@@ -1,4 +1,74 @@
 services:
+  ram-tracker:
+    image: docker:cli
+    container_name: ram_tracker
+    init: true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./:/workspace
+    networks:
+      - default
+    user: "root"
+    command:
+      - sh
+      - -c
+      - |
+        apk update > /dev/null 2>&1
+        apk add --no-cache python3 > /dev/null 2>&1
+        python3 -u - << 'EOF'
+        import subprocess, json, re, time
+
+        peaks = {}
+
+        def parse_bytes(mem_str):
+            raw = mem_str.split('/')[0].strip()
+            match = re.match(r"([0-9.]+)\s*([a-zA-Z]+)", raw)
+            if not match:
+                return 0
+            val, unit = float(match.group(1)), match.group(2).lower()
+            mult = {'b': 1, 'kib': 1024, 'mib': 1024**2, 'gib': 1024**3, 'kb': 1000, 'mb': 1000**2, 'gb': 1000**3}.get(unit, 1)
+            return int(val * mult)
+
+        def fmt(size):
+            for u in ['B', 'KiB', 'MiB', 'GiB']:
+                if size < 1024:
+                    return f"{size:.2f} {u}"
+                size /= 1024.0
+            return f"{size:.2f} TiB"
+
+        while True:
+            try:
+                out = subprocess.check_output(
+                    ["docker", "stats", "--no-stream", "--format", '{"name":"{{.Name}}","mem":"{{.MemUsage}}"}'],
+                    stderr=subprocess.DEVNULL, text=True
+                )
+                for line in out.strip().split('\n'):
+                    if not line:
+                        continue
+                    try:
+                        d = json.loads(line.strip())
+                        name, mem = d.get("name"), d.get("mem")
+                        if name and mem:
+                            b = parse_bytes(mem)
+                            if name not in peaks or b > peaks[name]:
+                                peaks[name] = b
+                    except:
+                        pass
+                
+                if peaks:
+                    with open('/workspace/peak_ram.txt', 'w') as f:
+                        f.write("="*45 + "\n")
+                        f.write("          PEAK RAM USAGE SUMMARY\n")
+                        f.write("="*45 + "\n")
+                        for c, p in sorted(peaks.items()):
+                            if c != "ram_tracker":
+                                f.write(f" {c:<32} : {fmt(p)}\n")
+                        f.write("="*45 + "\n")
+            except:
+                pass
+            
+            time.sleep(2)
+        EOF
   mlflow-server:
     image: ghcr.io/mlflow/mlflow:latest
     container_name: mlflow_container
