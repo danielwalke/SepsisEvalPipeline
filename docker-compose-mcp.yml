@@ -1,0 +1,127 @@
+services:
+  mlflow-server:
+    image: ghcr.io/mlflow/mlflow:latest
+    container_name: mlflow_container
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlflow_data:/mlflow
+    command: >
+      sh -c 'mlflow server 
+      --host 0.0.0.0 
+      --allowed-hosts "*" 
+      --backend-store-uri sqlite:////mlflow/mlflow.db 
+      --serve-artifacts 
+      --default-artifact-root /mlflow/artifacts'
+    networks:
+      mlflow-network:
+        aliases:
+          - mlflow-server
+  2-baseline:
+    build: 
+      context: ./2_baseline
+    depends_on:
+      mlflow-server:
+        condition: service_started
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./1_preprocess/data/preprocessed_data:/app/input
+      - ./2_baseline:/app/output
+      - ./config.ini:/app/config/config.ini
+      - ./2_baseline/models:/app/models
+    networks:
+      - default
+      - mlflow-network
+
+  3-graph-construction:
+    build: 
+      context: ./3_graph_construction
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}" 
+    volumes:
+      - ./1_preprocess/data/preprocessed_data:/app/input
+      - ./3_graph_construction/data:/app/output
+      - ./3_graph_construction/metrics:/app/metrics
+      - ./config.ini:/app/config/config.ini
+
+  4-db-upload:
+    build:
+      context: ./4_db_upload/sqlite
+      dockerfile: Dockerfile
+    depends_on:
+      3-graph-construction:
+        condition: service_completed_successfully
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}" 
+    volumes:
+      - "./3_graph_construction/data:/app/csv_data:ro"
+      - "./4_db_upload/sqlite/sqlite_data:/app/db"
+      - ./config.ini:/app/config/config.ini
+    environment:
+      CSV_DIR: /app/csv_data
+      DB_PATH: /app/db/mimic_sbc_graph.db
+      
+  5-gnn-training:
+    build:
+      context: ./5_gnn_training
+      dockerfile: docker/Dockerfile
+    depends_on:
+      4-db-upload:
+        condition: service_completed_successfully
+      mlflow-server:
+        condition: service_started
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}" 
+    shm_size: "32gb"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    volumes:
+      - ./5_gnn_training:/app
+      - ./0_mimic_preprocess:/app/0_mimic_preprocess:ro
+      - ./4_db_upload/sqlite/sqlite_data:/app/db
+      - ./config.ini:/app/config/config.ini:ro
+    networks:
+      - default
+      - mlflow-network
+
+  6-graphaware:
+    build:
+      context: ./6_graphaware
+      dockerfile: docker/Dockerfile
+    depends_on:
+      5-gnn-training:
+        condition: service_completed_successfully
+      mlflow-server:
+        condition: service_started
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}" 
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    volumes:
+      - ./6_graphaware:/app
+      - ./0_mimic_preprocess:/app/0_mimic_preprocess:ro
+      - ./4_db_upload/sqlite/sqlite_data:/app/db
+      - ./config.ini:/app/config/config.ini:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+      - MPLCONFIGDIR=/tmp/matplotlib
+    networks:
+      - default
+      - mlflow-network
+networks:
+  default:
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: "1400"
+  mlflow-network:
+    name: mlflow-network
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: "1400"
