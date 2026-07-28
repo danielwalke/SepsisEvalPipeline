@@ -11,7 +11,7 @@ It features time-decay patient temporal graph construction, graph database stora
 
 ---
 
-![GraphFlow Inference Dashboard Application](docs/images/graphflow_dashboard_actual.png)
+![GraphFlow Streamlit Dashboard Overview](docs/images/graphflow_dashboard_actual.png)
 
 ---
 
@@ -28,7 +28,7 @@ It features time-decay patient temporal graph construction, graph database stora
 - **Explainable AI ($2N$ SHAP Values)**: Computes aggregated local SHAP values ($\text{SHAP}_{\text{orig}} + \text{SHAP}_{\text{delta\_mean}}$) per feature to deliver clinically interpretable explanations.
 - **Geometric Mean (G-Mean) ROC Optimization**: Pre-computed optimal ROC classification cutoffs tailored per laboratory panel.
 - **Model Context Protocol (MCP) Server & Client**: Standardized FastMCP server interface paired with an OpenAI-compatible MCP Client for LLM agent integration.
-- **Streamlit Interactive Dashboard**: Real-time sepsis risk assessment, calibrated risk scores, and patient SHAP visualizations.
+- **Streamlit Interactive Dashboard**: Real-time sepsis risk assessment, calibrated risk scores, ROC/AUROC evaluation, and patient SHAP visualizations.
 
 ---
 
@@ -93,7 +93,7 @@ SepsisEvalPipeline/
 - **Output**: Trained GraphAware models in `6_graphaware/models/` and SHAP summary plots.
 
 ### 7. Interactive Inference & Dashboard (`7_inference/`)
-- Interactive Streamlit dashboard (`app.py`) providing real-time sepsis risk prediction, calibrated probability percentage, and local SHAP explanation breakdowns.
+- Interactive Streamlit dashboard (`app.py`) providing real-time sepsis risk prediction, calibrated probability percentage, ROC/AUROC curves, and local SHAP explanation breakdowns.
 
 ---
 
@@ -122,11 +122,55 @@ LOG_LEVEL=INFO
 SEED=42
 ```
 
-You can automatically populate `HOST_UID` and `HOST_GID` on Linux/macOS using:
+Populate `HOST_UID` and `HOST_GID` on Linux/macOS using:
 ```bash
 echo "HOST_UID=$(id -u)" >> .env
 echo "HOST_GID=$(id -g)" >> .env
 ```
+
+---
+
+## Interactive Dashboard Visualizations & Interpretability
+
+The Streamlit inference application provides three dedicated analytical views:
+
+### 1. Sepsis Prediction Probabilities & Risk Calibrated Table
+
+![Sepsis Prediction Probabilities & Calibrated Risk Table](docs/images/graphflow_predictions_overview.png)
+
+**Explanation**:
+- **Cutoff-Calibrated Sepsis Risk (%)**: Calibrates the raw output probability $P(\text{Sepsis})$ relative to the active Geometric Mean ROC cutoff threshold $c$.
+  - At raw probability $P = c$, calibrated risk is defined as **50.0%**.
+  - Above the cutoff ($P \ge c$), risk increases continuously from 50% to 100%.
+  - Below the cutoff ($P < c$), risk decreases continuously from 50% down to 0%.
+- **Interactive Row Selection**: Users can click directly on any patient row in the table to trigger local SHAP feature explanations.
+
+---
+
+### 2. Ground-Truth Performance Evaluation (ROC Curve, AUROC & Confusion Matrix)
+
+![Ground-Truth Performance Evaluation & ROC Curve](docs/images/graphflow_roc_auroc_evaluation.png)
+
+**Explanation**:
+- **ROC Curve & AUROC Score**: Displays the Receiver Operating Characteristic curve comparing True Positive Rate (Sensitivity) against False Positive Rate ($1 - \text{Specificity}$). The overall area under the curve (AUROC) summarizes discriminative performance across all decision thresholds.
+- **Optimal Cutoff Star Marker ($\star$)**: Identifies the optimal threshold maximizing the Geometric Mean of sensitivity and specificity:
+  $$\text{G-Mean} = \sqrt{\text{Sensitivity} \times \text{Specificity}}$$
+- **Annotated Confusion Matrix**: Heatmap detailing True Negatives (TN), False Positives (FP), False Negatives (FN), and True Positives (TP) at the active decision threshold, alongside Sensitivity, Specificity, PPV (Precision), and NPV metrics.
+
+---
+
+### 3. Local SHAP Explanation & GraphFlow Feature Attribution ($2N$ Decomposed Values)
+
+![Local SHAP Explanation & GraphFlow Feature Attribution](docs/images/graphflow_shap_explanation.png)
+
+**Explanation**:
+- **Total Aggregated Local SHAP Bar Chart**: Shows the net directional impact of each lab feature on the sepsis risk score for a selected patient.
+  - **Red bars ($\text{SHAP} > 0$)**: Features driving the prediction *towards* high Sepsis risk (e.g., elevated Age or abnormal MCV).
+  - **Blue bars ($\text{SHAP} < 0$)**: Protective features driving the prediction *away* from Sepsis (e.g., normal WBC or HGB levels).
+- **GraphFlow Attribution Breakdown (Original vs. $\Delta$ Mean)**: Decomposes the total SHAP attribution into two distinct physical components:
+  1. **Original Feature SHAP** ($\mathbf{X}_{orig}$): Contribution of the patient's current static laboratory values.
+  2. **Time-Based $\Delta$ Mean SHAP** ($\mathbf{X}_{orig} - \boldsymbol{\mu}_{neighbors}$): Contribution of the patient's temporal trend relative to their historical 1-hop spatial neighborhood.
+- **Detailed Attribution Breakdown Table**: Quantifies the exact raw values, time-based delta mean values, individual SHAP values, and risk impact directions for clinical auditability.
 
 ---
 
@@ -163,21 +207,6 @@ Or pass flags explicitly:
   --model "vllm/google/gemma-4-31B-it" \
   --prompt "Run all pipeline steps and explain performance metrics."
 ```
-
----
-
-## GraphFlow Streamlit Dashboard
-
-The Streamlit web application provides a visual UI for clinical decision support.
-
-![GraphFlow Inference Predictions & SHAP](docs/images/graphflow_dashboard_predictions.png)
-
-### Launching the Dashboard
-
-```bash
-.venv/bin/python -m streamlit run 7_inference/app.py --server.port=8501
-```
-Access the dashboard at `http://localhost:8501`.
 
 ---
 
