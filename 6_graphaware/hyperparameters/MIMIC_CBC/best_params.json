@@ -1,14 +1,14 @@
 {
     "objective": "binary:logistic",
     "scale_pos_weight": 1,
-    "max_depth": 2,
-    "learning_rate": 0.13392325884360265,
-    "subsample": 0.8909561845063165,
-    "colsample_bytree": 0.8671435478121744,
-    "min_child_weight": 3.606790728749466,
-    "gamma": 0.6555273518413444,
-    "alpha": 8.847933688591855,
-    "reg_lambda": 0.00564310405526328,
+    "max_depth": 1,
+    "learning_rate": 0.19081615172005137,
+    "subsample": 0.7778733138124648,
+    "colsample_bytree": 0.9009343991956857,
+    "min_child_weight": 2.3879817544334383,
+    "gamma": 0.7294008330833289,
+    "alpha": 9.495221643144632,
+    "reg_lambda": 0.011560444941657944,
     "random_state": 42,
     "booster": "gbtree"
 }

@@ -1,0 +1,38 @@
+{
+    "MIMIC_CBC": {
+        "CBC/mimic_processed_test.csv": 0.0027,
+        "DEFAULT": 0.0027
+    },
+    "MIMIC_CBC_BMP": {
+        "CBC_BMP/mimic_processed_test.csv": 0.0016,
+        "DEFAULT": 0.0016
+    },
+    "MIMIC_CBC_BMP_HIL": {
+        "CBC_BMP_HIL/mimic_processed_test.csv": 0.0011,
+        "DEFAULT": 0.0011
+    },
+    "MIMIC_CBC_COAG": {
+        "CBC_COAG/mimic_processed_test.csv": 0.0036,
+        "DEFAULT": 0.0036
+    },
+    "MIMIC_CBC_HIL": {
+        "CBC_HIL/mimic_processed_test.csv": 0.0022,
+        "DEFAULT": 0.0022
+    },
+    "MIMIC_CBC_KIDNEY": {
+        "CBC_KIDNEY/mimic_processed_test.csv": 0.0025,
+        "DEFAULT": 0.0025
+    },
+    "MIMIC_CBC_LIVER": {
+        "CBC_LIVER/mimic_processed_test.csv": 0.0086,
+        "DEFAULT": 0.0086
+    },
+    "SBC_CBC": {
+        "CBC/mimic_processed_test.csv": 0.0016,
+        "DEFAULT": 0.0016
+    },
+    "SBC_CBC_KIDNEY": {
+        "CBC_KIDNEY/mimic_processed_test.csv": 0.0027,
+        "DEFAULT": 0.0027
+    }
+}

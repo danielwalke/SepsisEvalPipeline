@@ -1,4 +1,5 @@
 import configparser
+import os
 
 CBC = {
     "Hemoglobin (Blood)": 51222,
@@ -7,7 +8,6 @@ CBC = {
     "Platelet Count (Blood)": 51265,
     "MCV (Blood)": 51250,
 }
-
 
 EXTCBC = {
     "Hemoglobin (Blood)": 51222,
@@ -31,7 +31,6 @@ BMP = {
     "Urea Nitrogen (Blood)": 51006,
     "Creatinine (Blood)": 50912
 }
-
 
 WBC_DIFFERENTIAL = {
     "Neutrophils (Blood)": 51256,
@@ -68,9 +67,9 @@ KIDNEY_FUNCTION = {
 }
 
 HIL_INDICES = {
-    "H (Blood)": 50934,  # Hemolysis
-    "L (Blood)": 51678,  # Lipemia
-    "I (Blood)": 50947   # Icterus
+    "H (Blood)": 50934,
+    "L (Blood)": 51678,
+    "I (Blood)": 50947
 }
 
 panel_name_to_feature_codes = {
@@ -86,8 +85,6 @@ panel_name_to_feature_codes = {
 }
 
 def write_feature_codes_to_csv(panel_name):
-
-    
     feature_codes = []
     for panel in panel_name.split("_"):
         panel = panel.strip()
@@ -102,12 +99,18 @@ def write_feature_codes_to_csv(panel_name):
             f.write(f"{code}\n")
 
 def write_config_to_env(config, env_file_path):
-
     with open(env_file_path, 'w') as env_file:
         for section in config.sections() + ['DEFAULT']:
             for key, value in config[section].items():
                 clean_value = value.strip('"\' ')
                 env_file.write(f"{key.upper()}={clean_value}\n")
+        
+        host_uid = getattr(os, 'getuid', lambda: 1000)()
+        host_gid = getattr(os, 'getgid', lambda: 1000)()
+        
+        env_file.write(f"HOST_UID={host_uid}\n")
+        env_file.write(f"HOST_GID={host_gid}\n")
+
 config = configparser.ConfigParser()
 config.read('config.ini')
 panel_name = config["PANEL"]["panel_name"]

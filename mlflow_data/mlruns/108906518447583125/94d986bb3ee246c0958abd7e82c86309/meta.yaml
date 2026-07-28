@@ -1,0 +1,14 @@
+artifact_uri: /mlflow/artifacts/108906518447583125/94d986bb3ee246c0958abd7e82c86309/artifacts
+end_time: 1784841503262
+entry_point_name: ''
+experiment_id: '108906518447583125'
+lifecycle_stage: active
+run_id: 94d986bb3ee246c0958abd7e82c86309
+run_name: GraphAwareXGBoost_MIMIC
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1784841457475
+status: 3
+tags: []
+user_id: unknown

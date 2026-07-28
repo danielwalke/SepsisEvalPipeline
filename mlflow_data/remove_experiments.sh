@@ -1,1 +1,0 @@
-docker exec mlflow_container mlflow gc --backend-store-uri "sqlite:////mlflow/mlflow.db" --tracking-uri "sqlite:////mlflow/mlflow.db"

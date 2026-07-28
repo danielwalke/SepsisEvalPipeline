@@ -56,7 +56,6 @@ def interpret_and_visualize():
         train_label_name = node_split_container.train_split_information.label_name
         exp_name = f"{train_label_name.split('_')[0]}_{feature_set_name}"
 
-
         model_exp_path = os.path.join("/app", "models", exp_name)
         figure_exp_path = os.path.join("/app", "figures", exp_name)
         os.makedirs(model_exp_path, exist_ok=True)

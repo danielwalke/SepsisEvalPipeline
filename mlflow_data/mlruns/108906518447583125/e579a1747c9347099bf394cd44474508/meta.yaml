@@ -1,0 +1,14 @@
+artifact_uri: /mlflow/artifacts/108906518447583125/e579a1747c9347099bf394cd44474508/artifacts
+end_time: 1784802524943
+entry_point_name: ''
+experiment_id: '108906518447583125'
+lifecycle_stage: active
+run_id: e579a1747c9347099bf394cd44474508
+run_name: LogisticRegression_Baseline_MIMIC
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1784802326260
+status: 3
+tags: []
+user_id: root

@@ -216,6 +216,25 @@ services:
     networks:
       - default
       - mlflow-network
+
+  7-graphflow-inference:
+    build:
+      context: .
+      dockerfile: 7_inference/Dockerfile
+    container_name: graphflow_inference_app
+    ports:
+      - "8501:8501"
+    depends_on:
+      6-graphaware:
+        condition: service_completed_successfully
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+      - MPLCONFIGDIR=/tmp/matplotlib
+    networks:
+      - default
 networks:
   default:
     driver: bridge

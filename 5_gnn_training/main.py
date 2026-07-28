@@ -77,6 +77,7 @@ if __name__ == '__main__':
 
     feature_set_name = config['PANEL']['panel_name']
     include_sbc = config['PANEL'].getboolean('include_sbc', fallback=False)
+    print(f"Using feature set: {feature_set_name}, include_sbc={include_sbc}")
     checkpoint_path = os.path.expanduser("/app/checkpoints")
     os.makedirs(checkpoint_path, exist_ok=True)
     
