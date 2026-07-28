@@ -24,6 +24,7 @@ It features time-decay temporal patient graph construction ($w = 1 - \Delta t_{\
 - [Interactive Dashboard Visualizations & Interpretability](#interactive-dashboard-visualizations--interpretability)
 - [Model Context Protocol (MCP) & AI Integration](#model-context-protocol-mcp--ai-integration)
   - [Available MCP Tools](#available-mcp-tools)
+  - [Starting the MCP Server](#starting-the-mcp-server)
   - [MCP Server JSON Configuration (`mcp.json`)](#mcp-server-json-configuration-mcpjson)
   - [Running the MCP Client](#running-the-mcp-client)
 - [System Requirements & Setup](#system-requirements--setup)
@@ -211,19 +212,49 @@ The repository includes a **FastMCP Server** ([mcp_server/server.py](file:///hom
 | `explain_patient_prediction` | Computes $2N$ aggregated SHAP values for a specific patient observation. |
 | `get_dashboard_status` | Checks if the Streamlit inference dashboard is active on port 8501. |
 
+### Starting the MCP Server
+
+You can start the FastMCP Server in two ways depending on your execution preference:
+
+#### Method 1: Local Virtual Environment (Stdio Mode)
+
+To run the MCP server directly using your local Python environment:
+
+```bash
+# Activate virtual environment
+source .venv/bin/activate
+
+# Launch the FastMCP Server (runs in stdio mode)
+python mcp_server/server.py
+```
+
+#### Method 2: Containerized Execution (Docker Compose)
+
+To launch the MCP server as part of the full stack (alongside MLflow and the Streamlit Dashboard):
+
+```bash
+# Launch full service stack including mcp-server container
+docker-compose -f docker-compose-mcp.yml up -d
+
+# Or launch only the mcp-server service:
+docker-compose -f docker-compose-mcp.yml up -d mcp-server
+```
+
 ### MCP Server JSON Configuration (`mcp.json`)
 
-To connect external LLM applications (such as Claude Desktop, Cursor, Antigravity, VS Code, or custom AI agents) directly to the GraphFlow FastMCP server, add one of the following JSON configuration blocks to your client's `mcp.json` or `claude_desktop_config.json`:
+To connect external LLM applications (such as Claude Desktop, Cursor, Antigravity, VS Code, or custom AI agents) directly to the GraphFlow FastMCP server, copy one of the following JSON configuration blocks into your client's `mcp.json` or `claude_desktop_config.json` file:
 
-#### Option A: Local Virtual Environment Execution
+#### Configuration A: Local Virtual Environment Stdio Mode
+
+*(Recommended for Claude Desktop, Cursor, or local IDEs running directly on your host machine)*
 
 ```json
 {
   "mcpServers": {
     "sepsis-eval-pipeline": {
-      "command": "/path/to/SepsisEvalPipeline/.venv/bin/python",
+      "command": "/home/daniel.walke/git/SepsisEvalPipeline/.venv/bin/python",
       "args": [
-        "/path/to/SepsisEvalPipeline/mcp_server/server.py"
+        "/home/daniel.walke/git/SepsisEvalPipeline/mcp_server/server.py"
       ],
       "env": {
         "PYTHONUNBUFFERED": "1"
@@ -233,7 +264,11 @@ To connect external LLM applications (such as Claude Desktop, Cursor, Antigravit
 }
 ```
 
-#### Option B: Containerized Docker Compose Execution
+> **Note**: Replace `/home/daniel.walke/git/SepsisEvalPipeline` with the absolute path to your local repository clone.
+
+#### Configuration B: Docker Compose Execution Mode
+
+*(Recommended when running the pipeline in containerized environments)*
 
 ```json
 {
@@ -271,6 +306,7 @@ Or pass flags explicitly:
 ```
 
 ---
+
 
 ## System Requirements & Setup
 
