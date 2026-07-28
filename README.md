@@ -15,6 +15,23 @@ It features time-decay temporal patient graph construction ($w = 1 - \Delta t_{\
 
 ---
 
+## Table of Contents
+
+- [Key Features](#key-features)
+- [Directory & Pipeline Overview](#directory--pipeline-overview)
+- [Pipeline Execution Steps](#pipeline-execution-steps)
+- [Environment Setup & Configuration (`.env`)](#environment-setup--configuration-env)
+- [Interactive Dashboard Visualizations & Interpretability](#interactive-dashboard-visualizations--interpretability)
+- [Model Context Protocol (MCP) & AI Integration](#model-context-protocol-mcp--ai-integration)
+  - [Available MCP Tools](#available-mcp-tools)
+  - [MCP Server JSON Configuration (`mcp.json`)](#mcp-server-json-configuration-mcpjson)
+  - [Running the MCP Client](#running-the-mcp-client)
+- [System Requirements & Setup](#system-requirements--setup)
+- [MLflow Experiment Tracking](#mlflow-experiment-tracking)
+- [Citation & References](#citation--references)
+
+---
+
 ## Key Features
 
 - **End-to-End Containerized Pipeline**: Fully modular architecture built on Docker containers for preprocessing, graph construction, database upload, model training, and explainable inference.
@@ -156,7 +173,9 @@ The Streamlit inference application provides three dedicated analytical views:
 **Explanation**:
 - **ROC Curve & AUROC Score**: Displays the Receiver Operating Characteristic curve comparing True Positive Rate (Sensitivity) against False Positive Rate ($1 - \text{Specificity}$). The overall area under the curve (AUROC) summarizes discriminative performance across all decision thresholds.
 - **Optimal Cutoff Star Marker ($\star$)**: Identifies the optimal threshold maximizing the Geometric Mean of sensitivity and specificity:
+  
   $$\text{G-Mean} = \sqrt{\text{Sensitivity} \times \text{Specificity}}$$
+
 - **Annotated Confusion Matrix**: Heatmap detailing True Negatives (TN), False Positives (FP), False Negatives (FN), and True Positives (TP) at the active decision threshold, alongside Sensitivity, Specificity, PPV (Precision), and NPV metrics.
 
 ---
@@ -170,8 +189,8 @@ The Streamlit inference application provides three dedicated analytical views:
   - **Red bars ($\text{SHAP} > 0$)**: Features driving the prediction *towards* high Sepsis risk (e.g., elevated Age or abnormal MCV).
   - **Blue bars ($\text{SHAP} < 0$)**: Protective features driving the prediction *away* from Sepsis (e.g., normal WBC or HGB levels).
 - **GraphFlow Attribution Breakdown (Original vs. $\Delta$ Mean)**: Decomposes the total SHAP attribution into two distinct physical components:
-  1. **Original Feature SHAP** ($\mathbf{X}_{orig}$): Contribution of the patient's current static laboratory values.
-  2. **Time-Based $\Delta$ Mean SHAP** ($\mathbf{X}_{orig} - \boldsymbol{\mu}_{neighbors}$): Contribution of the patient's temporal trend relative to their historical 1-hop spatial neighborhood.
+  1. **Original Feature SHAP** ($\mathbf{X}_{\text{orig}}$): Contribution of the patient's current static laboratory values.
+  2. **Time-Based $\Delta$ Mean SHAP** ($\mathbf{X}_{\text{orig}} - \boldsymbol{\mu}_{\text{neighbors}}$): Contribution of the patient's temporal trend relative to their historical 1-hop spatial neighborhood.
 - **Detailed Attribution Breakdown Table**: Quantifies the exact raw values, time-based delta mean values, individual SHAP values, and risk impact directions for clinical auditability.
 
 ---
@@ -191,6 +210,47 @@ The repository includes a **FastMCP Server** ([mcp_server/server.py](file:///hom
 | `run_graphflow_inference` | Runs GraphFlow 1-hop spatial neighborhood inference on sample datasets. |
 | `explain_patient_prediction` | Computes $2N$ aggregated SHAP values for a specific patient observation. |
 | `get_dashboard_status` | Checks if the Streamlit inference dashboard is active on port 8501. |
+
+### MCP Server JSON Configuration (`mcp.json`)
+
+To connect external LLM applications (such as Claude Desktop, Cursor, Antigravity, VS Code, or custom AI agents) directly to the GraphFlow FastMCP server, add one of the following JSON configuration blocks to your client's `mcp.json` or `claude_desktop_config.json`:
+
+#### Option A: Local Virtual Environment Execution
+
+```json
+{
+  "mcpServers": {
+    "sepsis-eval-pipeline": {
+      "command": "/path/to/SepsisEvalPipeline/.venv/bin/python",
+      "args": [
+        "/path/to/SepsisEvalPipeline/mcp_server/server.py"
+      ],
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  }
+}
+```
+
+#### Option B: Containerized Docker Compose Execution
+
+```json
+{
+  "mcpServers": {
+    "sepsis-eval-pipeline": {
+      "command": "docker",
+      "args": [
+        "exec",
+        "-i",
+        "mcp_pipeline_server",
+        "python",
+        "/app/mcp_server/server.py"
+      ]
+    }
+  }
+}
+```
 
 ### Running the MCP Client
 
