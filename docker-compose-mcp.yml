@@ -134,6 +134,25 @@ services:
       - MPLCONFIGDIR=/tmp/matplotlib
     networks:
       - default
+
+  mcp-server:
+    build:
+      context: .
+      dockerfile: mcp_server/Dockerfile
+    container_name: mcp_pipeline_server
+    depends_on:
+      7-graphflow-inference:
+        condition: service_started
+      mlflow-server:
+        condition: service_started
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    networks:
+      - default
+      - mlflow-network
 networks:
   default:
     driver: bridge
