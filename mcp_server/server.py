@@ -10,13 +10,16 @@ Provides standardized RPC tools to:
 """
 
 import os
+import sys
 import json
 import sqlite3
 import subprocess
+import contextlib
 import pandas as pd
 import numpy as np
 from typing import Optional, List, Dict, Any
 from mcp.server.fastmcp import FastMCP
+
 
 # Initialize FastMCP Server
 mcp = FastMCP("GraphFlow-SepsisEvalPipeline-MCP")
@@ -176,22 +179,6 @@ def get_optimal_cutoffs() -> Dict[str, Any]:
     return {"status": "success", "cutoffs": cutoffs}
 
 
-@mcp.tool()
-def run_graphflow_inference(
-    selected_panel: str = "MIMIC_CBC",
-    dataset_key: Optional[str] = None,
-    max_rows: int = 500,
-    risk_threshold: Optional[float] = None
-) -> Dict[str, Any]:
-    """
-    Runs GraphFlow 1-hop spatial neighborhood feature aggregation and XGBoost inference programmatically.
-
-    Args:
-        selected_panel: Panel name (e.g. 'MIMIC_CBC', 'MIMIC_CBC_BMP', 'SBC_CBC').
-        dataset_key: Optional specific sample test dataset filename or relative path.
-        max_rows: Number of dataset rows to evaluate (default 500).
-        risk_threshold: Optional Sepsis risk cutoff override (defaults to Geometric Mean ROC cutoff).
-    """
 def _load_inference_app():
     import importlib.util
     app_path = os.path.join(BASE_DIR, "7_inference", "app.py")
@@ -217,41 +204,42 @@ def run_graphflow_inference(
         max_rows: Number of dataset rows to evaluate (default 500).
         risk_threshold: Optional Sepsis risk cutoff override (defaults to Geometric Mean ROC cutoff).
     """
-    app_mod = _load_inference_app()
-    get_sample_datasets = app_mod.get_sample_datasets
-    run_graphaware_inference = app_mod.run_graphaware_inference
-    get_default_cutoff = app_mod.get_default_cutoff
+    with contextlib.redirect_stdout(sys.stderr):
+        app_mod = _load_inference_app()
+        get_sample_datasets = app_mod.get_sample_datasets
+        run_graphaware_inference = app_mod.run_graphaware_inference
+        get_default_cutoff = app_mod.get_default_cutoff
 
-    sample_datasets = get_sample_datasets(selected_panel)
-    if not sample_datasets:
-        return {"status": "error", "message": f"No sample test datasets found for panel '{selected_panel}'"}
+        sample_datasets = get_sample_datasets(selected_panel)
+        if not sample_datasets:
+            return {"status": "error", "message": f"No sample test datasets found for panel '{selected_panel}'"}
 
-    target_path = None
-    if dataset_key and dataset_key in sample_datasets:
-        target_path = sample_datasets[dataset_key]
-    else:
-        target_key = list(sample_datasets.keys())[0]
-        target_path = sample_datasets[target_key]
-        dataset_key = target_key
+        target_path = None
+        if dataset_key and dataset_key in sample_datasets:
+            target_path = sample_datasets[dataset_key]
+        else:
+            target_key = list(sample_datasets.keys())[0]
+            target_path = sample_datasets[target_key]
+            dataset_key = target_key
 
-    if not os.path.exists(target_path):
-        return {"status": "error", "message": f"Dataset path not found: {target_path}"}
+        if not os.path.exists(target_path):
+            return {"status": "error", "message": f"Dataset path not found: {target_path}"}
 
-    df = pd.read_csv(target_path)
-    if len(df) > max_rows:
-        df = df.iloc[:max_rows].copy()
+        df = pd.read_csv(target_path)
+        if len(df) > max_rows:
+            df = df.iloc[:max_rows].copy()
 
-    clean_panel = selected_panel.replace("MIMIC_", "").replace("SBC_", "")
-    model_path = os.path.join(BASE_DIR, "6_graphaware", "models", clean_panel, "final_model.xgb")
-    if not os.path.exists(model_path):
-        model_path = os.path.join(BASE_DIR, "6_graphaware", "models", selected_panel, "final_model.xgb")
+        clean_panel = selected_panel.replace("MIMIC_", "").replace("SBC_", "")
+        model_path = os.path.join(BASE_DIR, "6_graphaware", "models", clean_panel, "final_model.xgb")
+        if not os.path.exists(model_path):
+            model_path = os.path.join(BASE_DIR, "6_graphaware", "models", selected_panel, "final_model.xgb")
 
-    res_df, preds_prob, final_feats, f_cols = run_graphaware_inference(df, model_path, selected_panel)
-    if res_df is None or preds_prob is None:
-        return {"status": "error", "message": "GraphFlow inference failed to produce prediction probabilities."}
+        res_df, preds_prob, final_feats, f_cols = run_graphaware_inference(df, model_path, selected_panel)
+        if res_df is None or preds_prob is None:
+            return {"status": "error", "message": "GraphFlow inference failed to produce prediction probabilities."}
 
-    opt_cutoff = get_default_cutoff(selected_panel, dataset_key)
-    active_cutoff = risk_threshold if risk_threshold is not None else opt_cutoff
+        opt_cutoff = get_default_cutoff(selected_panel, dataset_key)
+        active_cutoff = risk_threshold if risk_threshold is not None else opt_cutoff
 
     c_safe = max(1e-6, min(1.0 - 1e-6, float(active_cutoff)))
     calibrated_risk_pct = np.where(
@@ -295,30 +283,31 @@ def explain_patient_prediction(
         row_index: 0-indexed row position of the patient observation to explain.
         dataset_key: Optional sample test dataset key.
     """
-    app_mod = _load_inference_app()
-    get_sample_datasets = app_mod.get_sample_datasets
-    run_graphaware_inference = app_mod.run_graphaware_inference
-    get_shap_explanations = app_mod.get_shap_explanations
-    get_default_cutoff = app_mod.get_default_cutoff
+    with contextlib.redirect_stdout(sys.stderr):
+        app_mod = _load_inference_app()
+        get_sample_datasets = app_mod.get_sample_datasets
+        run_graphaware_inference = app_mod.run_graphaware_inference
+        get_shap_explanations = app_mod.get_shap_explanations
+        get_default_cutoff = app_mod.get_default_cutoff
 
-    sample_datasets = get_sample_datasets(selected_panel)
-    if not sample_datasets:
-        return {"status": "error", "message": f"No sample datasets found for panel '{selected_panel}'"}
+        sample_datasets = get_sample_datasets(selected_panel)
+        if not sample_datasets:
+            return {"status": "error", "message": f"No sample datasets found for panel '{selected_panel}'"}
 
-    target_key = dataset_key if (dataset_key and dataset_key in sample_datasets) else list(sample_datasets.keys())[0]
-    target_path = sample_datasets[target_key]
-    df = pd.read_csv(target_path)
+        target_key = dataset_key if (dataset_key and dataset_key in sample_datasets) else list(sample_datasets.keys())[0]
+        target_path = sample_datasets[target_key]
+        df = pd.read_csv(target_path)
 
-    if row_index < 0 or row_index >= len(df):
-        return {"status": "error", "message": f"Invalid row_index {row_index}. Valid range: [0, {len(df)-1}]"}
+        if row_index < 0 or row_index >= len(df):
+            return {"status": "error", "message": f"Invalid row_index {row_index}. Valid range: [0, {len(df)-1}]"}
 
-    clean_panel = selected_panel.replace("MIMIC_", "").replace("SBC_", "")
-    model_path = os.path.join(BASE_DIR, "6_graphaware", "models", clean_panel, "final_model.xgb")
-    if not os.path.exists(model_path):
-        model_path = os.path.join(BASE_DIR, "6_graphaware", "models", selected_panel, "final_model.xgb")
+        clean_panel = selected_panel.replace("MIMIC_", "").replace("SBC_", "")
+        model_path = os.path.join(BASE_DIR, "6_graphaware", "models", clean_panel, "final_model.xgb")
+        if not os.path.exists(model_path):
+            model_path = os.path.join(BASE_DIR, "6_graphaware", "models", selected_panel, "final_model.xgb")
 
-    res_df, preds_prob, final_feats, f_cols = run_graphaware_inference(df, model_path, selected_panel)
-    shap_vals, base_val = get_shap_explanations(model_path, final_feats)
+        res_df, preds_prob, final_feats, f_cols = run_graphaware_inference(df, model_path, selected_panel)
+        shap_vals, base_val = get_shap_explanations(model_path, final_feats)
 
     opt_cutoff = get_default_cutoff(selected_panel, target_key)
     c_safe = max(1e-6, min(1.0 - 1e-6, float(opt_cutoff)))
