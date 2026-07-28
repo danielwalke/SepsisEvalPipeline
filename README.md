@@ -5,9 +5,9 @@
 [![MLflow](https://img.shields.io/badge/MLflow-Tracking-green.svg)](https://mlflow.org/)
 [![Model Context Protocol](https://img.shields.io/badge/MCP-FastMCP-purple.svg)](https://modelcontextprotocol.io/)
 
-**SepsisEvalPipeline** is an end-to-end, graph-aware machine learning framework for early sepsis prediction from multi-center clinical laboratory time-series data (e.g., MIMIC-IV and SBC datasets). 
+**SepsisEvalPipeline / GraphFlow** is an end-to-end, reproducible, Docker-based graph learning workflow for early sepsis prediction from multi-center clinical laboratory time-series data (e.g., MIMIC-IV and SBC datasets), designed in adherence to FAIR (Findable, Accessible, Interoperable, Reusable) open science principles. 
 
-It features time-decay patient temporal graph construction, graph database storage (SQLite & Neo4j), PyTorch Geometric Graph Neural Networks (GNNs), the **GraphAware** spatial neighborhood feature aggregation framework, Model Context Protocol (MCP) AI integration, and an interactive Streamlit inference dashboard.
+It features time-decay temporal patient graph construction ($w = 1 - \Delta t_{\text{scaled}}$), memory-efficient mini-batch graph database storage (SQLite BLOB feature encoding & Neo4j), PyTorch Geometric Graph Attention Networks v2 (`GATv2`), the **GraphAware** spatial neighborhood feature aggregation framework, Model Context Protocol (MCP) AI integration, and an interactive Streamlit inference dashboard.
 
 ---
 
@@ -17,15 +17,17 @@ It features time-decay patient temporal graph construction, graph database stora
 
 ## Key Features
 
-- **Modular 8-Step Pipeline**: Complete separation of preprocessing, graph construction, database upload, model training, and inference.
-- **Dynamic Laboratory Panel Support**: Supports custom lab panels (`CBC`, `CBC_BMP`, `BMP`, `HIL`, `LIVER`, `COAG`, `KIDNEY`, `WBCDIFF`, etc.).
-- **Time-Decay Temporal Patient Graphs**: Constructs patient-centric graph representations where edge weights reflect time differences between laboratory observations.
-- **Graph Storage Options**: Efficient graph storage using SQLite (`mimic_sbc_graph.db`) or Neo4j graph database backends.
-- **Diverse Machine Learning Suite**:
+- **End-to-End Containerized Pipeline**: Fully modular architecture built on Docker containers for preprocessing, graph construction, database upload, model training, and explainable inference.
+- **FAIR Principles & Open Science**: Decoupled, OS-independent Docker workflow ensuring Findability, Accessibility, Interoperability, and Reusability across institutions.
+- **Dynamic Laboratory Panel & Sparsity Support**: Evaluates complete blood counts (`CBC`), basic metabolic panels (`BMP`), and pre-analytical quality indices (`HIL`), enabling stress-testing under real-world clinical data sparsity.
+- **Time-Decay Temporal Patient Graphs**: Constructs patient-centric graph representations where edge weights reflect normalized time differences ($w = 1 - \Delta t_{\text{scaled}}$) between laboratory observations.
+- **Memory-Efficient Graph Storage & Mini-Batching**: High-performance SQLite BLOB node feature storage and indexed edge list querying for low-RAM mini-batch training on standard hardware.
+- **Diverse Machine Learning & Graph Suite**:
   - **Baseline ML**: Logistic Regression, Random Forest, XGBoost.
-  - **Graph Neural Networks**: PyTorch Geometric Graph Attention Networks (GAT).
+  - **Graph Neural Networks**: PyTorch Geometric Graph Attention Networks v2 (`GATv2`) with dynamic attention and edge-weight support.
   - **GraphAware**: 1-hop spatial neighborhood feature aggregation paired with XGBoost for fast, scalable graph learning.
 - **Explainable AI ($2N$ SHAP Values)**: Computes aggregated local SHAP values ($\text{SHAP}_{\text{orig}} + \text{SHAP}_{\text{delta\_mean}}$) per feature to deliver clinically interpretable explanations.
+- **Cross-Dataset Generalizability**: Multi-center validation pipeline evaluating model transferability across distinct hospital cohorts (e.g., MIMIC-IV and SBC internal/external hospital cohorts).
 - **Geometric Mean (G-Mean) ROC Optimization**: Pre-computed optimal ROC classification cutoffs tailored per laboratory panel.
 - **Model Context Protocol (MCP) Server & Client**: Standardized FastMCP server interface paired with an OpenAI-compatible MCP Client for LLM agent integration.
 - **Streamlit Interactive Dashboard**: Real-time sepsis risk assessment, calibrated risk scores, ROC/AUROC evaluation, and patient SHAP visualizations.
@@ -41,7 +43,7 @@ SepsisEvalPipeline/
 ├── 2_baseline/                 # Step 2: Baseline ML models (LogReg, Random Forest, XGBoost)
 ├── 3_graph_construction/       # Step 3: Temporal patient graph construction with time decay
 ├── 4_db_upload/                # Step 4: Upload graph nodes & edges to SQLite / Neo4j
-├── 5_gnn_training/             # Step 5: PyTorch Geometric GNN (GAT) mini-batch training
+├── 5_gnn_training/             # Step 5: PyTorch Geometric GNN (GATv2) mini-batch training
 ├── 6_graphaware/               # Step 6: GraphAware 1-hop spatial neighborhood XGBoost & SHAP
 ├── 7_inference/                # Step 7: Streamlit dashboard app & optimal G-Mean cutoffs
 ├── 8_example_use_cases/        # Step 8: Jupyter notebooks & programmatic usage examples
@@ -71,20 +73,20 @@ SepsisEvalPipeline/
 
 ### 2. Machine Learning Baselines (`2_baseline/`)
 - Trains baseline Logistic Regression, Random Forest, and XGBoost classifiers.
-- Logs AUROC, Sensitivity, and Specificity metrics to MLflow.
+- Logs evaluation metrics to MLflow.
 - **Output**: Trained models in `2_baseline/models/`.
 
 ### 3. Temporal Graph Construction (`3_graph_construction/`)
 - Constructs directed patient-centric temporal graphs where edges link sequential laboratory measurements.
-- Calculates exponential time-decay edge weights based on time elapsed between measurements.
+- Calculates exponential time-decay edge weights based on time elapsed between measurements ($w = 1 - \Delta t_{\text{scaled}}$).
 - **Output**: Graph node and edge CSV files in `3_graph_construction/data/`.
 
 ### 4. Database Upload (`4_db_upload/`)
-- Imports graph nodes, edges, and feature vectors into SQLite (`sqlite_data/mimic_sbc_graph.db`) or Neo4j database instances.
+- Imports graph nodes, edges, and feature vectors into SQLite (`sqlite_data/mimic_sbc_graph.db` using BLOB feature encoding and indexed edge tables) or Neo4j database instances.
 - **Output**: SQLite / Neo4j database files.
 
 ### 5. GNN Training (`5_gnn_training/`)
-- Fetches mini-batches from the graph database and trains Graph Attention Networks (GAT) with edge weight support via PyTorch Geometric.
+- Fetches mini-batches from the graph database and trains Graph Attention Networks v2 (`GATv2`) with edge weight support via PyTorch Geometric.
 - **Output**: Trained model checkpoints in `5_gnn_training/checkpoints/` and MLflow metric logs.
 
 ### 6. GraphAware Training (`6_graphaware/`)
@@ -252,7 +254,7 @@ docker-compose -f docker-compose-mcp.yml up -d
 
 ## MLflow Experiment Tracking
 
-All training runs (baseline models, GNNs, and GraphAware) automatically record hyperparameters, AUROC scores, Sensitivity, and Specificity into the backend MLflow database (`mlflow_data/mlflow.db`).
+All training runs (baseline models, GNNs, and GraphAware) automatically record hyperparameters and metrics into the backend MLflow database (`mlflow_data/mlflow.db`).
 
 Start MLflow manually:
 ```bash
@@ -261,7 +263,22 @@ Start MLflow manually:
 
 ---
 
-## References
+## Citation & References
+
+### Citation Placeholder
+
+If you use GraphFlow or this framework in your research, please cite our paper:
+
+```bibtex
+@article{walke2024graphflow,
+  title={GraphFlow: End-to-end graph learning workflow exemplified for predicting sepsis},
+  author={Walke, Daniel and Staritzbichler, Ren{\'e} and Kaiser, Thorsten and Saake, Gunter and Broneske, David and Heyer, Robert},
+  journal={Under Review / In Preparation},
+  year={2024}
+}
+```
+
+### Key References
 
 1. **Steinbach et al. (2024)**: *Applying Machine Learning to Blood Count Data Predicts Sepsis with ICU Admission.* Clinical Chemistry. [DOI: 10.1093/clinchem/hvae001](https://doi.org/10.1093/clinchem/hvae001)
 2. **Walke et al. (2025)**: *Edges are all you need: Potential of medical time series analysis on complete blood count data with graph neural networks.* PLOS ONE 20(7): e0327636. [DOI: 10.1371/journal.pone.0327636](https://doi.org/10.1371/journal.pone.0327636)
