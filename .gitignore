@@ -1,30 +1,63 @@
-# Ignore specific directories
+# Ignore virtual environments & IDEs
+.venv/
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Ignore environment & secret files
+.env
+.env.*
+
+# Ignore model checkpoints & model weights
+*.pth
+*.pt
+*.pkl
+*.xgb
+*.joblib
+*.h5
+*.onnx
+2_baseline/models/
+5_gnn_training/checkpoints/
+6_graphaware/models/
+trained_models
+
+# Ignore databases & database storage
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+mlflow.db
+mlflow_data/mlflow.db
+4_db_upload/sqlite/sqlite_data
+4_db_upload/neo4j_data
+4_db_upload/neo4j/neo4j_data
+
+# Ignore raw datasets & preprocessed data CSVs
 data/raw_data/
 data/graph_data/
-.venv/
-tests/
+0_mimic_preprocess/extdata/
+0_mimic_preprocess/preprocessed_file/
+1_preprocess/data/
+3_graph_construction/data/
+mimic/
 gt_edge_index/
 notes_evaluation/batched_notes/
 notes_evaluation/graph_data/
-0_mimic_preprocess/extdata/
-0_mimic_preprocess/preprocessed_file/
-mimic/
 
-# Ignore all CSV files (case-insensitive)
+# Ignore all tabular data files
 *.csv
 *.tsv
-*.pt
 *.[Cc][Ss][Vv]
-4_db_upload/neo4j_data
+*.parquet
+
+# Python cache & logs
 __pycache__/
-*.py[cod]
-*.log
-*.pyc
-*.txt
 */__pycache__/*
+*.py[cod]
+*.pyc
+*.log
+*.txt
 2_baseline/training_logs.log
-.env
-*.db*
-4_db_upload/sqlite/sqlite_data
-4_db_upload/neo4j/neo4j_data
-mlflow.db
+tests/
