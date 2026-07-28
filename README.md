@@ -11,7 +11,7 @@ It features time-decay patient temporal graph construction, graph database stora
 
 ---
 
-![SepsisEvalPipeline Architecture](docs/images/sepsis_pipeline_architecture.jpg)
+![GraphFlow Inference Dashboard Application](docs/images/graphflow_dashboard_actual.png)
 
 ---
 
@@ -52,7 +52,7 @@ SepsisEvalPipeline/
 ├── docker-compose-ram.yml      # Low-RAM memory optimized Docker Compose configuration
 ├── pipeline.sh                 # Sequential bash wrapper script for steps 2 to 6
 ├── config.ini                  # Global system configuration (paths, panels, hyperparameters)
-└── .env                        # Local environment variables (LLM API keys, base URLs, seed)
+└── .env                        # Local environment variables (LLM credentials, HOST_UID, HOST_GID)
 ```
 
 ---
@@ -97,11 +97,42 @@ SepsisEvalPipeline/
 
 ---
 
+## Environment Setup & Configuration (`.env`)
+
+To run the pipeline services and Docker containers smoothly, create a `.env` file in the root directory.
+
+> [!IMPORTANT]
+> **User Permissions Requirement**: You **MUST** define `HOST_UID` and `HOST_GID` in your `.env` file so that files created inside Docker containers match the user and group IDs of your host machine.
+
+Example `.env` configuration:
+
+```env
+# Host User & Group ID (Required for Docker container volume permissions)
+HOST_UID=1000
+HOST_GID=1000
+
+# OpenAI-Compatible LLM Credentials (Required for MCP Client)
+OPENAI_API_KEY="sk-..."
+OPENAI_BASE_URL="https://llm.bi.denbi.de/v1"
+OPENAI_MODEL="vllm/google/gemma-4-31B-it"
+
+# Pipeline & App Parameters
+APP_NAME=SepsisEvaluationPipeline
+LOG_LEVEL=INFO
+SEED=42
+```
+
+You can automatically populate `HOST_UID` and `HOST_GID` on Linux/macOS using:
+```bash
+echo "HOST_UID=$(id -u)" >> .env
+echo "HOST_GID=$(id -g)" >> .env
+```
+
+---
+
 ## Model Context Protocol (MCP) & AI Integration
 
 The repository includes a **FastMCP Server** ([mcp_server/server.py](file:///home/daniel.walke/git/SepsisEvalPipeline/mcp_server/server.py)) and an **OpenAI-Compatible MCP Client** ([mcp_client.py](file:///home/daniel.walke/git/SepsisEvalPipeline/mcp_client.py)), allowing LLM agents (e.g. OpenAI GPT-4o, DeepSeek, Ollama, vLLM, Groq, OpenRouter) to programmatically inspect and control the pipeline.
-
-![MCP Client Terminal Demo](docs/images/mcp_client_terminal_demo.jpg)
 
 ### Available MCP Tools
 
@@ -139,7 +170,7 @@ Or pass flags explicitly:
 
 The Streamlit web application provides a visual UI for clinical decision support.
 
-![GraphFlow Inference Dashboard](docs/images/graphflow_dashboard_mockup.jpg)
+![GraphFlow Inference Predictions & SHAP](docs/images/graphflow_dashboard_predictions.png)
 
 ### Launching the Dashboard
 
@@ -175,12 +206,7 @@ Access the dashboard at `http://localhost:8501`.
 
 3. **Configure Environment (`.env` and `config.ini`)**:
    - Update `config.ini` for data paths, selected panel names, and hyperparameters.
-   - Create `.env` for LLM credentials:
-     ```env
-     OPENAI_API_KEY="your-api-key"
-     OPENAI_BASE_URL="https://api.openai.com/v1"
-     OPENAI_MODEL="gpt-4o"
-     ```
+   - Set up `.env` with required `HOST_UID`, `HOST_GID`, and LLM credentials.
 
 ### Docker Compose Quickstart
 
