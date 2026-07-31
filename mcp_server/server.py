@@ -7,11 +7,13 @@ Provides standardized RPC tools to:
   4. Run GraphFlow 1-hop spatial neighborhood inference programmatically.
   5. Compute 2N aggregated local SHAP explanations for specific patient cases.
   6. Check and interface with the Streamlit GraphFlow inference dashboard.
+  7. Programmatically start or restart the Streamlit GraphFlow inference dashboard.
 """
 
 import os
 import sys
 import json
+import socket
 import sqlite3
 import subprocess
 import contextlib
@@ -363,7 +365,6 @@ def get_dashboard_status() -> Dict[str, Any]:
     """
     Checks if the GraphFlow Streamlit inference web dashboard is running on port 8501.
     """
-    import socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     result = sock.connect_ex(('127.0.0.1', 8501))
     sock.close()
@@ -376,6 +377,174 @@ def get_dashboard_status() -> Dict[str, Any]:
         "url": "http://localhost:8501" if is_running else "Not running",
         "launch_command": "streamlit run 7_inference/app.py --server.port=8501"
     }
+
+
+@mcp.tool()
+def start_dashboard(port: int = 8501, headless: bool = True) -> Dict[str, Any]:
+    """
+    Launches the Streamlit GraphFlow inference dashboard in the background if it is not already running.
+
+    Args:
+        port: Port to run the Streamlit server on (default 8501).
+        headless: Run Streamlit in headless mode without attempting to open a browser window (default True).
+    """
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    check_res = sock.connect_ex(('127.0.0.1', port))
+    sock.close()
+
+    if check_res == 0:
+        return {
+            "status": "already_running",
+            "message": f"Dashboard is already active on port {port}",
+            "url": f"http://localhost:{port}"
+        }
+
+    streamlit_bin = os.path.join(BASE_DIR, ".venv", "bin", "streamlit")
+    if not os.path.exists(streamlit_bin):
+        streamlit_bin = "streamlit"
+
+    app_script = os.path.join(BASE_DIR, "7_inference", "app.py")
+    if not os.path.exists(app_script):
+        return {"status": "error", "message": f"Streamlit application script not found at {app_script}"}
+
+    cmd = [
+        streamlit_bin,
+        "run",
+        app_script,
+        f"--server.port={port}",
+        f"--server.headless={str(headless).lower()}"
+    ]
+
+    try:
+        proc = subprocess.Popen(
+            cmd,
+            cwd=BASE_DIR,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True
+        )
+        return {
+            "status": "success",
+            "message": f"Dashboard process launched on port {port}",
+            "pid": proc.pid,
+            "url": f"http://localhost:{port}"
+        }
+    except Exception as e:
+        return {"status": "error", "message": f"Failed to launch Streamlit dashboard: {str(e)}"}
+
+
+@mcp.tool()
+def find_divergent_patient_trajectories(
+    selected_panel: str = "MIMIC_CBC_BMP",
+    min_events: int = 2,
+    max_candidates: int = 5
+) -> Dict[str, Any]:
+    """
+    Scans patient time series trajectories in the dataset to find cases where 
+    Traditional XGBoost and GraphAware XGBoost make divergent predictions 
+    (e.g., Traditional XGBoost misses sepsis or triggers false alarms, while GraphAware is accurate).
+
+    Args:
+        selected_panel: Panel name (e.g. 'MIMIC_CBC_BMP', 'MIMIC_CBC').
+        min_events: Minimum number of time series observations per patient (default 2).
+        max_candidates: Maximum number of divergent patient trajectory cases to return (default 5).
+    """
+    with contextlib.redirect_stdout(sys.stderr):
+        app_mod = _load_inference_app()
+        get_sample_datasets = app_mod.get_sample_datasets
+        run_graphaware_inference = app_mod.run_graphaware_inference
+        get_default_cutoff = app_mod.get_default_cutoff
+
+        clean_panel = selected_panel.replace("MIMIC_", "").replace("SBC_", "")
+        sample_datasets = get_sample_datasets(clean_panel)
+        if not sample_datasets:
+            return {"status": "error", "message": f"No sample datasets found for panel '{selected_panel}'"}
+
+        target_key = list(sample_datasets.keys())[0]
+        target_path = sample_datasets[target_key]
+        df_all = pd.read_csv(target_path)
+
+        import joblib
+        import xgboost as xgb
+
+        model_path = os.path.join(BASE_DIR, "6_graphaware", "models", clean_panel, "final_model.xgb")
+        if not os.path.exists(model_path):
+            model_path = os.path.join(BASE_DIR, "6_graphaware", "models", f"MIMIC_{clean_panel}", "final_model.xgb")
+
+        baseline_path = os.path.join(BASE_DIR, "2_baseline", "models", clean_panel, "XGBClassifier.pkl")
+        if not os.path.exists(baseline_path):
+            baseline_path = os.path.join(BASE_DIR, "2_baseline", "models", f"MIMIC_{clean_panel}", "XGBClassifier.pkl")
+
+        if not os.path.exists(model_path) or not os.path.exists(baseline_path):
+            return {"status": "error", "message": f"Model files not found for panel '{clean_panel}' (Checked: {model_path}, {baseline_path})"}
+
+        baseline_model = joblib.load(baseline_path)
+        feature_cols = [c for c in df_all.columns if c.startswith("f__")]
+
+        df_all['y_bin'] = (df_all['y'] == 'Sepsis').astype(int)
+        sepsis_patient_ids = df_all[df_all['y_bin'] == 1]['Id'].unique()
+
+        cutoff = get_default_cutoff(selected_panel, target_key)
+
+        divergent_cases = []
+
+        for pid in sepsis_patient_ids:
+            p_df = df_all[df_all['Id'] == pid].sort_values('Time').copy()
+            if len(p_df) < min_events:
+                continue
+
+            sorted_df, preds_ga, _, _ = run_graphaware_inference(p_df, model_path, selected_panel)
+            preds_base = baseline_model.predict_proba(sorted_df[feature_cols].to_numpy())[:, 1]
+            sorted_df['pred_baseline'] = preds_base
+            sorted_df['pred_graphaware'] = preds_ga
+
+            sorted_df['base_pos'] = sorted_df['pred_baseline'] >= cutoff
+            sorted_df['ga_pos'] = sorted_df['pred_graphaware'] >= cutoff
+
+            sepsis_events = sorted_df[sorted_df['y_bin'] == 1]
+            control_events = sorted_df[sorted_df['y_bin'] == 0]
+
+            base_missed_sepsis = (sepsis_events['base_pos'].sum() == 0) and (sepsis_events['ga_pos'].sum() > 0)
+            base_control_fps = (control_events['base_pos'].sum() > 0)
+            ga_control_clean = (control_events['ga_pos'].sum() == 0) and (sepsis_events['ga_pos'].sum() > 0)
+
+            if base_missed_sepsis or (base_control_fps and ga_control_clean):
+                events_summary = []
+                first_charttime = pd.to_datetime(sorted_df['charttime'].iloc[0])
+                for _, r in sorted_df.iterrows():
+                    ct = pd.to_datetime(r['charttime'])
+                    hr = (ct - first_charttime).total_seconds() / 3600.0
+                    events_summary.append({
+                        "hours_elapsed": round(hr, 1),
+                        "charttime": str(r['charttime']),
+                        "true_label": str(r['y']),
+                        "wbc": float(r.get('f__WBC', 0.0)),
+                        "platelets": float(r.get('f__PLT', 0.0)),
+                        "baseline_prob": round(float(r['pred_baseline']), 6),
+                        "baseline_status": "POSITIVE" if r['base_pos'] else "NEGATIVE",
+                        "graphaware_prob": round(float(r['pred_graphaware']), 6),
+                        "graphaware_status": "POSITIVE" if r['ga_pos'] else "NEGATIVE"
+                    })
+
+                divergent_cases.append({
+                    "patient_id": str(pid),
+                    "subject_id": str(sorted_df['subject_id'].iloc[0]),
+                    "hadm_id": str(sorted_df['hadm_id'].iloc[0]),
+                    "total_events": len(sorted_df),
+                    "divergence_type": "Baseline Missed Sepsis" if base_missed_sepsis else "Baseline Control False Alarms",
+                    "events": events_summary
+                })
+
+                if len(divergent_cases) >= max_candidates:
+                    break
+
+        return {
+            "status": "success",
+            "selected_panel": selected_panel,
+            "decision_cutoff": cutoff,
+            "total_divergent_cases_found": len(divergent_cases),
+            "cases": divergent_cases
+        }
 
 
 if __name__ == "__main__":
