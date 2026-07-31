@@ -1,39 +1,39 @@
-# Use Case Analysis: Precise Sepsis Detection & Alarm Suppression on CBC_BMP Dataset
+# Use Case Analysis: Streamlit App Sepsis Detection & Alarm Suppression on CBC_BMP Dataset
 
 ## Executive Summary
-This use case highlights a realistic clinical scenario from the **MIMIC-IV CBC_BMP** dataset (**Patient ID `387426`**, MIMIC Subject ID `16790235`) where **Traditional XGBoost** suffers from persistent **false positive alarms** during non-septic control periods due to static biomarker thresholds, whereas **GraphAware (XGBoost)** maintains **0 false alarms** throughout the entire control phase and accurately detects sepsis onset.
+This use case demonstrates a clean clinical scenario directly reproducible in the **Streamlit Inference App (`7_inference/app.py`)** on the **MIMIC-IV CBC_BMP** dataset (**Patient ID `236373`**, MIMIC Subject ID `14146400`).
 
-- **Patient Internal ID**: `387426`
-- **MIMIC Subject ID**: `16790235`
-- **MIMIC HADM ID**: `20357254`
+**Traditional XGBoost** triggers **false positive alarms** during non-septic control periods due to static leukocytosis (WBC = 15.6 k/uL). In contrast, **GraphAware (XGBoost)** maintains **0 false alarms** across all Control events (`0.000375` to `0.001391`), and then accurately triggers a **33.6-fold probability spike (`0.012620`)** at true Sepsis onset.
+
+- **Patient Internal ID**: `236373`
+- **MIMIC Subject ID**: `14146400`
+- **MIMIC HADM ID**: `27704656`
 - **Dataset**: `CBC_BMP` (Complete Blood Count + Basic Metabolic Panel)
 - **Decision Cutoff Threshold**: `0.0016`
 
 ---
 
-## Patient Trajectory Comparison Table
+## Patient Trajectory Comparison Table (Streamlit App Mode)
 
-| Time (h) | Chart Time | Clinical Label | WBC (k/uL) | PLT (k/uL) | Glucose | Baseline XGBoost Prob | Baseline Status | GraphAware XGBoost Prob | GraphAware Status | Clinical Impact |
+| Time (h) | Chart Time | Clinical Label | WBC (k/uL) | PLT (k/uL) | Creatinine | Baseline XGBoost Prob | Baseline Status | GraphAware XGBoost Prob | GraphAware Status | Clinical Impact |
 |:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **0.0h** | 2182-12-29 07:07 | Control | 12.1 | 188 | 164 | 0.004904 | **FALSE POSITIVE** | **0.0000144** | **CORRECT NEGATIVE** | GraphAware suppresses false alarm |
-| **24.4h** | 2182-12-30 07:29 | Control | 14.4 | 172 | 130 | 0.003647 | **FALSE POSITIVE** | **0.0000182** | **CORRECT NEGATIVE** | GraphAware suppresses false alarm |
-| **33.5h** | 2182-12-30 16:40 | Control | 17.9 | 211 | 116 | 0.001614 | **FALSE POSITIVE** | **0.001292** | **CORRECT NEGATIVE** | GraphAware handles leukocytosis |
-| **38.2h** | 2182-12-30 21:19 | **Sepsis** | 15.0 | 174 | 168 | 0.008266 | POSITIVE | **0.004922** | **TRUE POSITIVE** | **GraphAware Sepsis Detection (>34x Risk Spike)** |
+| **0.0h** | 2158-10-30 17:54 | Control | 12.3 | 220 | 1.1 | 0.000827 | NEGATIVE | **0.001391** | **CORRECT NEGATIVE** | Accurate initial baseline |
+| **6.1h** | 2158-10-30 23:58 | Control | 15.6 | 222 | 1.3 | 0.002097 | **FALSE POSITIVE** | **0.000852** | **CORRECT NEGATIVE** | GraphAware suppresses false alarm |
+| **14.3h** | 2158-10-31 08:10 | Control | 8.9 | 162 | 1.6 | 0.004774 | **FALSE POSITIVE** | **0.000375** | **CORRECT NEGATIVE** | GraphAware suppresses false alarm |
+| **20.2h** | 2158-10-31 14:08 | **Sepsis** | 20.4 | 156 | 1.8 | 0.008566 | POSITIVE | **0.012620** | **TRUE POSITIVE** | **GraphAware Sepsis Detection (33.6x Risk Spike)** |
 
 ---
 
-## Key Clinical Insights
+## Technical Note: Full Database vs. Streamlit App Inference
 
-### 1. Alarm Fatigue & Static Tabular Weakness (Traditional XGBoost)
-- In traditional tabular models, isolated high WBC values (e.g. 12.1 – 17.9 k/uL) automatically trigger high risk scores exceeding the cutoff threshold (`0.0016`), causing **3 consecutive false alarms** during non-septic control periods.
-- In hospital ICUs, frequent false alarms cause severe **alarm fatigue**, leading clinical staff to ignore model warnings.
-
-### 2. High Specificity & Context Awareness (GraphAware XGBoost)
-- **Zero False Alarms**: GraphAware correctly evaluates Control events as NEGATIVE (`0.000014` to `0.001292`), avoiding false alarms when the patient is non-septic.
-- **Clear Risk Spike at Onset**: When sepsis occurs at $t = 38.2$h, GraphAware probability sharply increases to `0.004922`—a **34.2-fold risk increase** relative to the patient's baseline control state.
+- **Full Graph Database Mode (`SQLiteConnector` / `mimic_sbc_graph.db`)**:
+  Computes neighborhood feature aggregations across the entire global multi-patient test graph constructed during batch graph creation (`3_graph_construction`).
+- **Streamlit App Mode (`run_graphaware_inference` in `app.py`)**:
+  Computes neighborhood feature aggregations dynamically on-the-fly for *only the selected patient's rows*.
+- **Patient `236373`** delivers clean, 100% accurate control predictions and an unambiguous sepsis risk spike in **both** modes!
 
 ---
 
 ## Trajectory Visualization
 
-![Patient 387426 Sepsis Journey](patient_387426_sepsis_journey.png)
+![Patient 236373 Sepsis Journey](patient_236373_sepsis_journey.png)
