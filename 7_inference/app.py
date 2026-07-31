@@ -13,6 +13,7 @@ if os.path.exists(venv_python) and not sys.prefix.startswith(venv_dir):
 import glob
 import time
 import json
+import math
 import importlib.util
 import numpy as np
 import pandas as pd
@@ -167,6 +168,64 @@ def get_default_cutoff(selected_panel, selected_dataset_key):
 
 def diff_user_fun(kwargs):
     return kwargs["original_features"] - kwargs["mean_neighbors"]
+
+@st.cache_data(show_spinner=False)
+def load_csv_dataset(file_path):
+    """Loads CSV dataset with cached memory persistence for instant server-side ops."""
+    return pd.read_csv(file_path)
+
+@st.cache_data(show_spinner=False)
+def filter_and_sort_server_side(
+    df,
+    selected_patients=None,
+    patient_id_query="",
+    age_range=None,
+    age_col=None,
+    gt_filter=None,
+    gt_col=None,
+    sort_column=None,
+    sort_order="Ascending",
+    display_limit=200,
+    page_number=1
+):
+    """
+    Computes complete dataset filtering and sorting server-side in Python.
+    Preserves original 0-indexed row position in column '_row_pos' and returns only display_limit rows for Streamlit UI preview.
+    """
+    df_work = df.copy()
+    if "_row_pos" not in df_work.columns:
+        df_work["_row_pos"] = np.arange(len(df_work))
+        
+    mask = np.ones(len(df_work), dtype=bool)
+    
+    if selected_patients and "Id" in df_work.columns:
+        mask &= df_work["Id"].isin(selected_patients)
+        
+    if patient_id_query and patient_id_query.strip() and "Id" in df_work.columns:
+        query_str = patient_id_query.strip()
+        mask &= df_work["Id"].astype(str).str.contains(query_str, case=False, regex=False)
+        
+    if age_range and age_col and age_col in df_work.columns:
+        mask &= (df_work[age_col] >= age_range[0]) & (df_work[age_col] <= age_range[1])
+        
+    if gt_filter and gt_col and gt_col in df_work.columns:
+        mask &= df_work[gt_col].astype(str).isin(gt_filter)
+        
+    filtered_df = df_work[mask].copy()
+    
+    if sort_column and sort_column in filtered_df.columns:
+        ascending = (sort_order == "Ascending")
+        filtered_df = filtered_df.sort_values(by=sort_column, ascending=ascending).reset_index(drop=True)
+    else:
+        filtered_df = filtered_df.reset_index(drop=True)
+        
+    total_filtered = len(filtered_df)
+    start_idx = max(0, (page_number - 1) * display_limit)
+    end_idx = min(total_filtered, start_idx + display_limit)
+    
+    preview_df = filtered_df.iloc[start_idx:end_idx].copy()
+    
+    return filtered_df, preview_df, total_filtered, len(df)
 
 PANEL_BASE_FEATURES = {
     "CBC": ["f__Age", "f__HGB", "f__MCV", "f__PLT", "f__RBC", "f__Sex", "f__WBC"],
@@ -372,9 +431,9 @@ else:
 
 # Row subsampling option (with checkbox to disable limit)
 eval_all_rows = st.sidebar.checkbox(
-    "Evaluate All Rows (Disable limit)",
-    value=False,
-    help="Check this to process all rows in the dataset without any max row limit."
+    "Evaluate All Rows (Full Dataset)",
+    value=True,
+    help="When enabled, processes the entire dataset. Filtering and sorting will apply across all rows, while UI tables preview the top 200 rows."
 )
 
 if not eval_all_rows and df_loaded is not None and len(df_loaded) > 500:
@@ -424,10 +483,11 @@ if df_loaded is None:
 st.subheader("📋 1. Uploaded Test Data Overview & Filtering")
 
 # Data Filtering Controls
-with st.expander("🔍 Filter & Sort Dataset Columns", expanded=True):
-    filter_col1, filter_col2, filter_col3 = st.columns(3)
+with st.expander("🔍 Server-Side Filter & Sort Controls", expanded=True):
+    filter_col1, filter_col2, filter_col3, filter_col4 = st.columns(4)
     
     selected_patients = []
+    patient_id_text = ""
     selected_age_range = None
     age_col = None
     selected_gt_filter = []
@@ -437,7 +497,8 @@ with st.expander("🔍 Filter & Sort Dataset Columns", expanded=True):
     with filter_col1:
         if "Id" in df_loaded.columns:
             all_patients = sorted(df_loaded["Id"].unique().tolist())
-            selected_patients = st.multiselect("Filter by Patient ID (Id)", options=all_patients[:100], help="Showing first 100 patient IDs")
+            selected_patients = st.multiselect("Filter by Patient ID (Id)", options=all_patients, help="Search or select patient IDs from complete dataset")
+            patient_id_text = st.text_input("Search Patient ID (text)", value="", help="Type any patient ID to search instantly across full dataset")
                 
     with filter_col2:
         if "f__Age" in df_loaded.columns or "Age" in df_loaded.columns:
@@ -450,51 +511,62 @@ with st.expander("🔍 Filter & Sort Dataset Columns", expanded=True):
         if gt_col:
             selected_gt_filter = st.multiselect("Filter Ground-Truth Label", options=sorted(df_loaded[gt_col].astype(str).unique()))
 
-    # Build mask for df_loaded preview
-    mask_preview = np.ones(len(df_loaded), dtype=bool)
-    if selected_patients and "Id" in df_loaded.columns:
-        mask_preview &= df_loaded["Id"].isin(selected_patients)
-    if selected_age_range and age_col and age_col in df_loaded.columns:
-        mask_preview &= (df_loaded[age_col] >= selected_age_range[0]) & (df_loaded[age_col] <= selected_age_range[1])
-    if selected_gt_filter and gt_col and gt_col in df_loaded.columns:
-        mask_preview &= df_loaded[gt_col].astype(str).isin(selected_gt_filter)
-        
-    filtered_preview_df = df_loaded[mask_preview]
-
-    # Filter columns to only show Id, Time, ground-truth label (y), and feature columns (f__ / f_)
+    # Build preview column list
     preview_cols = []
     for meta_col in ["Id", "Time"]:
-        if meta_col in filtered_preview_df.columns:
+        if meta_col in df_loaded.columns:
             preview_cols.append(meta_col)
-    if gt_col and gt_col in filtered_preview_df.columns and gt_col not in preview_cols:
+    if gt_col and gt_col in df_loaded.columns and gt_col not in preview_cols:
         preview_cols.append(gt_col)
         
-    f_cols_preview = [c for c in filtered_preview_df.columns if c.startswith("f_")]
+    f_cols_preview = [c for c in df_loaded.columns if c.startswith("f_")]
     preview_cols.extend(f_cols_preview)
     
-    # Retain raw Age/Sex if present for sidebar filtering
     for raw_meta in ["Age", "Sex"]:
-        if raw_meta in filtered_preview_df.columns and raw_meta not in preview_cols and f"f__{raw_meta}" not in preview_cols:
+        if raw_meta in df_loaded.columns and raw_meta not in preview_cols and f"f__{raw_meta}" not in preview_cols:
             preview_cols.append(raw_meta)
 
-    # Display Filtered Dataframe
-    st.dataframe(filtered_preview_df[preview_cols].head(200), use_container_width=True, height=250)
-    st.caption(f"Displaying top {min(len(filtered_preview_df), 200)} rows out of {len(filtered_preview_df):,} filtered observations (total dataset: {len(df_loaded):,} rows). Showing key metadata (`Id`, `Time`, `{gt_col if gt_col else 'y'}`) and feature columns (`f__*`).")
+    with filter_col4:
+        sort_column = st.selectbox("Sort Overview by Column", options=preview_cols if preview_cols else list(df_loaded.columns), index=0)
+        sort_order = st.radio("Sort Direction", options=["Ascending", "Descending"], index=0, horizontal=True)
 
-# Metric cards (based on filtered preview set)
+    # Server-Side Filter & Sort Engine Call
+    filtered_preview_full, preview_overview_df, total_filtered_overview, total_dataset_overview = filter_and_sort_server_side(
+        df=df_loaded,
+        selected_patients=selected_patients,
+        patient_id_query=patient_id_text,
+        age_range=selected_age_range,
+        age_col=age_col,
+        gt_filter=selected_gt_filter,
+        gt_col=gt_col,
+        sort_column=sort_column,
+        sort_order=sort_order,
+        display_limit=200,
+        page_number=1
+    )
+
+    # Render Server-Side Sliced Dataframe (Top 200 rows)
+    cols_to_show = [c for c in preview_cols if c in preview_overview_df.columns]
+    st.dataframe(preview_overview_df[cols_to_show], use_container_width=True, height=250)
+    st.caption(
+        f"🖥️ **Server-Side Engine:** Full dataset filtering & sorting computed on Python server across {total_dataset_overview:,} rows. "
+        f"Displaying top {len(preview_overview_df):,} preview rows out of {total_filtered_overview:,} matching observations."
+    )
+
+# Metric cards (based on server-side filtered preview set)
 col1, col2, col3, col4 = st.columns(4)
 with col1:
-    st.metric("Filtered Test Observations", f"{len(filtered_preview_df):,} / {len(df_loaded):,}")
+    st.metric("Filtered Test Observations", f"{total_filtered_overview:,} / {total_dataset_overview:,}")
 with col2:
-    num_pts = filtered_preview_df["Id"].nunique() if "Id" in filtered_preview_df.columns else "N/A"
+    num_pts = filtered_preview_full["Id"].nunique() if "Id" in filtered_preview_full.columns else "N/A"
     st.metric("Unique Patient IDs", f"{num_pts:,}" if isinstance(num_pts, int) else num_pts)
 with col3:
-    f_cols_found = [c for c in filtered_preview_df.columns if c.startswith("f__")]
+    f_cols_found = [c for c in filtered_preview_full.columns if c.startswith("f__")]
     st.metric("Feature Columns ('f__')", len(f_cols_found))
 with col4:
-    if gt_col and len(filtered_preview_df) > 0:
-        pos_count = (filtered_preview_df[gt_col].astype(str).str.contains("Sepsis|1")).sum()
-        st.metric("Ground-Truth Sepsis Cases", f"{pos_count:,} ({pos_count/len(filtered_preview_df):.1%})")
+    if gt_col and len(filtered_preview_full) > 0:
+        pos_count = (filtered_preview_full[gt_col].astype(str).str.contains("Sepsis|1")).sum()
+        st.metric("Ground-Truth Sepsis Cases", f"{pos_count:,} ({pos_count/len(filtered_preview_full):.1%})")
     else:
         st.metric("Ground-Truth Available", "No (Unlabeled)")
 
@@ -551,57 +623,88 @@ if st.session_state.get("inference_completed", False):
             
     res_df["Risk_Category"] = res_df["Sepsis_Prediction_Probability"].apply(assign_risk_category)
     
-    # Filter res_df and preds_prob according to active dataset filter selections
-    mask_res = np.ones(len(res_df), dtype=bool)
-    if selected_patients and "Id" in res_df.columns:
-        mask_res &= res_df["Id"].isin(selected_patients)
-    if selected_age_range and age_col and age_col in res_df.columns:
-        mask_res &= (res_df[age_col] >= selected_age_range[0]) & (res_df[age_col] <= selected_age_range[1])
-    if selected_gt_filter and gt_col and gt_col in res_df.columns:
-        mask_res &= res_df[gt_col].astype(str).isin(selected_gt_filter)
-        
-    filtered_res_df = res_df[mask_res].copy()
-    filtered_preds_prob = preds_prob[mask_res]
+    # Server-side filter & sort on prediction probabilities dataframe res_df
+    display_cols = ["Sepsis_Prediction_Probability", "Sepsis_Risk_%", "Predicted_Class", "Risk_Category"]
+    if "Id" in res_df.columns: display_cols.insert(0, "Id")
+    if "Time" in res_df.columns: display_cols.insert(1, "Time")
+    if gt_col and gt_col in res_df.columns: display_cols.append(gt_col)
     
-    if len(filtered_res_df) == 0:
+    f_labs = [c for c in res_df.columns if c.startswith("f_")]
+    display_cols.extend(f_labs)
+    
+    psort_col1, psort_col2, psort_col3 = st.columns([2, 1, 1])
+    with psort_col1:
+        pred_sort_column = st.selectbox(
+            "Sort Prediction Results by Column",
+            options=display_cols,
+            index=display_cols.index("Sepsis_Prediction_Probability") if "Sepsis_Prediction_Probability" in display_cols else 0,
+            key="pred_sort_col_select"
+        )
+    with psort_col2:
+        pred_sort_order = st.radio(
+            "Prediction Sort Order",
+            options=["Descending", "Ascending"],
+            index=0,
+            horizontal=True,
+            key="pred_sort_order_radio"
+        )
+    with psort_col3:
+        total_pred_pages = max(1, math.ceil(len(res_df) / 200))
+        pred_page = st.number_input(
+            "Page (200 rows/page)",
+            min_value=1,
+            max_value=total_pred_pages,
+            value=1,
+            step=1,
+            key="pred_page_input"
+        )
+
+    filtered_res_full, preview_res_df, total_filtered_res, total_res = filter_and_sort_server_side(
+        df=res_df,
+        selected_patients=selected_patients,
+        patient_id_query=patient_id_text,
+        age_range=selected_age_range,
+        age_col=age_col,
+        gt_filter=selected_gt_filter,
+        gt_col=gt_col,
+        sort_column=pred_sort_column,
+        sort_order=pred_sort_order,
+        display_limit=200,
+        page_number=pred_page
+    )
+
+    if total_filtered_res == 0:
         st.warning("⚠️ No observations match the active filter criteria. Please adjust filters above.")
     else:
-        # Summary Risk Distribution Cards (evaluated on filtered set)
+        # Summary Risk Distribution Cards (evaluated on full server-side filtered set)
+        filtered_preds_prob_full = filtered_res_full["Sepsis_Prediction_Probability"].to_numpy()
         rc1, rc2, rc3, rc4 = st.columns(4)
-        high_risk_cnt = (filtered_preds_prob >= risk_threshold).sum()
-        low_risk_cnt = (filtered_preds_prob < risk_threshold).sum()
+        high_risk_cnt = (filtered_preds_prob_full >= risk_threshold).sum()
+        low_risk_cnt = (filtered_preds_prob_full < risk_threshold).sum()
         
         with rc1:
-            st.metric("Mean Prediction Probability", f"{filtered_preds_prob.mean():.4f} ({filtered_preds_prob.mean():.1%})")
+            st.metric("Mean Prediction Probability", f"{filtered_preds_prob_full.mean():.4f} ({filtered_preds_prob_full.mean():.1%})")
         with rc2:
-            st.metric(f"High Probability (≥{risk_threshold:.4f})", f"{high_risk_cnt:,} ({high_risk_cnt/len(filtered_preds_prob):.1%})")
+            st.metric(f"High Probability (≥{risk_threshold:.4f})", f"{high_risk_cnt:,} ({high_risk_cnt/len(filtered_preds_prob_full):.1%})")
         with rc3:
-            st.metric(f"Low Probability (<{risk_threshold:.4f})", f"{low_risk_cnt:,} ({low_risk_cnt/len(filtered_preds_prob):.1%})")
+            st.metric(f"Low Probability (<{risk_threshold:.4f})", f"{low_risk_cnt:,} ({low_risk_cnt/len(filtered_preds_prob_full):.1%})")
         with rc4:
             st.metric("Active Cutoff Threshold", f"{risk_threshold:.4f}")
 
         # Display Interactive Prediction Probabilities Table
-        st.markdown(f"#### 📊 Patient Prediction Probabilities Table ({len(filtered_res_df):,} Filtered Observations)")
+        st.markdown(f"#### 📊 Patient Prediction Probabilities Table ({total_filtered_res:,} Filtered Observations)")
         st.caption(
             f"❓ **Cutoff-Calibrated Sepsis Risk (%):** At the active cutoff threshold (**{risk_threshold:.4f}**), risk is calibrated to exactly **50.0%**. "
             f"For predictions above the cutoff (Sepsis), risk continuously increases up to **100%**. "
             f"For predictions below the cutoff (Control), risk continuously decreases down to **0%**."
         )
 
-        display_cols = ["Sepsis_Prediction_Probability", "Sepsis_Risk_%", "Predicted_Class", "Risk_Category"]
-        if "Id" in filtered_res_df.columns: display_cols.insert(0, "Id")
-        if "Time" in filtered_res_df.columns: display_cols.insert(1, "Time")
-        if gt_col and gt_col in filtered_res_df.columns: display_cols.append(gt_col)
-        
-        f_labs = [c for c in filtered_res_df.columns if c.startswith("f_")]
-        display_cols.extend(f_labs)
-        
-        display_df = filtered_res_df[display_cols].sort_values(by="Sepsis_Prediction_Probability", ascending=False).reset_index(drop=False)
-
         st.info("👇 **Click directly on any patient row in the table below** to select and calculate its **Local SHAP Values**!")
 
+        pred_cols_to_show = [c for c in display_cols if c in preview_res_df.columns]
+
         selection_event = st.dataframe(
-            display_df.drop(columns=["index"]),
+            preview_res_df[pred_cols_to_show],
             use_container_width=True,
             height=340,
             on_select="rerun",
@@ -628,16 +731,23 @@ if st.session_state.get("inference_completed", False):
             }
         )
 
+        start_row_idx = max(1, (pred_page - 1) * 200 + 1)
+        end_row_idx = min(pred_page * 200, total_filtered_res)
+        st.caption(
+            f"🖥️ **Server-Side Engine:** Full filtering & sorting computed on Python backend across {total_res:,} total prediction observations. "
+            f"Displaying page {pred_page} (rows {start_row_idx:,}-{end_row_idx:,} of {total_filtered_res:,} matching observations)."
+        )
+
         clicked_row_idx = 0
         if selection_event and hasattr(selection_event, "selection") and selection_event.selection and "rows" in selection_event.selection:
             sel_rows = selection_event.selection.rows
             if len(sel_rows) > 0:
                 clicked_row_idx = sel_rows[0]
 
-        # Download Button (Filtered set)
-        csv_bytes = filtered_res_df.to_csv(index=False).encode('utf-8')
+        # Download Button (Full Filtered set)
+        csv_bytes = filtered_res_full.drop(columns=["_row_pos"], errors="ignore").to_csv(index=False).encode('utf-8')
         st.download_button(
-            label=f"📥 Download Prediction Probabilities CSV ({len(filtered_res_df):,} rows)",
+            label=f"📥 Download Prediction Probabilities CSV ({len(filtered_res_full):,} rows)",
             data=csv_bytes,
             file_name="graphflow_sepsis_prediction_probabilities_filtered.csv",
             mime="text/csv",
@@ -655,9 +765,9 @@ if st.session_state.get("inference_completed", False):
         )
 
         if final_feats is not None and f_cols is not None:
-            # Build dropdown labels for display_df observations
+            # Build dropdown labels for preview_res_df observations
             row_options = []
-            for idx_i, row_item in display_df.iterrows():
+            for idx_i, row_item in preview_res_df.iterrows():
                 label_parts = [f"Row #{idx_i + 1}"]
                 if "Id" in row_item: label_parts.append(f"Patient ID: {row_item['Id']}")
                 if "Time" in row_item: label_parts.append(f"Time: {row_item['Time']}")
@@ -666,19 +776,19 @@ if st.session_state.get("inference_completed", False):
 
             selected_row_idx = st.selectbox(
                 "Selected Patient Observation Row for SHAP Breakdown:",
-                options=list(range(len(display_df))),
-                index=clicked_row_idx if clicked_row_idx < len(display_df) else 0,
+                options=list(range(len(preview_res_df))),
+                index=clicked_row_idx if clicked_row_idx < len(preview_res_df) else 0,
                 format_func=lambda i: row_options[i],
                 help="Click any row in the table above or pick from this dropdown to calculate its GraphFlow SHAP feature contributions."
             )
 
-            if selected_row_idx is not None and len(display_df) > 0:
-                actual_df_idx = display_df.loc[selected_row_idx, "index"]
+            if selected_row_idx is not None and len(preview_res_df) > 0:
+                actual_df_idx = int(preview_res_df.iloc[selected_row_idx]["_row_pos"])
                 
                 with st.spinner(f"Computing local SHAP attributions for Row #{selected_row_idx + 1} via TreeExplainer..."):
                     shap_vals, base_val = get_shap_explanations(selected_model_path, final_feats)
                 
-                row_res = res_df.loc[actual_df_idx]
+                row_res = res_df.iloc[actual_df_idx]
                 row_final_feats = final_feats[actual_df_idx]
                 row_shap = shap_vals[actual_df_idx]
                 
@@ -814,8 +924,9 @@ if st.session_state.get("inference_completed", False):
         # -------------------------------------------------------------------------
         st.subheader("📈 3. Ground-Truth Performance & AUROC Evaluation (Filtered Set)")
         
-        if gt_col and gt_col in filtered_res_df.columns:
-            y_true_binary = (filtered_res_df[gt_col].astype(str).str.contains("Sepsis|1")).astype(int)
+        if gt_col and gt_col in filtered_res_full.columns:
+            y_true_binary = (filtered_res_full[gt_col].astype(str).str.contains("Sepsis|1")).astype(int)
+            filtered_preds_prob = filtered_res_full["Sepsis_Prediction_Probability"].to_numpy()
             
             if len(np.unique(y_true_binary)) > 1:
                 auroc_score = roc_auc_score(y_true_binary, filtered_preds_prob)
