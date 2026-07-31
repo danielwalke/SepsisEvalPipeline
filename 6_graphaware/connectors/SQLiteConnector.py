@@ -11,8 +11,9 @@ class SQLiteConnector:
         Reads the database path from the environment variable if not provided.
         """
         config = configparser.ConfigParser()
-        config.read('/app/config/config.ini')
-        panel_name = config['PANEL']["panel_name"]
+        cfg_path = '/app/config/config.ini' if os.path.exists('/app/config/config.ini') else os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'config.ini'))
+        config.read(cfg_path)
+        panel_name = config['PANEL']["panel_name"] if 'PANEL' in config else "CBC"
         if db_path is None:
             db_path = f"/app/db/{panel_name}/mimic_sbc_graph.db"
         
