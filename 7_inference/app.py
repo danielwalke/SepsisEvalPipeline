@@ -994,7 +994,7 @@ if st.session_state.get("inference_completed", False):
 
                     fig_roc.update_layout(
                         title=dict(
-                            text=f"ROC Curve - GraphFlow ({selected_panel}) [{len(filtered_res_df):,} Filtered Obs]",
+                            text=f"ROC Curve - GraphFlow ({selected_panel}) [{len(filtered_res_full):,} Filtered Obs]",
                             font=dict(size=16),
                             x=0.0,
                             xanchor='left',
