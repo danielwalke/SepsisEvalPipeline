@@ -19,7 +19,7 @@ import subprocess
 import contextlib
 import pandas as pd
 import numpy as np
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Union
 from sklearn.metrics import (
     roc_auc_score, roc_curve, confusion_matrix,
     precision_score, recall_score, f1_score, fbeta_score, accuracy_score
@@ -322,15 +322,21 @@ def run_graphflow_inference(
 @mcp.tool()
 def explain_patient_prediction(
     selected_panel: str = "MIMIC_CBC",
-    row_index: int = 0,
+    patient_id: Optional[Union[int, str]] = None,
+    event_index: Optional[int] = None,
+    hours_elapsed: Optional[float] = None,
+    row_index: Optional[int] = None,
     dataset_key: Optional[str] = None
 ) -> Dict[str, Any]:
     """
-    Calculates 2N total aggregated local SHAP values (SHAP_orig + SHAP_delta_mean) for a specific patient row.
+    Calculates 2N total aggregated local SHAP values (SHAP_orig + SHAP_delta_mean) for a specific patient row or event.
 
     Args:
         selected_panel: Panel name (e.g. 'MIMIC_CBC', 'MIMIC_CBC_BMP').
-        row_index: 0-indexed row position of the patient observation to explain.
+        patient_id: Optional Patient ID (e.g. 342990 or '342990'). RECOMMENDED for patient-specific explanations.
+        event_index: Optional 0-indexed position within the patient's time series trajectory (e.g. 0 for first event, 1 for second event, -1 for last event). If omitted when patient_id is provided, defaults to the sepsis onset event.
+        hours_elapsed: Optional time in hours (e.g. 5.6) to target a specific observation for the patient.
+        row_index: Optional 0-indexed global dataset row position to explain (used if patient_id is omitted).
         dataset_key: Optional sample test dataset key.
     """
     with contextlib.redirect_stdout(sys.stderr):
@@ -340,26 +346,28 @@ def explain_patient_prediction(
         get_shap_explanations = app_mod.get_shap_explanations
         get_default_cutoff = app_mod.get_default_cutoff
 
+        assets = _resolve_panel_assets(selected_panel)
         sample_datasets = get_sample_datasets(selected_panel)
-        if not sample_datasets:
-            return {"status": "error", "message": f"No sample datasets found for panel '{selected_panel}'"}
 
-        target_key = dataset_key if (dataset_key and dataset_key in sample_datasets) else list(sample_datasets.keys())[0]
-        target_path = sample_datasets[target_key]
+        target_key = dataset_key if (dataset_key and dataset_key in sample_datasets) else None
+        target_path = sample_datasets[target_key] if target_key else assets["csv_path"]
+
+        if not os.path.exists(target_path):
+            return {"status": "error", "message": f"Dataset path not found: {target_path}"}
+
         df = pd.read_csv(target_path)
-
-        if row_index < 0 or row_index >= len(df):
-            return {"status": "error", "message": f"Invalid row_index {row_index}. Valid range: [0, {len(df)-1}]"}
 
         clean_panel = selected_panel.replace("MIMIC_", "").replace("SBC_", "")
         model_path = os.path.join(BASE_DIR, "6_graphaware", "models", clean_panel, "final_model.xgb")
         if not os.path.exists(model_path):
             model_path = os.path.join(BASE_DIR, "6_graphaware", "models", selected_panel, "final_model.xgb")
+        if not os.path.exists(model_path):
+            model_path = assets["ga_model_path"]
 
         res_df, preds_prob, final_feats, f_cols = run_graphaware_inference(df, model_path, selected_panel)
         shap_vals, base_val = get_shap_explanations(model_path, final_feats)
 
-    opt_cutoff = get_default_cutoff(selected_panel, target_key)
+    opt_cutoff = assets["cutoff_graphaware"]
     c_safe = max(1e-6, min(1.0 - 1e-6, float(opt_cutoff)))
     calibrated_risk_pct = np.where(
         preds_prob < c_safe,
@@ -371,9 +379,49 @@ def explain_patient_prediction(
     res_df["Sepsis_Risk_%"] = np.clip(calibrated_risk_pct, 0.0, 100.0).round(2)
     res_df["Predicted_Class"] = np.where(preds_prob >= opt_cutoff, "Sepsis", "Control")
 
-    row_res = res_df.iloc[row_index]
-    row_final_feats = final_feats[row_index]
-    row_shap = shap_vals[row_index]
+    # Resolve target row index
+    if patient_id is not None:
+        pid_str = str(patient_id).strip()
+        p_mask = res_df["Id"].astype(str).str.strip() == pid_str
+        p_indices = res_df.index[p_mask].tolist()
+
+        if not p_indices:
+            return {"status": "error", "message": f"Patient ID '{patient_id}' not found in dataset for panel '{selected_panel}'."}
+
+        first_ct = pd.to_datetime(res_df.loc[p_indices[0], 'charttime'])
+        p_hours = [round((pd.to_datetime(res_df.loc[idx, 'charttime']) - first_ct).total_seconds() / 3600.0, 1) for idx in p_indices]
+
+        if hours_elapsed is not None:
+            best_k = min(range(len(p_hours)), key=lambda k: abs(p_hours[k] - hours_elapsed))
+            target_idx = p_indices[best_k]
+            target_event_idx = best_k
+        elif event_index is not None:
+            if event_index < -len(p_indices) or event_index >= len(p_indices):
+                return {"status": "error", "message": f"Invalid event_index {event_index} for patient {patient_id}. Valid range: [0, {len(p_indices)-1}]"}
+            target_idx = p_indices[event_index]
+            target_event_idx = event_index if event_index >= 0 else len(p_indices) + event_index
+        elif row_index is not None and 0 <= row_index < len(p_indices):
+            target_idx = p_indices[row_index]
+            target_event_idx = row_index
+        else:
+            sepsis_k = [k for k, idx in enumerate(p_indices) if (res_df.loc[idx, 'y'] == 'Sepsis' or res_df.loc[idx, 'Predicted_Class'] == 'Sepsis')]
+            best_k = sepsis_k[0] if sepsis_k else 0
+            target_idx = p_indices[best_k]
+            target_event_idx = best_k
+    else:
+        target_idx = row_index if row_index is not None else 0
+        if target_idx < 0 or target_idx >= len(res_df):
+            return {"status": "error", "message": f"Invalid row_index {target_idx}. Valid range: [0, {len(res_df)-1}]"}
+
+        pid_val = res_df.loc[target_idx, 'Id']
+        p_indices = res_df.index[res_df['Id'] == pid_val].tolist()
+        target_event_idx = p_indices.index(target_idx) if target_idx in p_indices else 0
+        first_ct = pd.to_datetime(res_df.loc[p_indices[0], 'charttime'])
+        p_hours = [round((pd.to_datetime(res_df.loc[idx, 'charttime']) - first_ct).total_seconds() / 3600.0, 1) for idx in p_indices]
+
+    row_res = res_df.iloc[target_idx]
+    row_final_feats = final_feats[target_idx]
+    row_shap = shap_vals[target_idx]
 
     num_base_f = len(f_cols)
     orig_vals = row_final_feats[:num_base_f]
@@ -397,13 +445,24 @@ def explain_patient_prediction(
 
     breakdown_sorted = sorted(breakdown, key=lambda x: abs(x["total_aggregated_shap"]), reverse=True)
 
+    cur_ct = pd.to_datetime(row_res['charttime'])
+    cur_hr = round((cur_ct - first_ct).total_seconds() / 3600.0, 1)
+
     return {
         "status": "success",
+        "selected_panel": selected_panel,
         "patient_id": str(row_res.get("Id", "N/A")),
-        "timestamp": str(row_res.get("Time", "N/A")),
+        "subject_id": str(row_res.get("subject_id", "N/A")),
+        "hadm_id": str(row_res.get("hadm_id", "N/A")),
+        "event_index": target_event_idx,
+        "total_patient_events": len(p_indices),
+        "hours_elapsed": cur_hr,
+        "charttime": str(row_res.get("charttime", "N/A")),
+        "true_label": str(row_res.get("y", "N/A")),
         "predicted_class": str(row_res.get("Predicted_Class", "N/A")),
         "sepsis_prediction_probability": float(row_res.get("Sepsis_Prediction_Probability", 0.0)),
         "calibrated_sepsis_risk_percent": float(row_res.get("Sepsis_Risk_%", 0.0)),
+        "dataset_global_row_index": int(target_idx),
         "top_feature_attributions": breakdown_sorted[:10]
     }
 
@@ -630,10 +689,11 @@ def find_divergent_patient_trajectories(
             if ga_perfect_sepsis and base_missed_all_sepsis:
                 events_summary = []
                 first_charttime = pd.to_datetime(sorted_df['charttime'].iloc[0])
-                for _, r in sorted_df.iterrows():
+                for idx_ev, (_, r) in enumerate(sorted_df.iterrows()):
                     ct = pd.to_datetime(r['charttime'])
                     hr = (ct - first_charttime).total_seconds() / 3600.0
                     events_summary.append({
+                        "event_index": idx_ev,
                         "hours_elapsed": round(hr, 1),
                         "charttime": str(r['charttime']),
                         "true_label": str(r['y']),
@@ -681,7 +741,7 @@ def find_divergent_patient_trajectories(
 
 @mcp.tool()
 def evaluate_patient_traditional_xgboost(
-    patient_id: int,
+    patient_id: Union[int, str],
     selected_panel: str = "MIMIC_CBC_BMP"
 ) -> Dict[str, Any]:
     """
@@ -699,7 +759,8 @@ def evaluate_patient_traditional_xgboost(
 
         df_all = pd.read_csv(assets["csv_path"])
 
-        p_df = df_all[df_all['Id'] == patient_id].sort_values('Time').copy()
+        pid_str = str(patient_id).strip()
+        p_df = df_all[df_all['Id'].astype(str).str.strip() == pid_str].sort_values('Time').copy()
         if len(p_df) == 0:
             return {"status": "error", "message": f"Patient ID {patient_id} not found in panel '{assets['panel_name']}'."}
 
@@ -717,10 +778,11 @@ def evaluate_patient_traditional_xgboost(
 
         events = []
         first_ct = pd.to_datetime(p_df['charttime'].iloc[0])
-        for _, r in p_df.iterrows():
+        for idx_ev, (_, r) in enumerate(p_df.iterrows()):
             ct = pd.to_datetime(r['charttime'])
             hr = (ct - first_ct).total_seconds() / 3600.0
             events.append({
+                "event_index": idx_ev,
                 "hours_elapsed": round(hr, 1),
                 "charttime": str(r['charttime']),
                 "true_label": str(r['y']),
@@ -747,7 +809,7 @@ def evaluate_patient_traditional_xgboost(
 
 @mcp.tool()
 def evaluate_patient_graphaware_xgboost(
-    patient_id: int,
+    patient_id: Union[int, str],
     selected_panel: str = "MIMIC_CBC_BMP"
 ) -> Dict[str, Any]:
     """
@@ -768,7 +830,8 @@ def evaluate_patient_graphaware_xgboost(
 
         df_all = pd.read_csv(assets["csv_path"])
 
-        p_df = df_all[df_all['Id'] == patient_id].sort_values('Time').copy()
+        pid_str = str(patient_id).strip()
+        p_df = df_all[df_all['Id'].astype(str).str.strip() == pid_str].sort_values('Time').copy()
         if len(p_df) == 0:
             return {"status": "error", "message": f"Patient ID {patient_id} not found in panel '{assets['panel_name']}'."}
 
@@ -783,10 +846,11 @@ def evaluate_patient_graphaware_xgboost(
 
         events = []
         first_ct = pd.to_datetime(sorted_df['charttime'].iloc[0])
-        for _, r in sorted_df.iterrows():
+        for idx_ev, (_, r) in enumerate(sorted_df.iterrows()):
             ct = pd.to_datetime(r['charttime'])
             hr = (ct - first_ct).total_seconds() / 3600.0
             events.append({
+                "event_index": idx_ev,
                 "hours_elapsed": round(hr, 1),
                 "charttime": str(r['charttime']),
                 "true_label": str(r['y']),
@@ -813,7 +877,7 @@ def evaluate_patient_graphaware_xgboost(
 
 @mcp.tool()
 def compare_patient_time_series(
-    patient_id: int,
+    patient_id: Union[int, str],
     selected_panel: str = "MIMIC_CBC_BMP"
 ) -> Dict[str, Any]:
     """
@@ -837,8 +901,9 @@ def compare_patient_time_series(
     panel_used = base_res.get("panel_used", selected_panel)
 
     events_comparison = []
-    for b_ev, g_ev in zip(base_res["events"], ga_res["events"]):
+    for idx_ev, (b_ev, g_ev) in enumerate(zip(base_res["events"], ga_res["events"])):
         events_comparison.append({
+            "event_index": idx_ev,
             "hours_elapsed": b_ev["hours_elapsed"],
             "charttime": b_ev["charttime"],
             "true_label": b_ev["true_label"],
