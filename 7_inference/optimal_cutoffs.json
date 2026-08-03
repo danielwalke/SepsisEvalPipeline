@@ -1,7 +1,7 @@
 {
     "MIMIC_CBC": {
-        "CBC/mimic_processed_test.csv": 0.0027,
-        "DEFAULT": 0.0027
+        "CBC/mimic_processed_test.csv": 0.000639,
+        "DEFAULT": 0.000639
     },
     "MIMIC_CBC_BMP": {
         "CBC_BMP/mimic_processed_test.csv": 0.0016,
