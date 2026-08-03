@@ -18,6 +18,7 @@ class XGBoostModel(BaseModel):
             "colsample_bytree": hp.hp.uniform("colsample_bytree", 0.5, 1.0), # Fraction of features per tree
             "min_child_weight": hp.hp.choice("min_child_weight", [1, 3, 5, 7]), # Similar to min_samples_leaf
             "gamma": hp.hp.uniform("gamma", 0.0, 0.5),                    # Minimum loss reduction for a split
+            "random_state": self.seed
         }
         
         best_params = self.tune_params(search_space)

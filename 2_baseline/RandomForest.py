@@ -24,7 +24,8 @@ class RandomForestModel(BaseModel):
                 {0: 0.0025, 1: 1}, 
                 {0: 0.005, 1: 1}, 
                 {0: 0.01, 1: 1}
-            ])
+            ]),
+            "random_state": self.seed
         }
         best_params = self.tune_params(search_space)
         self.log_scores(best_params, *test_data)
