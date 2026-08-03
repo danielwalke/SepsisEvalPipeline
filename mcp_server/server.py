@@ -661,8 +661,44 @@ def evaluate_patient_graphaware_xgboost(
         if not os.path.exists(model_path):
             return {"status": "error", "message": f"GraphAware model file not found at {model_path}"}
 
-        sorted_df, preds_ga, _, _ = run_graphaware_inference(p_df, model_path, selected_panel)
-        sorted_df['pred_graphaware'] = preds_ga
+        db_path = os.path.join(BASE_DIR, '4_db_upload', 'sqlite', 'sqlite_data', clean_panel, 'mimic_sbc_graph.db')
+        if not os.path.exists(db_path):
+            db_path = os.path.join(BASE_DIR, '4_db_upload', 'sqlite', 'sqlite_data', f"MIMIC_{clean_panel}", 'mimic_sbc_graph.db')
+
+        if os.path.exists(db_path):
+            import xgboost as xgb
+            from GraphAware.EnsembleFramework import Framework
+            from connectors.SQLiteConnector import SQLiteConnector
+            def diff_user_fun(kwargs):
+                return kwargs['original_features'] - kwargs['mean_neighbors']
+            hops = [0, 1]
+            framework = Framework(
+                user_functions=[diff_user_fun for _ in hops],
+                hops_list=hops,
+                clfs=[None for _ in hops],
+                gpu_idx=0,
+                handle_nan=0.0,
+                attention_configs=[None for _ in hops],
+                classifier_on_device=False
+            )
+            connector = SQLiteConnector(db_path=db_path)
+            ga_model = xgb.Booster()
+            ga_model.load_model(model_path)
+            skip = 0
+            test_preds_ga = []
+            while True:
+                X_batch, y_batch = connector.fetch_data_batch('MIMIC_TEST', '', skip, 10000, framework)
+                if len(y_batch) == 0:
+                    break
+                preds = ga_model.predict(xgb.DMatrix(X_batch))
+                test_preds_ga.extend(preds)
+                skip += 10000
+            connector.close()
+            df_all['pred_graphaware'] = test_preds_ga[:len(df_all)]
+            sorted_df = df_all[df_all['Id'] == patient_id].sort_values('Time').copy()
+        else:
+            sorted_df, preds_ga, _, _ = run_graphaware_inference(p_df, model_path, selected_panel)
+            sorted_df['pred_graphaware'] = preds_ga
 
         cutoff = 0.000178 # GraphAware Validation G-Mean ROC Cutoff
         sorted_df['ga_pos'] = sorted_df['pred_graphaware'] >= cutoff
