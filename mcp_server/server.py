@@ -469,14 +469,16 @@ def _resolve_panel_assets(selected_panel: str = "MIMIC_CBC_BMP"):
 
     # 5. Exact Optimal Cutoffs per panel (Validation G-Mean ROC optimization)
     cutoff_baseline_dict = {
-        'CBC_BMP': 0.001613,
         'CBC': 0.002117,
-        'BMP': 0.002000
+        'CBC_BMP': 0.001613,
+        'CBC_HIL': 0.001565,
+        'CBC_BMP_HIL': 0.000956
     }
     cutoff_ga_dict = {
-        'CBC_BMP': 0.000178,
         'CBC': 0.000709,
-        'BMP': 0.000200
+        'CBC_BMP': 0.000178,
+        'CBC_HIL': 0.000644,
+        'CBC_BMP_HIL': 0.000348
     }
 
     cutoff_base = cutoff_baseline_dict.get(clean_panel, 0.001613)
