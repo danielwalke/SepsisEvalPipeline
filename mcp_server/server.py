@@ -3,7 +3,7 @@ GraphFlow / SepsisEvalPipeline Model Context Protocol (MCP) Server.
 Provides standardized RPC tools to:
   1. Execute pipeline steps (2_baseline, 3_graph_construction, 4_db_upload, 5_gnn_training, 6_graphaware, all_steps).
   2. Query MLflow experiment runs, metrics (AUROC, Sensitivity, Specificity), and logged parameters.
-  3. Fetch pre-calculated optimal G-Mean ROC cutoffs per panel.
+  3. Fetch pre-calculated optimal F2 score (beta=2) cutoffs per panel.
   4. Run GraphFlow 1-hop spatial neighborhood inference programmatically.
   5. Compute 2N aggregated local SHAP explanations for specific patient cases.
   6. Check and interface with the Streamlit GraphFlow inference dashboard.
@@ -20,6 +20,10 @@ import contextlib
 import pandas as pd
 import numpy as np
 from typing import Optional, List, Dict, Any
+from sklearn.metrics import (
+    roc_auc_score, roc_curve, confusion_matrix,
+    precision_score, recall_score, f1_score, fbeta_score, accuracy_score
+)
 from mcp.server.fastmcp import FastMCP
 
 
@@ -171,7 +175,7 @@ def get_mlflow_experiment_results(experiment_name: Optional[str] = None, limit: 
 @mcp.tool()
 def get_optimal_cutoffs() -> Dict[str, Any]:
     """
-    Returns pre-calculated Geometric Mean (G-Mean) ROC classification cutoffs for all laboratory panels.
+    Returns pre-calculated optimal F2 score (beta=2) classification cutoffs for all laboratory panels.
     """
     if not os.path.exists(CUTOFFS_PATH):
         return {"status": "error", "message": f"Optimal cutoffs JSON file not found at {CUTOFFS_PATH}"}
@@ -194,7 +198,7 @@ def _load_inference_app():
 def run_graphflow_inference(
     selected_panel: str = "MIMIC_CBC",
     dataset_key: Optional[str] = None,
-    max_rows: int = 500,
+    max_rows: Optional[int] = None,
     risk_threshold: Optional[float] = None
 ) -> Dict[str, Any]:
     """
@@ -203,8 +207,8 @@ def run_graphflow_inference(
     Args:
         selected_panel: Panel name (e.g. 'MIMIC_CBC', 'MIMIC_CBC_BMP', 'SBC_CBC').
         dataset_key: Optional specific sample test dataset filename or relative path.
-        max_rows: Number of dataset rows to evaluate (default 500).
-        risk_threshold: Optional Sepsis risk cutoff override (defaults to Geometric Mean ROC cutoff).
+        max_rows: Optional max number of dataset rows to evaluate (defaults to None = full dataset).
+        risk_threshold: Optional Sepsis risk cutoff override (defaults to optimal F2 score cutoff).
     """
     with contextlib.redirect_stdout(sys.stderr):
         app_mod = _load_inference_app()
@@ -228,7 +232,7 @@ def run_graphflow_inference(
             return {"status": "error", "message": f"Dataset path not found: {target_path}"}
 
         df = pd.read_csv(target_path)
-        if len(df) > max_rows:
+        if max_rows is not None and len(df) > max_rows:
             df = df.iloc[:max_rows].copy()
 
         clean_panel = selected_panel.replace("MIMIC_", "").replace("SBC_", "")
@@ -257,18 +261,62 @@ def run_graphflow_inference(
     sepsis_cnt = int((preds_prob >= active_cutoff).sum())
     control_cnt = int((preds_prob < active_cutoff).sum())
 
-    return {
+    # Ground-truth evaluation metrics (matching 7_inference/app.py implementation)
+    gt_metrics = {}
+    gt_col = None
+    for candidate in ["y", "label", "Label", "target", "SepsisLabel"]:
+        if candidate in res_df.columns:
+            gt_col = candidate
+            break
+
+    if gt_col is not None:
+        y_true_binary = (res_df[gt_col].astype(str).str.contains("Sepsis|1")).astype(int)
+        y_pred_binary = (preds_prob >= active_cutoff).astype(int)
+
+        if len(np.unique(y_true_binary)) > 1:
+            auroc_score = roc_auc_score(y_true_binary, preds_prob)
+            sens = recall_score(y_true_binary, y_pred_binary, zero_division=0)
+            prec = precision_score(y_true_binary, y_pred_binary, zero_division=0)
+            f1 = f1_score(y_true_binary, y_pred_binary, zero_division=0)
+            f2 = fbeta_score(y_true_binary, y_pred_binary, beta=2, zero_division=0)
+            acc = accuracy_score(y_true_binary, y_pred_binary)
+            tn, fp, fn, tp = confusion_matrix(y_true_binary, y_pred_binary).ravel()
+            spec = tn / (tn + fp) if (tn + fp) > 0 else 0.0
+            npv = tn / (tn + fn) if (tn + fn) > 0 else 0.0
+            g_mean = float(np.sqrt(sens * spec))
+
+            gt_metrics = {
+                "auroc": round(float(auroc_score), 4),
+                "sensitivity": round(float(sens), 4),
+                "specificity": round(float(spec), 4),
+                "precision_ppv": round(float(prec), 4),
+                "npv": round(float(npv), 4),
+                "f1_score": round(float(f1), 4),
+                "f2_score": round(float(f2), 4),
+                "accuracy": round(float(acc), 4),
+                "g_mean": round(g_mean, 4),
+                "confusion_matrix": {"tn": int(tn), "fp": int(fp), "fn": int(fn), "tp": int(tp)}
+            }
+        else:
+            gt_metrics = {"warning": "Only one class present in ground truth — cannot compute AUROC or binary metrics."}
+
+    result = {
         "status": "success",
         "panel_name": selected_panel,
         "dataset_key": dataset_key,
         "total_rows_evaluated": len(preds_prob),
-        "gmean_roc_cutoff": opt_cutoff,
+        "optimal_f2_cutoff": opt_cutoff,
         "active_risk_threshold": active_cutoff,
         "predicted_sepsis_cases": sepsis_cnt,
         "predicted_control_cases": control_cnt,
         "mean_sepsis_probability": float(np.mean(preds_prob)),
         "top_5_high_risk_predictions": res_df.head(5)[["Id", "Time", "Sepsis_Prediction_Probability", "Sepsis_Risk_%", "Predicted_Class"]].to_dict(orient="records")
     }
+
+    if gt_metrics:
+        result["ground_truth_metrics"] = gt_metrics
+
+    return result
 
 
 @mcp.tool()
@@ -467,26 +515,29 @@ def _resolve_panel_assets(selected_panel: str = "MIMIC_CBC_BMP"):
     if not os.path.exists(db_path):
         db_path = os.path.join(BASE_DIR, "4_db_upload", "sqlite", "sqlite_data", panel_full_name, "mimic_sbc_graph.db")
 
-    # 5. Exact Optimal Cutoffs per panel (Read directly from 7_inference/optimal_cutoffs.json)
+    # 5. Optimal Cutoffs per panel (Read F2 score cutoffs from panel_optimal_cutoffs.json / 7_inference/optimal_cutoffs.json)
+    panel_cutoffs_path = os.path.join(BASE_DIR, "mcp_server", "panel_optimal_cutoffs.json")
     opt_json_path = os.path.join(BASE_DIR, "7_inference", "optimal_cutoffs.json")
-    cutoff_base = 0.0016
-    cutoff_ga = 0.0027
+    cutoff_base = 0.05715
+    cutoff_ga = 0.032564
+
+    # Read panel_optimal_cutoffs.json for baseline and graphaware cutoffs
+    if os.path.exists(panel_cutoffs_path):
+        with open(panel_cutoffs_path, 'r') as f:
+            panel_cut_data = json.load(f)
+            panel_entry = panel_cut_data.get(clean_panel, panel_cut_data.get(panel_full_name, {}))
+            if panel_entry:
+                cutoff_base = float(panel_entry.get("baseline_cutoff", cutoff_base))
+                cutoff_ga = float(panel_entry.get("graphaware_cutoff", cutoff_ga))
+
+    # Override graphaware cutoff from 7_inference/optimal_cutoffs.json if available
     if os.path.exists(opt_json_path):
-        import json
         with open(opt_json_path, 'r') as f:
             cut_data = json.load(f)
             if panel_full_name in cut_data:
-                cutoff_ga = float(cut_data[panel_full_name].get("DEFAULT", 0.0027))
+                cutoff_ga = float(cut_data[panel_full_name].get("DEFAULT", cutoff_ga))
             elif clean_panel in cut_data:
-                cutoff_ga = float(cut_data[clean_panel].get("DEFAULT", 0.0027))
-
-    cutoff_baseline_dict = {
-        'CBC': 0.002117,
-        'CBC_BMP': 0.001613,
-        'CBC_HIL': 0.001565,
-        'CBC_BMP_HIL': 0.000956
-    }
-    cutoff_base = cutoff_baseline_dict.get(clean_panel, 0.001613)
+                cutoff_ga = float(cut_data[clean_panel].get("DEFAULT", cutoff_ga))
 
     return {
         "panel_name": panel_full_name,
@@ -537,9 +588,6 @@ def find_divergent_patient_trajectories(
         df_all['y_bin'] = (df_all['y'] == 'Sepsis').astype(int)
         df_all['pred_baseline'] = baseline_model.predict_proba(df_all[feature_cols].to_numpy())[:, 1]
         sepsis_patient_ids = df_all[df_all['y_bin'] == 1]['Id'].unique()
-
-        cutoff_base = assets["cutoff_baseline"]
-        cutoff_ga = assets["cutoff_graphaware"]
 
         cutoff_base = assets["cutoff_baseline"]
         cutoff_ga = assets["cutoff_graphaware"]

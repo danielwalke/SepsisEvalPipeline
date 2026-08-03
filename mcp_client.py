@@ -100,7 +100,7 @@ async def run_mcp_client(
                     "role": "system",
                     "content": (
                         "You are an AI Assistant that manages and executes the SepsisEvalPipeline MCP server tools. "
-                        "You can execute pipeline steps, inspect MLflow metrics, fetch G-Mean cutoffs, "
+                        "You can execute pipeline steps, inspect MLflow metrics, fetch optimal F2 score cutoffs, "
                         "run 1-hop spatial neighborhood inference, and explain patient predictions. "
                         "Use the provided MCP tools to complete the user's request accurately."
                     )
