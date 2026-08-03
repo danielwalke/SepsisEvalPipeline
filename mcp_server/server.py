@@ -502,7 +502,7 @@ def _resolve_panel_assets(selected_panel: str = "MIMIC_CBC_BMP"):
 
 @mcp.tool()
 def find_divergent_patient_trajectories(
-    selected_panel: str = "MIMIC_CBC_BMP",
+    selected_panel: str = "MIMIC_CBC",
     min_events: int = 2,
     max_candidates: int = 5
 ) -> Dict[str, Any]:
@@ -560,25 +560,24 @@ def find_divergent_patient_trajectories(
 
             sepsis_events = sorted_df[sorted_df['y_bin'] == 1]
             control_events = sorted_df[sorted_df['y_bin'] == 0]
-            if len(control_events) == 0 or len(sepsis_events) == 0:
+            if len(sepsis_events) == 0:
                 continue
 
             n_c = len(control_events)
-            b_c_fps = control_events['base_pos'].sum()
-            g_c_fps = control_events['ga_pos'].sum()
+            b_c_fps = control_events['base_pos'].sum() if n_c > 0 else 0
+            g_c_fps = control_events['ga_pos'].sum() if n_c > 0 else 0
 
             b_s_hits = sepsis_events['base_pos'].sum()
             g_s_hits = sepsis_events['ga_pos'].sum()
 
-            ga_c_acc = (n_c - g_c_fps) / n_c
-            base_c_acc = (n_c - b_c_fps) / n_c
+            ga_c_acc = ((n_c - g_c_fps) / n_c) if n_c > 0 else 1.0
+            base_c_acc = ((n_c - b_c_fps) / n_c) if n_c > 0 else 1.0
 
             base_missed_sepsis = (b_s_hits == 0)
             ga_detected_sepsis = (g_s_hits >= 1)
             baseline_100pct_negative = (sorted_df['base_pos'].sum() == 0)
 
-            # Require GraphAware to be accurate on Control events (ga_c_acc >= 0.50) AND detect Sepsis
-            # AND Baseline must either miss sepsis or trigger more control false alarms
+            # Require GraphAware to detect Sepsis while Baseline either misses Sepsis or has worse control false alarms
             if ga_detected_sepsis and ga_c_acc >= 0.50 and (base_missed_sepsis or b_c_fps > g_c_fps):
                 events_summary = []
                 first_charttime = pd.to_datetime(sorted_df['charttime'].iloc[0])
