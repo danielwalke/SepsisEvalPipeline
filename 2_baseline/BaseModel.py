@@ -17,17 +17,29 @@ class BaseModel:
         self.maximize_metric = maximize_metric
         self.metric_pred_proba = metric_pred_proba
         self.config = configparser.ConfigParser()
-        files_read = self.config.read('/app/config/config.ini')
-        self.seed = int(self.config['RANDOM'].get('seed', '42'))
+        if os.path.exists("config.ini"):
+            self.config.read("config.ini")
+        elif os.path.exists("/app/config/config.ini"):
+            self.config.read("/app/config/config.ini")
         
+        self.seed = int(self.config['RANDOM'].get('seed', '42')) if 'RANDOM' in self.config else 42
         
-        self.feature_set_name = self.config['PANEL']['panel_name']
+        self.feature_set_name = getattr(data, "feature_set_name", self.config['PANEL'].get('panel_name', 'CBC') if 'PANEL' in self.config else 'CBC')
         
-        logging.basicConfig(filename='/app/output/training_logs.log',
+        logging.basicConfig(filename='2_baseline/training_logs.log',
                             filemode='a',
                             level=logging.INFO, format='%(asctime)s - %(message)s')
         self.logger = logging.getLogger(__name__)
-        mlflow.set_tracking_uri("http://mlflow-server:5000")
+        tracking_uri = os.getenv("MLFLOW_TRACKING_URI")
+        if not tracking_uri:
+            # Check if mlflow-server hostname resolves, else use localhost
+            try:
+                import socket
+                socket.gethostbyname("mlflow-server")
+                tracking_uri = "http://mlflow-server:5000"
+            except Exception:
+                tracking_uri = "http://localhost:5000"
+        mlflow.set_tracking_uri(tracking_uri)
         mlflow.set_experiment(f"evaluations_{self.feature_set_name}")
         mlflow.start_run(run_name=f"{self.ModelClass.__name__}_Baseline_{data.name}")
         mlflow.set_tag("feature_set", self.feature_set_name)
@@ -51,7 +63,10 @@ class BaseModel:
             else:
                 train_X = self.data.train_X
                 val_X = self.data.val_X
-            model = self.ModelClass(**params, n_jobs=10)
+            try:
+                model = self.ModelClass(**params, n_jobs=10)
+            except TypeError:
+                model = self.ModelClass(**params)
             model.fit(train_X, self.data.train_y)
             if self.metric_pred_proba:
                 preds = model.predict_proba(val_X)[:, 1]
@@ -79,12 +94,21 @@ class BaseModel:
 
     def save_model(self, trained_model, best_params):
         exp_name = f"{self.data.name}_{self.feature_set_name}"
-        os.makedirs(f"/app/models/{exp_name}", exist_ok=True)
-        model_path = f"/app/models/{exp_name}/{self.ModelClass.__name__}.pkl"
+        os.makedirs(f"2_baseline/models/{exp_name}", exist_ok=True)
+        try:
+            os.makedirs(f"/app/models/{exp_name}", exist_ok=True)
+        except Exception:
+            pass
+        model_path = f"2_baseline/models/{exp_name}/{self.ModelClass.__name__}.pkl"
         with open(model_path, 'wb') as f:            
             pickle.dump(trained_model, f)
-        mlflow.log_artifact(model_path, artifact_path="models")
-        mlflow.log_params(best_params)     
+        try:
+            mlflow.log_artifact(model_path, artifact_path="models")
+        except Exception as e:
+            print(f"Artifact logging warning: {e}")
+        # Convert params values to string if dict
+        str_params = {k: str(v) if isinstance(v, dict) else v for k, v in best_params.items()}
+        mlflow.log_params(str_params)     
         print(f"Model saved to {model_path} and logged to MLflow.")
 
     def normalize_data(self, train_X, val_X, test_X):
@@ -103,7 +127,10 @@ class BaseModel:
         normalize = best_params.pop("normalize", False)            
         ## Retrain with best params
         train_start_time = time.time()
-        model = self.ModelClass(**best_params)
+        try:
+            model = self.ModelClass(**best_params, n_jobs=10)
+        except TypeError:
+            model = self.ModelClass(**best_params)
         if normalize:
             from sklearn.pipeline import Pipeline
             scaler = MinMaxScaler()
@@ -111,7 +138,7 @@ class BaseModel:
             full_model.fit(self.data.train_X, self.data.train_y)
         else:
             full_model = model
-            full_model.fit(train_X, self.data.train_y)
+            full_model.fit(self.data.train_X, self.data.train_y)
         train_end_time = time.time()
         self.save_model(full_model, best_params)
         model = full_model
