@@ -72,10 +72,10 @@ def find_high_quality_use_cases(selected_panel="MIMIC_CBC", max_display=5):
         if len(sepsis_rows) == 0:
             continue
             
-        ga_sepsis_correct = (sepsis_rows['ga_status'] == 'POSITIVE').any()
-        base_sepsis_missed = (sepsis_rows['base_status'] == 'NEGATIVE').any()
+        ga_sepsis_perfect = (sepsis_rows['ga_status'] == 'POSITIVE').all()
+        base_sepsis_missed_all = (sepsis_rows['base_status'] == 'NEGATIVE').all()
         
-        if ga_sepsis_correct and base_sepsis_missed:
+        if ga_sepsis_perfect and base_sepsis_missed_all:
             found_count += 1
             print("\n" + "=" * 80)
             print(f"Found Divergent Use Case #{found_count}: Patient ID {pid}")
