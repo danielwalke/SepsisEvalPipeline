@@ -50,8 +50,8 @@ def get_panel_assets(selected_panel: str = "MIMIC_CBC_BMP"):
     if not os.path.exists(db_path):
         db_path = os.path.join(REPO_ROOT, "4_db_upload", "sqlite", "sqlite_data", panel_full_name, "mimic_sbc_graph.db")
 
-    cutoff_base_dict = {'CBC_BMP': 0.001613, 'CBC': 0.002000, 'BMP': 0.002000}
-    cutoff_ga_dict = {'CBC_BMP': 0.000178, 'CBC': 0.000200, 'BMP': 0.000200}
+    cutoff_base_dict = {'CBC_BMP': 0.001613, 'CBC': 0.002117, 'BMP': 0.002000}
+    cutoff_ga_dict = {'CBC_BMP': 0.000178, 'CBC': 0.000709, 'BMP': 0.000200}
 
     return {
         "panel_name": panel_full_name,
