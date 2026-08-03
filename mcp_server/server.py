@@ -611,6 +611,7 @@ def find_divergent_patient_trajectories(
             if len(sepsis_events) == 0:
                 continue
 
+            n_s = len(sepsis_events)
             n_c = len(control_events)
             b_c_fps = control_events['base_pos'].sum() if n_c > 0 else 0
             g_c_fps = control_events['ga_pos'].sum() if n_c > 0 else 0
@@ -621,12 +622,12 @@ def find_divergent_patient_trajectories(
             ga_c_acc = ((n_c - g_c_fps) / n_c) if n_c > 0 else 1.0
             base_c_acc = ((n_c - b_c_fps) / n_c) if n_c > 0 else 1.0
 
-            base_missed_sepsis = (b_s_hits == 0)
-            ga_detected_sepsis = (g_s_hits >= 1)
+            ga_perfect_sepsis = (g_s_hits == n_s)
+            base_missed_all_sepsis = (b_s_hits == 0)
             baseline_100pct_negative = (sorted_df['base_pos'].sum() == 0)
 
-            # Require GraphAware to detect Sepsis while Baseline either misses Sepsis or has worse control false alarms
-            if ga_detected_sepsis and ga_c_acc >= 0.50 and (base_missed_sepsis or b_c_fps > g_c_fps):
+            # Require GraphAware to perfectly predict sepsis onset (100% sepsis recall) while Baseline XGBoost fails to predict any sepsis events
+            if ga_perfect_sepsis and base_missed_all_sepsis:
                 events_summary = []
                 first_charttime = pd.to_datetime(sorted_df['charttime'].iloc[0])
                 for _, r in sorted_df.iterrows():
@@ -652,7 +653,7 @@ def find_divergent_patient_trajectories(
                     "baseline_entire_series_100pct_negative": bool(baseline_100pct_negative),
                     "graphaware_control_accuracy": f"{ga_c_acc*100:.1f}% ({n_c - g_c_fps}/{n_c} correct)",
                     "baseline_control_accuracy": f"{base_c_acc*100:.1f}% ({n_c - b_c_fps}/{n_c} correct)",
-                    "divergence_type": "Baseline Entirely Negative (Missed Sepsis)" if baseline_100pct_negative else ("Baseline Missed Sepsis" if base_missed_sepsis else "Baseline High False Alarms"),
+                    "divergence_type": "GraphAware Perfect Sepsis Onset (Baseline Entirely Negative)" if baseline_100pct_negative else "GraphAware Perfect Sepsis Onset (Baseline Missed All Sepsis)",
                     "baseline_strictly_neg_raw": baseline_100pct_negative,
                     "ga_control_acc_raw": ga_c_acc,
                     "events": events_summary
