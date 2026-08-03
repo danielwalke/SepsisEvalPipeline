@@ -467,22 +467,26 @@ def _resolve_panel_assets(selected_panel: str = "MIMIC_CBC_BMP"):
     if not os.path.exists(db_path):
         db_path = os.path.join(BASE_DIR, "4_db_upload", "sqlite", "sqlite_data", panel_full_name, "mimic_sbc_graph.db")
 
-    # 5. Exact Optimal Cutoffs per panel (Validation G-Mean ROC optimization)
+    # 5. Exact Optimal Cutoffs per panel (Read directly from 7_inference/optimal_cutoffs.json)
+    opt_json_path = os.path.join(BASE_DIR, "7_inference", "optimal_cutoffs.json")
+    cutoff_base = 0.0016
+    cutoff_ga = 0.0027
+    if os.path.exists(opt_json_path):
+        import json
+        with open(opt_json_path, 'r') as f:
+            cut_data = json.load(f)
+            if panel_full_name in cut_data:
+                cutoff_ga = float(cut_data[panel_full_name].get("DEFAULT", 0.0027))
+            elif clean_panel in cut_data:
+                cutoff_ga = float(cut_data[clean_panel].get("DEFAULT", 0.0027))
+
     cutoff_baseline_dict = {
         'CBC': 0.002117,
         'CBC_BMP': 0.001613,
         'CBC_HIL': 0.001565,
         'CBC_BMP_HIL': 0.000956
     }
-    cutoff_ga_dict = {
-        'CBC': 0.000709,
-        'CBC_BMP': 0.000178,
-        'CBC_HIL': 0.000644,
-        'CBC_BMP_HIL': 0.000348
-    }
-
     cutoff_base = cutoff_baseline_dict.get(clean_panel, 0.001613)
-    cutoff_ga = cutoff_ga_dict.get(clean_panel, 0.000178)
 
     return {
         "panel_name": panel_full_name,
