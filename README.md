@@ -46,7 +46,7 @@ It features time-decay temporal patient graph construction ($w = 1 - \Delta t_{\
   - **GraphAware**: 1-hop spatial neighborhood feature aggregation paired with XGBoost for fast, scalable graph learning.
 - **Explainable AI ($2N$ SHAP Values)**: Computes aggregated local SHAP values ($\text{SHAP}_{\text{orig}} + \text{SHAP}_{\text{delta\_mean}}$) per feature to deliver clinically interpretable explanations.
 - **Cross-Dataset Generalizability**: Multi-center validation pipeline evaluating model transferability across distinct hospital cohorts (e.g., MIMIC-IV and SBC internal/external hospital cohorts).
-- **Geometric Mean (G-Mean) ROC Optimization**: Pre-computed optimal ROC classification cutoffs tailored per laboratory panel.
+- **F₂ Score (β=2) Cutoff Optimization**: Pre-computed optimal $F_2$ score classification cutoffs tailored per laboratory panel.
 - **Model Context Protocol (MCP) Server & Client**: Standardized FastMCP server interface paired with an OpenAI-compatible MCP Client for LLM agent integration.
 - **Streamlit Interactive Dashboard**: Real-time sepsis risk assessment, calibrated risk scores, ROC/AUROC evaluation, and patient SHAP visualizations.
 
@@ -63,7 +63,7 @@ SepsisEvalPipeline/
 ├── 4_db_upload/                # Step 4: Upload graph nodes & edges to SQLite / Neo4j
 ├── 5_gnn_training/             # Step 5: PyTorch Geometric GNN (GATv2) mini-batch training
 ├── 6_graphaware/               # Step 6: GraphAware 1-hop spatial neighborhood XGBoost & SHAP
-├── 7_inference/                # Step 7: Streamlit dashboard app & optimal G-Mean cutoffs
+├── 7_inference/                # Step 7: Streamlit dashboard app & optimal F₂ score cutoffs
 ├── 8_example_use_cases/        # Step 8: Jupyter notebooks & programmatic usage examples
 ├── mcp_server/                 # FastMCP Server providing RPC tools for pipeline & LLM access
 ├── mcp_client.py               # OpenAI-compatible MCP Client script for LLM agent execution
@@ -159,7 +159,7 @@ The Streamlit inference application provides three dedicated analytical views:
 ![Sepsis Prediction Probabilities & Calibrated Risk Table](docs/images/graphflow_predictions_overview.png)
 
 **Explanation**:
-- **Cutoff-Calibrated Sepsis Risk (%)**: Calibrates the raw output probability $P(\text{Sepsis})$ relative to the active Geometric Mean ROC cutoff threshold $c$.
+- **Cutoff-Calibrated Sepsis Risk (%)**: Calibrates the raw output probability $P(\text{Sepsis})$ relative to the active $F_2$ score cutoff threshold $c$.
   - At raw probability $P = c$, calibrated risk is defined as **50.0%**.
   - Above the cutoff ($P \ge c$), risk increases continuously from 50% to 100%.
   - Below the cutoff ($P < c$), risk decreases continuously from 50% down to 0%.
@@ -173,9 +173,9 @@ The Streamlit inference application provides three dedicated analytical views:
 
 **Explanation**:
 - **ROC Curve & AUROC Score**: Displays the Receiver Operating Characteristic curve comparing True Positive Rate (Sensitivity) against False Positive Rate ($1 - \text{Specificity}$). The overall area under the curve (AUROC) summarizes discriminative performance across all decision thresholds.
-- **Optimal Cutoff Star Marker ($\star$)**: Identifies the optimal threshold maximizing the Geometric Mean of sensitivity and specificity:
-  
-  $$\text{G-Mean} = \sqrt{\text{Sensitivity} \times \text{Specificity}}$$
+- **Optimal Cutoff Star Marker ($\star$)**: Identifies the optimal threshold maximizing the $F_2$ score ($\beta=2$) weighting Sensitivity (Recall) 4x over Precision:
+
+  $$F_2 = \frac{5 \times \text{PPV} \times \text{Sensitivity}}{4 \times \text{PPV} + \text{Sensitivity}}$$
 
 - **Annotated Confusion Matrix**: Heatmap detailing True Negatives (TN), False Positives (FP), False Negatives (FN), and True Positives (TP) at the active decision threshold, alongside Sensitivity, Specificity, PPV (Precision), and NPV metrics.
 
@@ -207,7 +207,7 @@ The repository includes a **FastMCP Server** ([mcp_server/server.py](file:///hom
 | `list_pipeline_steps` | Returns all pipeline steps (Steps 2 to 7) and their script paths. |
 | `run_pipeline_step` | Programmatically executes a specific pipeline step or all steps sequentially. |
 | `get_mlflow_experiment_results` | Queries MLflow SQLite DB for past experiment metrics and hyperparameters. |
-| `get_optimal_cutoffs` | Fetches pre-calculated Geometric Mean (G-Mean) ROC classification cutoffs. |
+| `get_optimal_cutoffs` | Fetches pre-calculated optimal $F_2$ score ($\beta=2$) classification cutoffs. |
 | `run_graphflow_inference` | Runs GraphFlow 1-hop spatial neighborhood inference on sample datasets. |
 | `explain_patient_prediction` | Computes $2N$ aggregated SHAP values for a specific patient observation. |
 | `get_dashboard_status` | Checks if the Streamlit inference dashboard is active on port 8501. |
