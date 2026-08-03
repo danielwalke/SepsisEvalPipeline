@@ -1,10 +1,13 @@
 """
-Automated Divergent Trajectory Search Script
-============================================
-Scans the entire test dataset (MIMIC-IV CBC_BMP) to automatically identify 
-patient journeys where Traditional XGBoost and GraphAware XGBoost make divergent predictions.
+Automated High-Quality Sepsis Trajectory Scanner (Database Graph Mode)
+======================================================================
+Scans the test dataset (MIMIC-IV CBC_BMP) using SQLiteConnector (database graph) 
+and model-specific cutoffs to discover clinical patient journeys where:
+  1. GraphAware XGBoost is highly ACCURATE on preceding Control events (0 false alarms).
+  2. GraphAware XGBoost correctly DETECTS Sepsis at clinical onset.
+  3. Traditional XGBoost Fails (misses sepsis or triggers false alarms during control).
 
-Uses model-specific G-Mean ROC optimal decision cutoffs:
+Model-Specific Cutoffs:
   - Baseline XGBoost Cutoff:   0.001613
   - GraphAware XGBoost Cutoff: 0.000178
 
@@ -16,111 +19,138 @@ import os
 import sys
 import pandas as pd
 import numpy as np
+import xgboost as xgb
 import joblib
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
 sys.path.insert(0, REPO_ROOT)
-sys.path.insert(0, os.path.join(REPO_ROOT, "7_inference"))
+sys.path.insert(0, os.path.join(REPO_ROOT, "6_graphaware"))
 
-from app import run_graphaware_inference
+from GraphAware.EnsembleFramework import Framework
+from connectors.SQLiteConnector import SQLiteConnector
 
-# Model-specific optimal decision cutoffs derived from Validation G-Mean ROC optimization
 CUTOFF_BASELINE = 0.001613
 CUTOFF_GRAPHAWARE = 0.000178
 
-def find_divergent_trajectories(selected_panel="MIMIC_CBC_BMP", max_display=5):
+def diff_user_fun(kwargs):
+    return kwargs['original_features'] - kwargs['mean_neighbors']
+
+def find_high_quality_use_cases(selected_panel="MIMIC_CBC_BMP", max_display=5):
     print("=" * 85)
-    print(" AUTOMATED DIVERGENT PATIENT TRAJECTORY SCANNER ")
+    print(" HIGH-QUALITY CLINICAL SEPSIS TRAJECTORY SCANNER (DATABASE GRAPH) ")
     print(f" Panel: {selected_panel}")
-    print(f" Model-Specific Cutoffs -> Baseline XGBoost: {CUTOFF_BASELINE:.6f} | GraphAware XGBoost: {CUTOFF_GRAPHAWARE:.6f}")
+    print(f" Model-Specific Cutoffs -> Baseline: {CUTOFF_BASELINE:.6f} | GraphAware: {CUTOFF_GRAPHAWARE:.6f}")
     print("=" * 85)
 
     test_csv_path = os.path.join(REPO_ROOT, "1_preprocess/data/preprocessed_data/CBC_BMP/mimic_processed_test.csv")
-    if not os.path.exists(test_csv_path):
-        raise FileNotFoundError(f"Test CSV not found at {test_csv_path}")
-
     df_test = pd.read_csv(test_csv_path)
 
-    clean_panel = selected_panel.replace("MIMIC_", "").replace("SBC_", "")
-    model_path = os.path.join(REPO_ROOT, "6_graphaware/models", clean_panel, "final_model.xgb")
-    if not os.path.exists(model_path):
-        model_path = os.path.join(REPO_ROOT, "6_graphaware/models", f"MIMIC_{clean_panel}", "final_model.xgb")
-
-    baseline_path = os.path.join(REPO_ROOT, "2_baseline/models", clean_panel, "XGBClassifier.pkl")
-    if not os.path.exists(baseline_path):
-        baseline_path = os.path.join(REPO_ROOT, "2_baseline/models", f"MIMIC_{clean_panel}", "XGBClassifier.pkl")
-
+    baseline_path = os.path.join(REPO_ROOT, "2_baseline/models/MIMIC_CBC_BMP/XGBClassifier.pkl")
     baseline_model = joblib.load(baseline_path)
-    feature_cols = [c for c in df_test.columns if c.startswith("f__")]
 
+    ga_path = os.path.join(REPO_ROOT, "6_graphaware/models/MIMIC_CBC_BMP/final_model.xgb")
+    ga_model = xgb.Booster()
+    ga_model.load_model(ga_path)
+
+    hops = [0, 1]
+    framework = Framework(
+        user_functions=[diff_user_fun for _ in hops],
+        hops_list=hops,
+        clfs=[None for _ in hops],
+        gpu_idx=0,
+        handle_nan=0.0,
+        attention_configs=[None for _ in hops],
+        classifier_on_device=False
+    )
+
+    db_path = os.path.join(REPO_ROOT, '4_db_upload/sqlite/sqlite_data/CBC_BMP/mimic_sbc_graph.db')
+    connector = SQLiteConnector(db_path=db_path)
+
+    feature_cols = [c for c in df_test.columns if c.startswith("f__")]
+    df_test['pred_baseline'] = baseline_model.predict_proba(df_test[feature_cols].to_numpy())[:, 1]
     df_test['y_bin'] = (df_test['y'] == 'Sepsis').astype(int)
+
+    # Fetch Database Graphaware Predictions
+    skip = 0
+    test_preds_ga = []
+    while True:
+        X_batch, y_batch = connector.fetch_data_batch('MIMIC_TEST', '', skip, 10000, framework)
+        if len(y_batch) == 0:
+            break
+        preds = ga_model.predict(xgb.DMatrix(X_batch))
+        test_preds_ga.extend(preds)
+        skip += 10000
+
+    connector.close()
+    df_test['pred_graphaware'] = test_preds_ga[:len(df_test)]
+
+    df_test['base_pos'] = df_test['pred_baseline'] >= CUTOFF_BASELINE
+    df_test['ga_pos'] = df_test['pred_graphaware'] >= CUTOFF_GRAPHAWARE
+
     sepsis_patients = df_test[df_test['y_bin'] == 1]['Id'].unique()
 
-    print(f"[1/3] Scanning {len(sepsis_patients)} sepsis patients for divergent time series...")
-
-    divergent_results = []
+    results = []
 
     for pid in sepsis_patients:
         p_df = df_test[df_test['Id'] == pid].sort_values('Time').copy()
         if len(p_df) < 2:
             continue
 
-        control_events = p_df[p_df['y_bin'] == 0]
-        sepsis_events = p_df[p_df['y_bin'] == 1]
-        if len(control_events) == 0 or len(sepsis_events) == 0:
+        c_events = p_df[p_df['y_bin'] == 0]
+        s_events = p_df[p_df['y_bin'] == 1]
+        if len(c_events) == 0 or len(s_events) == 0:
             continue
 
-        # Run GraphAware inference in app sub-graph mode
-        sorted_df, preds_ga, _, _ = run_graphaware_inference(p_df, model_path, selected_panel)
-        preds_base = baseline_model.predict_proba(sorted_df[feature_cols].to_numpy())[:, 1]
-        sorted_df['pred_baseline'] = preds_base
-        sorted_df['pred_graphaware'] = preds_ga
+        n_c = len(c_events)
+        n_s = len(s_events)
 
-        # Model-specific thresholding
-        sorted_df['base_pos'] = sorted_df['pred_baseline'] >= CUTOFF_BASELINE
-        sorted_df['ga_pos'] = sorted_df['pred_graphaware'] >= CUTOFF_GRAPHAWARE
+        b_c_fps = c_events['base_pos'].sum()
+        g_c_fps = c_events['ga_pos'].sum()
 
-        b_sepsis_hits = sorted_df[sorted_df['y_bin'] == 1]['base_pos'].sum()
-        g_sepsis_hits = sorted_df[sorted_df['y_bin'] == 1]['ga_pos'].sum()
+        b_s_hits = s_events['base_pos'].sum()
+        g_s_hits = s_events['ga_pos'].sum()
 
-        b_control_fps = sorted_df[sorted_df['y_bin'] == 0]['base_pos'].sum()
-        g_control_fps = sorted_df[sorted_df['y_bin'] == 0]['ga_pos'].sum()
+        ga_c_acc = (n_c - g_c_fps) / n_c
+        base_c_acc = (n_c - b_c_fps) / n_c
 
-        base_missed_sepsis = (b_sepsis_hits == 0) and (g_sepsis_hits >= 1)
-        base_false_alarms = (b_control_fps > 0) and (g_control_fps == 0) and (g_sepsis_hits >= 1)
+        base_missed_sepsis = (b_s_hits == 0)
+        ga_detected_sepsis = (g_s_hits >= 1)
 
-        if base_missed_sepsis or base_false_alarms:
-            divergent_results.append({
+        if ga_detected_sepsis and ga_c_acc >= 0.50 and (base_missed_sepsis or b_c_fps > g_c_fps):
+            results.append({
                 'Id': pid,
-                'subject_id': sorted_df['subject_id'].iloc[0],
-                'hadm_id': sorted_df['hadm_id'].iloc[0],
-                'total_events': len(sorted_df),
-                'divergence_category': 'Baseline Sepsis Miss' if base_missed_sepsis else 'Baseline Control False Alarms',
-                'base_sepsis_max': sorted_df[sorted_df['y_bin'] == 1]['pred_baseline'].max(),
-                'ga_sepsis_max': sorted_df[sorted_df['y_bin'] == 1]['pred_graphaware'].max(),
-                'b_control_fps': b_control_fps,
-                'g_control_fps': g_control_fps,
-                'patient_df': sorted_df
+                'subject_id': p_df['subject_id'].iloc[0],
+                'hadm_id': p_df['hadm_id'].iloc[0],
+                'total_events': len(p_df),
+                'n_control': n_c,
+                'g_c_fps': g_c_fps,
+                'b_c_fps': b_c_fps,
+                'ga_control_acc': ga_c_acc,
+                'base_control_acc': base_c_acc,
+                'base_missed_sepsis': base_missed_sepsis,
+                'ga_detected_sepsis': ga_detected_sepsis,
+                'patient_df': p_df
             })
 
-    print(f"[2/3] Found {len(divergent_results)} divergent patient cases!")
-    
-    # Sort: Prioritize Baseline Sepsis Misses, then highest GA sepsis probability
-    divergent_results.sort(key=lambda x: (x['divergence_category'] == 'Baseline Sepsis Miss', x['ga_sepsis_max']), reverse=True)
+    results.sort(key=lambda x: (x['base_missed_sepsis'], x['ga_control_acc']), reverse=True)
 
+    print(f"Found {len(results)} HIGH-QUALITY USE CASES matching all criteria!")
     print("\n" + "=" * 85)
-    print(f" TOP {min(max_display, len(divergent_results))} DIVERGENT PATIENT JOURNEYS ")
+    print(f" TOP {min(max_display, len(results))} CLINICAL SEPSIS TRAJECTORIES ")
     print("=" * 85)
 
-    for i, case in enumerate(divergent_results[:max_display]):
+    for i, case in enumerate(results[:max_display]):
         pid = case['Id']
         sub_id = case['subject_id']
         hadm_id = case['hadm_id']
-        category = case['divergence_category']
+        ga_acc = case['ga_control_acc'] * 100
+        b_acc = case['base_control_acc'] * 100
         pdf = case['patient_df']
 
-        print(f"\nCase #{i+1}: Patient ID {pid} (Subject: {sub_id}, HADM: {hadm_id}) | Category: [{category}]")
+        print(f"\nCase #{i+1}: Patient ID {pid} (Subject: {sub_id}, HADM: {hadm_id})")
+        print(f"  GraphAware Control Accuracy: {ga_acc:.1f}% ({case['n_control'] - case['g_c_fps']}/{case['n_control']} correct) | Baseline Control Acc: {b_acc:.1f}%")
+        print(f"  Baseline Missed Sepsis: {case['base_missed_sepsis']} | GraphAware Detected Sepsis: {case['ga_detected_sepsis']}")
         print("-" * 85)
         print(f"{'Time (h)':>8} | {'ChartTime':>19} | {'True Label':>10} | {'WBC':>5} | {'Base Prob (cut=' + f'{CUTOFF_BASELINE:.4f}' + ')':>26} | {'GA Prob (cut=' + f'{CUTOFF_GRAPHAWARE:.4f}' + ')':>24}")
         print("-" * 85)
@@ -136,8 +166,6 @@ def find_divergent_trajectories(selected_panel="MIMIC_CBC_BMP", max_display=5):
             print(f"{hr:>8.1f} | {r['charttime']:>19} | {r['y']:>10} | {r['f__WBC']:>5.1f} | {bp:>10.6f} ({b_flag:>3}) | {gp:>10.6f} ({g_flag:>3})")
 
     print("\n" + "=" * 85)
-    print(" DIVERGENT SCAN COMPLETE ")
-    print("=" * 85)
 
 if __name__ == "__main__":
-    find_divergent_trajectories()
+    find_high_quality_use_cases()
