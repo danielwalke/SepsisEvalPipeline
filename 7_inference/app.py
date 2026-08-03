@@ -19,7 +19,10 @@ import numpy as np
 import pandas as pd
 import xgboost as xgb
 import streamlit as st
-from sklearn.metrics import roc_auc_score, roc_curve, confusion_matrix, precision_score, recall_score, f1_score, fbeta_score, accuracy_score
+from sklearn.metrics import (
+    roc_auc_score, roc_curve, confusion_matrix, precision_score, recall_score,
+    f1_score, fbeta_score, accuracy_score, precision_recall_curve, auc, average_precision_score
+)
 import plotly.graph_objects as go
 import plotly.express as px
 
@@ -87,6 +90,45 @@ st.markdown("""
         font-size: 0.9rem;
         display: inline-block;
         margin-bottom: 8px;
+    }
+    /* Responsive Display Enhancements for Smaller Screen Sizes & Tablets */
+    @media (max-width: 992px) {
+        .main-header { font-size: 1.5rem !important; }
+        .sub-header { font-size: 0.9rem !important; }
+        .opt-badge { font-size: 0.8rem !important; padding: 4px 8px !important; }
+        
+        /* Stack columns vertically below each other on smaller displays */
+        div[data-testid="column"], div[data-testid="stColumn"] {
+            flex: 1 1 100% !important;
+            width: 100% !important;
+            min-width: 100% !important;
+            margin-bottom: 14px !important;
+        }
+
+        /* Smaller font sizes for metrics */
+        div[data-testid="stMetricValue"] {
+            font-size: 1.25rem !important;
+        }
+        div[data-testid="stMetricLabel"] {
+            font-size: 0.8rem !important;
+        }
+        
+        /* Smaller font & scrollable dataframes */
+        .stDataFrame, .stTable {
+            font-size: 0.8rem !important;
+            overflow-x: auto !important;
+            display: block !important;
+        }
+    }
+    @media (max-width: 576px) {
+        .main-header { font-size: 1.2rem !important; }
+        .sub-header { font-size: 0.8rem !important; }
+        div[data-testid="stMetricValue"] {
+            font-size: 1.05rem !important;
+        }
+        div[data-testid="stMetricLabel"] {
+            font-size: 0.75rem !important;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -451,17 +493,17 @@ if not eval_all_rows and df_loaded is not None and len(df_loaded) > 500:
 optimal_cutoff_val = get_default_cutoff(selected_panel, selected_sample_key)
 
 st.sidebar.divider()
-st.sidebar.subheader("3. Classification Cutoff")
-st.sidebar.markdown(f'<div class="opt-badge">🎯 Optimal Cutoff (Geometric Mean): <b>{optimal_cutoff_val:.4f}</b></div>', unsafe_allow_html=True)
+st.sidebar.subheader("3. Decision Cutoff Threshold")
+st.sidebar.markdown(f'<div class="opt-badge">🎯 Optimal F₂ Cutoff (β=2): <b>{optimal_cutoff_val:.4f}</b></div>', unsafe_allow_html=True)
 
 risk_threshold = st.sidebar.number_input(
-    "Sepsis Risk Cutoff Threshold (High Precision)",
+    "Decision Cutoff Threshold",
     min_value=0.0001,
     max_value=0.9999,
     value=float(optimal_cutoff_val),
-    step=0.0010,
+    step=0.0001,
     format="%.4f",
-    help="Cutoff threshold for flagging Sepsis risk based on Geometric Mean of ROC. Supports 4 decimal digits and full range from 0.0001 to 0.9999."
+    help="Defaults to the optimal validation-calibrated F₂ cutoff (β=2). Adjust this value with 4-decimal precision (e.g., 0.0306) to test custom sensitivity/precision trade-offs."
 )
 
 st.sidebar.divider()
@@ -847,20 +889,17 @@ if st.session_state.get("inference_completed", False):
                             for _, r in local_shap_df_sorted.iterrows()
                         ]
                     ))
+                    st.markdown(
+                        f'<div style="font-size: 16px; font-weight: 700; color: #0F172A; margin-bottom: 8px;">'
+                        f'📊 Total Aggregated Local SHAP (Row #{selected_row_idx + 1})'
+                        f'</div>',
+                        unsafe_allow_html=True
+                    )
                     fig_total_shap.update_layout(
-                        title=dict(
-                            text=f"Total Aggregated Local SHAP (Row #{selected_row_idx + 1})",
-                            font=dict(size=16),
-                            x=0.0,
-                            xanchor='left',
-                            y=1.0,
-                            yanchor='bottom',
-                            pad=dict(t=25, b=0)
-                        ),
                         xaxis_title="Local SHAP Impact (+ Increases Risk, - Decreases Risk)",
                         yaxis_title="Clinical Lab Feature",
                         height=max(360, len(f_cols) * 35),
-                        margin=dict(l=40, r=40, t=80, b=40)
+                        margin=dict(l=40, r=40, t=20, b=40)
                     )
                     st.plotly_chart(fig_total_shap, use_container_width=True)
 
@@ -881,17 +920,14 @@ if st.session_state.get("inference_completed", False):
                         orientation='h',
                         marker=dict(color='#10B981')
                     ))
+                    st.markdown(
+                        f'<div style="font-size: 16px; font-weight: 700; color: #0F172A; margin-bottom: 8px;">'
+                        f'🧩 GraphFlow Attribution Breakdown (Original vs. Δ Mean)'
+                        f'</div>',
+                        unsafe_allow_html=True
+                    )
                     fig_breakdown.update_layout(
                         barmode='relative',
-                        title=dict(
-                            text="GraphFlow Attribution Breakdown (Original vs. Δ Mean)",
-                            font=dict(size=16),
-                            x=0.0,
-                            xanchor='left',
-                            y=1.0,
-                            yanchor='bottom',
-                            pad=dict(t=25, b=0)
-                        ),
                         xaxis_title="SHAP Contribution",
                         yaxis_title="Clinical Lab Feature",
                         legend=dict(
@@ -903,7 +939,7 @@ if st.session_state.get("inference_completed", False):
                             bgcolor="rgba(0,0,0,0)"
                         ),
                         height=max(380, len(f_cols) * 35),
-                        margin=dict(l=40, r=40, t=80, b=75)
+                        margin=dict(l=40, r=40, t=20, b=75)
                     )
                     st.plotly_chart(fig_breakdown, use_container_width=True)
 
@@ -981,50 +1017,20 @@ if st.session_state.get("inference_completed", False):
                         line=dict(color='#EF4444', width=2, dash='dash')
                     ))
                     
-                    # 1. Active User Threshold Marker on ROC Curve
-                    active_idx = np.argmin(np.abs(thresholds - risk_threshold))
-                    fig_roc.add_trace(go.Scatter(
-                        x=[fpr[active_idx]], y=[tpr[active_idx]],
-                        mode='markers+text',
-                        name=f'Active Threshold ({risk_threshold:.4f})',
-                        marker=dict(size=14, color='#8B5CF6', symbol='diamond'),
-                        text=[f"Active Threshold ({risk_threshold:.4f})"],
-                        textposition="top left"
-                    ))
-
-                    # 2. Optimal F2 Cutoff (beta = 2) calculation based on ROC curve
-                    # F2 reweights Sensitivity (Recall) 4x over Specificity / Precision
-                    f2_denom = (4.0 * (1.0 - fpr) + tpr)
-                    f2_scores_roc = np.where(f2_denom > 0, (5.0 * tpr * (1.0 - fpr)) / f2_denom, 0.0)
-                    best_f2_idx = np.argmax(f2_scores_roc)
-                    opt_cut_f2 = thresholds[best_f2_idx]
-                    
-                    fig_roc.add_trace(go.Scatter(
-                        x=[fpr[best_f2_idx]], y=[tpr[best_f2_idx]],
-                        mode='markers+text',
-                        name=f'Optimal F₂ Cutoff ({opt_cut_f2:.4f})',
-                        marker=dict(size=14, color='#10B981', symbol='star'),
-                        text=[f"Opt F₂ Cutoff ({opt_cut_f2:.4f})"],
-                        textposition="bottom right"
-                    ))
-
+                    st.markdown(
+                        f'<div style="font-size: 16px; font-weight: 700; color: #0F172A; margin-bottom: 8px;">'
+                        f'📈 ROC Curve - GraphFlow ({selected_panel}) [{len(filtered_res_full):,} Filtered Obs]'
+                        f'</div>',
+                        unsafe_allow_html=True
+                    )
                     fig_roc.update_layout(
-                        title=dict(
-                            text=f"ROC Curve - GraphFlow ({selected_panel}) [{len(filtered_res_full):,} Filtered Obs]",
-                            font=dict(size=16),
-                            x=0.0,
-                            xanchor='left',
-                            y=1.0,
-                            yanchor='bottom',
-                            pad=dict(t=25, b=0)
-                        ),
                         xaxis_title="False Positive Rate (1 - Specificity)",
                         yaxis_title="True Positive Rate (Sensitivity)",
                         xaxis=dict(range=[-0.01, 1.01]),
                         yaxis=dict(range=[-0.01, 1.01]),
                         legend=dict(x=0.42, y=0.15, bgcolor='rgba(0,0,0,0)'),
-                        margin=dict(l=40, r=40, t=80, b=40),
-                        height=420
+                        margin=dict(l=30, r=30, t=15, b=30),
+                        height=380
                     )
                     st.plotly_chart(fig_roc, use_container_width=True)
 
@@ -1047,19 +1053,16 @@ if st.session_state.get("inference_completed", False):
                         showscale=False
                     ))
                     
+                    st.markdown(
+                        f'<div style="font-size: 16px; font-weight: 700; color: #0F172A; margin-bottom: 8px;">'
+                        f'🎯 Confusion Matrix (Cutoff = {risk_threshold:.4f}) [{total_obs:,} Obs]'
+                        f'</div>',
+                        unsafe_allow_html=True
+                    )
                     fig_cm.update_layout(
-                        title=dict(
-                            text=f"Confusion Matrix (Cutoff = {risk_threshold:.4f}) [{total_obs:,} Obs]",
-                            font=dict(size=16),
-                            x=0.0,
-                            xanchor='left',
-                            y=1.0,
-                            yanchor='bottom',
-                            pad=dict(t=25, b=0)
-                        ),
                         xaxis_title="Predicted Class",
                         yaxis_title="Actual Ground-Truth Label",
-                        margin=dict(l=40, r=40, t=80, b=40),
+                        margin=dict(l=40, r=40, t=20, b=40),
                         height=350
                     )
                     st.plotly_chart(fig_cm, use_container_width=True)
