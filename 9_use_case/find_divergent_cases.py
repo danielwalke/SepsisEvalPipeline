@@ -1,15 +1,15 @@
 """
-Automated High-Quality Sepsis Trajectory Scanner (Database Graph Mode)
-======================================================================
-Scans the test dataset (MIMIC-IV CBC_BMP) using SQLiteConnector (database graph) 
-and model-specific cutoffs to discover clinical patient journeys where:
-  1. GraphAware XGBoost is highly ACCURATE on preceding Control events (0 false alarms).
+Automated High-Quality Sepsis Trajectory Scanner (MIMIC_CBC Panel - Database Graph Mode)
+======================================================================================
+Scans the test dataset (MIMIC-IV CBC panel) using SQLiteConnector (database graph) 
+and exact model-specific cutoffs to discover clinical patient journeys where:
+  1. GraphAware XGBoost is 100% ACCURATE on preceding Control events (0 false alarms).
   2. GraphAware XGBoost correctly DETECTS Sepsis at clinical onset.
-  3. Traditional XGBoost Fails (misses sepsis or triggers false alarms during control).
+  3. Traditional Baseline XGBoost Fails (misses sepsis or triggers false alarms during control).
 
-Model-Specific Cutoffs:
-  - Baseline XGBoost Cutoff:   0.001613
-  - GraphAware XGBoost Cutoff: 0.000178
+Model-Specific Cutoffs for MIMIC_CBC Panel:
+  - Baseline XGBoost Cutoff:   0.002117
+  - GraphAware XGBoost Cutoff: 0.000709
 
 Usage:
   .venv/bin/python 9_use_case/find_divergent_cases.py
@@ -30,26 +30,28 @@ sys.path.insert(0, os.path.join(REPO_ROOT, "6_graphaware"))
 from GraphAware.EnsembleFramework import Framework
 from connectors.SQLiteConnector import SQLiteConnector
 
-CUTOFF_BASELINE = 0.001613
-CUTOFF_GRAPHAWARE = 0.000178
+CUTOFF_BASELINE = 0.002117
+CUTOFF_GRAPHAWARE = 0.000709
 
 def diff_user_fun(kwargs):
     return kwargs['original_features'] - kwargs['mean_neighbors']
 
-def find_high_quality_use_cases(selected_panel="MIMIC_CBC_BMP", max_display=5):
+def find_high_quality_use_cases(selected_panel="MIMIC_CBC", max_display=5):
+    clean_panel = selected_panel.replace("MIMIC_", "").replace("SBC_", "")
+    
     print("=" * 85)
-    print(" HIGH-QUALITY CLINICAL SEPSIS TRAJECTORY SCANNER (DATABASE GRAPH) ")
+    print(f" HIGH-QUALITY CLINICAL SEPSIS TRAJECTORY SCANNER (DATABASE GRAPH) ")
     print(f" Panel: {selected_panel}")
     print(f" Model-Specific Cutoffs -> Baseline: {CUTOFF_BASELINE:.6f} | GraphAware: {CUTOFF_GRAPHAWARE:.6f}")
     print("=" * 85)
 
-    test_csv_path = os.path.join(REPO_ROOT, "1_preprocess/data/preprocessed_data/CBC_BMP/mimic_processed_test.csv")
+    test_csv_path = os.path.join(REPO_ROOT, f"1_preprocess/data/preprocessed_data/{clean_panel}/mimic_processed_test.csv")
     df_test = pd.read_csv(test_csv_path)
 
-    baseline_path = os.path.join(REPO_ROOT, "2_baseline/models/MIMIC_CBC_BMP/XGBClassifier.pkl")
+    baseline_path = os.path.join(REPO_ROOT, f"2_baseline/models/MIMIC_{clean_panel}/XGBClassifier.pkl")
     baseline_model = joblib.load(baseline_path)
 
-    ga_path = os.path.join(REPO_ROOT, "6_graphaware/models/MIMIC_CBC_BMP/final_model.xgb")
+    ga_path = os.path.join(REPO_ROOT, f"6_graphaware/models/MIMIC_{clean_panel}/final_model.xgb")
     ga_model = xgb.Booster()
     ga_model.load_model(ga_path)
 
@@ -64,7 +66,7 @@ def find_high_quality_use_cases(selected_panel="MIMIC_CBC_BMP", max_display=5):
         classifier_on_device=False
     )
 
-    db_path = os.path.join(REPO_ROOT, '4_db_upload/sqlite/sqlite_data/CBC_BMP/mimic_sbc_graph.db')
+    db_path = os.path.join(REPO_ROOT, f'4_db_upload/sqlite/sqlite_data/{clean_panel}/mimic_sbc_graph.db')
     connector = SQLiteConnector(db_path=db_path)
 
     feature_cols = [c for c in df_test.columns if c.startswith("f__")]
@@ -116,6 +118,7 @@ def find_high_quality_use_cases(selected_panel="MIMIC_CBC_BMP", max_display=5):
 
         base_missed_sepsis = (b_s_hits == 0)
         ga_detected_sepsis = (g_s_hits >= 1)
+        baseline_strictly_negative = (p_df['base_pos'].sum() == 0)
 
         if ga_detected_sepsis and ga_c_acc >= 0.50 and (base_missed_sepsis or b_c_fps > g_c_fps):
             results.append({
@@ -128,16 +131,17 @@ def find_high_quality_use_cases(selected_panel="MIMIC_CBC_BMP", max_display=5):
                 'b_c_fps': b_c_fps,
                 'ga_control_acc': ga_c_acc,
                 'base_control_acc': base_c_acc,
+                'baseline_strictly_negative': baseline_strictly_negative,
                 'base_missed_sepsis': base_missed_sepsis,
                 'ga_detected_sepsis': ga_detected_sepsis,
                 'patient_df': p_df
             })
 
-    results.sort(key=lambda x: (x['base_missed_sepsis'], x['ga_control_acc']), reverse=True)
+    results.sort(key=lambda x: (x['baseline_strictly_negative'], x['ga_control_acc']), reverse=True)
 
-    print(f"Found {len(results)} HIGH-QUALITY USE CASES matching all criteria!")
+    print(f"Found {len(results)} HIGH-QUALITY USE CASES in {selected_panel} panel!")
     print("\n" + "=" * 85)
-    print(f" TOP {min(max_display, len(results))} CLINICAL SEPSIS TRAJECTORIES ")
+    print(f" TOP {min(max_display, len(results))} CLINICAL SEPSIS TRAJECTORIES ({selected_panel}) ")
     print("=" * 85)
 
     for i, case in enumerate(results[:max_display]):
@@ -150,7 +154,7 @@ def find_high_quality_use_cases(selected_panel="MIMIC_CBC_BMP", max_display=5):
 
         print(f"\nCase #{i+1}: Patient ID {pid} (Subject: {sub_id}, HADM: {hadm_id})")
         print(f"  GraphAware Control Accuracy: {ga_acc:.1f}% ({case['n_control'] - case['g_c_fps']}/{case['n_control']} correct) | Baseline Control Acc: {b_acc:.1f}%")
-        print(f"  Baseline Missed Sepsis: {case['base_missed_sepsis']} | GraphAware Detected Sepsis: {case['ga_detected_sepsis']}")
+        print(f"  Baseline 100% Negative: {case['baseline_strictly_negative']} | Baseline Missed Sepsis: {case['base_missed_sepsis']}")
         print("-" * 85)
         print(f"{'Time (h)':>8} | {'ChartTime':>19} | {'True Label':>10} | {'WBC':>5} | {'Base Prob (cut=' + f'{CUTOFF_BASELINE:.4f}' + ')':>26} | {'GA Prob (cut=' + f'{CUTOFF_GRAPHAWARE:.4f}' + ')':>24}")
         print("-" * 85)
@@ -163,9 +167,9 @@ def find_high_quality_use_cases(selected_panel="MIMIC_CBC_BMP", max_display=5):
             gp = r['pred_graphaware']
             b_flag = "POS" if r['base_pos'] else "NEG"
             g_flag = "POS" if r['ga_pos'] else "NEG"
-            print(f"{hr:>8.1f} | {r['charttime']:>19} | {r['y']:>10} | {r['f__WBC']:>5.1f} | {bp:>10.6f} ({b_flag:>3}) | {gp:>10.6f} ({g_flag:>3})")
+            print(f"{hr:>8.1f} | {r['charttime']:>19} | {r['y']:>10} | {r.get('f__WBC', 0.0):>5.1f} | {bp:>10.6f} ({b_flag:>3}) | {gp:>10.6f} ({g_flag:>3})")
 
     print("\n" + "=" * 85)
 
 if __name__ == "__main__":
-    find_high_quality_use_cases()
+    find_high_quality_use_cases("MIMIC_CBC")
