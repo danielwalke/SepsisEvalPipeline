@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 import xgboost as xgb
 import streamlit as st
-from sklearn.metrics import roc_auc_score, roc_curve, confusion_matrix, precision_score, recall_score, f1_score, accuracy_score
+from sklearn.metrics import roc_auc_score, roc_curve, confusion_matrix, precision_score, recall_score, f1_score, fbeta_score, accuracy_score
 import plotly.graph_objects as go
 import plotly.express as px
 
@@ -938,13 +938,14 @@ if st.session_state.get("inference_completed", False):
                 sens = recall_score(y_true_binary, y_pred_binary, zero_division=0)
                 prec = precision_score(y_true_binary, y_pred_binary, zero_division=0)
                 f1 = f1_score(y_true_binary, y_pred_binary, zero_division=0)
+                f2 = fbeta_score(y_true_binary, y_pred_binary, beta=2, zero_division=0)
                 tn, fp, fn, tp = confusion_matrix(y_true_binary, y_pred_binary).ravel()
                 spec = tn / (tn + fp) if (tn + fp) > 0 else 0.0
                 npv = tn / (tn + fn) if (tn + fn) > 0 else 0.0
                 g_mean = np.sqrt(sens * spec)
 
                 # Metric Cards
-                auc_c1, auc_c2, auc_c3, auc_c4, auc_c5 = st.columns(5)
+                auc_c1, auc_c2, auc_c3, auc_c4, auc_c5, auc_c6 = st.columns(6)
                 with auc_c1:
                     st.metric("🏆 AUROC Score", f"{auroc_score:.4f}")
                 with auc_c2:
@@ -954,6 +955,8 @@ if st.session_state.get("inference_completed", False):
                 with auc_c4:
                     st.metric("PPV (Precision)", f"{prec:.1%}")
                 with auc_c5:
+                    st.metric("F₂ Score (β=2)", f"{f2:.4f}")
+                with auc_c6:
                     st.metric("Geometric Mean (G-Mean)", f"{g_mean:.4f}")
 
                 # Plot ROC Curve & Enhanced Confusion Matrix side by side
@@ -978,18 +981,31 @@ if st.session_state.get("inference_completed", False):
                         line=dict(color='#EF4444', width=2, dash='dash')
                     ))
                     
-                    # Optimal Cutoff calculation based on Geometric Mean of ROC
-                    gmeans = np.sqrt(np.maximum(0, tpr * (1.0 - fpr)))
-                    best_gmean_idx = np.argmax(gmeans)
-                    opt_cut_val = thresholds[best_gmean_idx]
+                    # 1. Active User Threshold Marker on ROC Curve
+                    active_idx = np.argmin(np.abs(thresholds - risk_threshold))
+                    fig_roc.add_trace(go.Scatter(
+                        x=[fpr[active_idx]], y=[tpr[active_idx]],
+                        mode='markers+text',
+                        name=f'Active Threshold ({risk_threshold:.4f})',
+                        marker=dict(size=14, color='#8B5CF6', symbol='diamond'),
+                        text=[f"Active Threshold ({risk_threshold:.4f})"],
+                        textposition="top left"
+                    ))
+
+                    # 2. Optimal F2 Cutoff (beta = 2) calculation based on ROC curve
+                    # F2 reweights Sensitivity (Recall) 4x over Specificity / Precision
+                    f2_denom = (4.0 * (1.0 - fpr) + tpr)
+                    f2_scores_roc = np.where(f2_denom > 0, (5.0 * tpr * (1.0 - fpr)) / f2_denom, 0.0)
+                    best_f2_idx = np.argmax(f2_scores_roc)
+                    opt_cut_f2 = thresholds[best_f2_idx]
                     
                     fig_roc.add_trace(go.Scatter(
-                        x=[fpr[best_gmean_idx]], y=[tpr[best_gmean_idx]],
+                        x=[fpr[best_f2_idx]], y=[tpr[best_f2_idx]],
                         mode='markers+text',
-                        name=f'Optimal Cutoff (G-Mean: {opt_cut_val:.4f})',
+                        name=f'Optimal F₂ Cutoff ({opt_cut_f2:.4f})',
                         marker=dict(size=14, color='#10B981', symbol='star'),
-                        text=[f"Opt Cutoff (G-Mean: {opt_cut_val:.4f})"],
-                        textposition="top left"
+                        text=[f"Opt F₂ Cutoff ({opt_cut_f2:.4f})"],
+                        textposition="bottom right"
                     ))
 
                     fig_roc.update_layout(
