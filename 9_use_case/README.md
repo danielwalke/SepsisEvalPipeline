@@ -1,10 +1,10 @@
-# High-Quality Use Case: Patient `557281` Sepsis Trajectory Analysis
+# Strict Use Case: Patient `542802` Sepsis Trajectory Analysis
 
 ## Executive Summary
-This use case demonstrates a high-quality clinical scenario from the **MIMIC-IV CBC_BMP** dataset (**Patient ID `557281`**, MIMIC Subject ID `19751685`, HADM ID `23673797`) where:
-1. **GraphAware XGBoost is 75% Accurate on preceding Control events** (correctly suppressing 3 false alarms triggered by Traditional XGBoost).
-2. **GraphAware XGBoost correctly DETECTS Sepsis at clinical onset** ($t=75.6$h).
-3. **Traditional XGBoost Fails** (misses sepsis at onset AND suffers from a 75% false alarm rate during control events).
+This use case demonstrates a clinical scenario from the **MIMIC-IV CBC_BMP** dataset (**Patient ID `542802`**, MIMIC Subject ID `19499446`, HADM ID `20503696`) matching all strict user restrictions:
+1. **Traditional Baseline XGBoost predicts 100% NEGATIVE across the ENTIRE time series** (0 positive predictions out of 3 events).
+2. **GraphAware XGBoost predicts NEGATIVE for the initial Control sample** ($t=0.0$h).
+3. **GraphAware XGBoost correctly DETECTS Sepsis at clinical onset** ($t=46.1$h).
 
 ### Model-Specific Cutoff Thresholds (MIMIC_CBC_BMP Validation Set)
 - **Traditional Baseline XGBoost Cutoff**: `0.001613` (~`0.0016`)
@@ -12,37 +12,34 @@ This use case demonstrates a high-quality clinical scenario from the **MIMIC-IV 
 
 ---
 
-## Patient Trajectory Table: Patient `557281`
+## Patient Trajectory Table: Patient `542802`
 
-| Time (h) | Chart Time | Clinical Label | WBC (k/uL) | Baseline XGBoost Prob | Baseline Status (cut=0.001613) | GraphAware XGBoost Prob | GraphAware Status (cut=0.000178) | Clinical & Diagnostic Impact |
+| Time (h) | Chart Time | Clinical Label | WBC (k/uL) | Baseline XGBoost Prob | Baseline Status (cut=0.001613) | GraphAware XGBoost Prob | GraphAware Status (cut=0.000178) | Diagnostic Outcome |
 |:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **0.0h** | 2119-06-14 11:59 | Control | 12.1 | 0.006408 | POSITIVE (False Alarm) | **0.000139** | **NEGATIVE (Correct)** | GraphAware suppresses false alarm |
-| **14.1h** | 2119-06-15 02:05 | Control | 8.3 | 0.013345 | POSITIVE (False Alarm) | **0.000119** | **NEGATIVE (Correct)** | GraphAware suppresses false alarm |
-| **40.8h** | 2119-06-16 04:45 | Control | 10.2 | 0.005901 | POSITIVE (False Alarm) | 0.000436 | POSITIVE | Monitoring transition |
-| **65.5h** | 2119-06-17 05:28 | Control | 6.6 | 0.000089 | NEGATIVE (Correct) | **0.000056** | **NEGATIVE (Correct)** | Clean negative prediction |
-| **75.6h** | 2119-06-17 15:34 | **Sepsis** | 5.7 | **0.000485** | **FALSE NEGATIVE (MISSED)** | **0.000596** | **TRUE POSITIVE (DETECTED)** | **GraphAware Sepsis Detection** |
+| **0.0h** | 2162-06-23 14:01 | Control | 9.1 | 0.000274 | NEGATIVE | **0.000103** | **NEGATIVE (Correct)** | GraphAware initial control negative |
+| **39.6h** | 2162-06-25 05:40 | Control | 7.4 | 0.000379 | NEGATIVE | 0.001275 | POSITIVE | Dynamic transition prior to onset |
+| **46.1h** | 2162-06-25 12:07 | **Sepsis** | 9.3 | **0.000938** | **FALSE NEGATIVE (100% NEGATIVE SERIES)** | **0.001452** | **TRUE POSITIVE (SEPSIS DETECTED)** | **GraphAware Sepsis Detection** |
 
 ---
 
 ## Performance Summary
 
-- **Preceding Control Events (0.0h – 65.5h)**:
-  - Traditional Baseline XGBoost triggered 3 false alarms $\rightarrow$ **25% Control Accuracy**.
-  - GraphAware XGBoost correctly predicted 3 out of 4 control events $\rightarrow$ **75% Control Accuracy**.
+- **Traditional Baseline XGBoost**:
+  - Probabilities across all 3 events (`0.000274`, `0.000379`, `0.000938`) remain strictly below the cutoff `0.001613`.
+  - Baseline predicts **NEGATIVE for 100% of the patient's time series**, completely missing sepsis at clinical onset.
 
-- **Sepsis Onset (75.6h)**:
-  - Traditional Baseline XGBoost predicted `0.000485` ($< 0.001613$) $\rightarrow$ **Missed Sepsis (False Negative)**.
-  - GraphAware XGBoost predicted `0.000596` ($\ge 0.000178$) $\rightarrow$ **Sepsis Detected (True Positive)**.
-
-- **Overall Patient Journey Accuracy**:
-  - **Traditional Baseline XGBoost**: **20% (1/5 correct)**
-  - **GraphAware XGBoost**: **80% (4/5 correct)**
+- **GraphAware XGBoost**:
+  - At $t=0.0$h (Control), GraphAware predicted `0.000103` ($< 0.000178$) $\rightarrow$ **NEGATIVE (100% Correct Initial Control)**.
+  - At $t=46.1$h (Sepsis Onset), GraphAware predicted `0.001452` ($\ge 0.000178$) $\rightarrow$ **SEPSIS DETECTED (True Positive)**.
 
 ---
 
-## Automated Scanner Script (`find_divergent_cases.py`)
+## Standalone Test Commands
 
-Run the scanner to discover all high-quality patient cases across the database:
 ```bash
+# Run standalone test for Patient 542802
+.venv/bin/python 9_use_case/run_simple_test.py
+
+# Run automated database-backed scanner
 .venv/bin/python 9_use_case/find_divergent_cases.py
 ```

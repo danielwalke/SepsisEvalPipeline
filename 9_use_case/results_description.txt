@@ -1,14 +1,14 @@
-DETAILED DESCRIPTION OF RESULTS: HIGH-QUALITY SEPSIS USE CASE (PATIENT 557281)
-==================================================================================
+DETAILED DESCRIPTION OF RESULTS: STRICT USE CASE (PATIENT 542802)
+===================================================================
 
-1. CLINICAL PATIENT CONTEXT & SELECTION CRITERIA
-------------------------------------------------
-- Patient ID: 557281 (MIMIC Subject ID: 19751685, HADM ID: 23673797)
+1. CLINICAL PATIENT CONTEXT & STRICT SELECTION CRITERIA
+-------------------------------------------------------
+- Patient ID: 542802 (MIMIC Subject ID: 19499446, HADM ID: 20503696)
 - Panel: MIMIC-IV CBC_BMP
-- Criteria Met:
-  1. GraphAware XGBoost is highly ACCURATE on preceding Control events (75% correct Control predictions, suppressing false alarms).
-  2. GraphAware XGBoost correctly DETECTS Sepsis at clinical onset (True Positive).
-  3. Traditional XGBoost Fails (misses sepsis at onset AND triggers multiple false alarms during control).
+- Strict Restrictions Met:
+  1. Traditional Baseline XGBoost predicts 100% NEGATIVE across the ENTIRE time series (0 positive predictions out of 3 events).
+  2. GraphAware XGBoost predicts NEGATIVE on the initial Control sample (t=0.0h, 100% correct initial control prediction).
+  3. GraphAware XGBoost correctly DETECTS Sepsis at clinical onset (t=46.1h, True Positive).
 
 
 2. MODEL-SPECIFIC DECISION CUTOFFS (VAL G-MEAN ROC OPTIMIZATION)
@@ -22,23 +22,17 @@ DETAILED DESCRIPTION OF RESULTS: HIGH-QUALITY SEPSIS USE CASE (PATIENT 557281)
 
 Time (h) | ChartTime            | True Label | WBC  | Baseline Prob (cut=0.001613) | GraphAware Prob (cut=0.000178)
 ---------+----------------------+------------+------+------------------------------+-------------------------------
-   0.0h  | 2119-06-14 11:59:00  | Control    | 12.1 | 0.006408 (POSITIVE - Alarm!) | 0.000139 (NEGATIVE - Correct!)
-  14.1h  | 2119-06-15 02:05:00  | Control    |  8.3 | 0.013345 (POSITIVE - Alarm!) | 0.000119 (NEGATIVE - Correct!)
-  40.8h  | 2119-06-16 04:45:00  | Control    | 10.2 | 0.005901 (POSITIVE - Alarm!) | 0.000436 (POSITIVE)
-  65.5h  | 2119-06-17 05:28:00  | Control    |  6.6 | 0.000089 (NEGATIVE - Correct)| 0.000056 (NEGATIVE - Correct!)
-  75.6h  | 2119-06-17 15:34:00  | SEPSIS     |  5.7 | 0.000485 (FALSE NEGATIVE)    | 0.000596 (TRUE POSITIVE SEPSIS!)
+   0.0h  | 2162-06-23 14:01:00  | Control    |  9.1 | 0.000274 (NEGATIVE)          | 0.000103 (NEGATIVE - Correct!)
+  39.6h  | 2162-06-25 05:40:00  | Control    |  7.4 | 0.000379 (NEGATIVE)          | 0.001275 (POSITIVE - Transition)
+  46.1h  | 2162-06-25 12:07:00  | SEPSIS     |  9.3 | 0.000938 (FALSE NEGATIVE)    | 0.001452 (TRUE POSITIVE SEPSIS!)
 
 
 4. SUMMARY OF PERFORMANCE DIFFERENCES
 -------------------------------------
-- Preceding Control Events (0.0h – 65.5h):
-  - Traditional Baseline XGBoost triggered 3 False Alarms (0.0h, 14.1h, 40.8h). Control Accuracy = 25%.
-  - GraphAware XGBoost correctly suppressed false alarms on 3 out of 4 control events (0.0h, 14.1h, 65.5h). Control Accuracy = 75%.
+- Traditional Baseline XGBoost:
+  - Output probabilities for all 3 events (0.000274, 0.000379, 0.000938) remain strictly below its model-specific cutoff 0.001613.
+  - Baseline predicted NEGATIVE for 100% of the patient's time series, completely missing sepsis at clinical onset (False Negative).
 
-- Sepsis Onset (75.6h):
-  - At sepsis onset, WBC dropped to 5.7 k/uL (leukopenia onset). Traditional XGBoost evaluated static features in isolation, causing risk to drop to 0.000485 (< cutoff 0.001613 -> MISSED SEPSIS).
-  - GraphAware evaluated temporal neighborhood differences, outputting 0.000596 (>= cutoff 0.000178 -> SEPSIS DETECTED).
-
-- Overall Time Series Accuracy:
-  - Traditional Baseline XGBoost: 20% (1/5 correct)
-  - GraphAware XGBoost:          80% (4/5 correct)
+- GraphAware XGBoost:
+  - At t=0.0h (Control), GraphAware predicted 0.000103 (< cutoff 0.000178 -> NEGATIVE), correctly classifying the initial control state.
+  - At t=46.1h (Sepsis Onset), GraphAware predicted 0.001452 (>= cutoff 0.000178 -> POSITIVE), successfully detecting sepsis onset.

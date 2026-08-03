@@ -1,12 +1,12 @@
 """
-Simple Test Script: Traditional XGBoost vs. GraphAware XGBoost (Patient 557281)
-================================================================================
-Loads Patient 557281 from the MIMIC-IV CBC_BMP dataset and evaluates sepsis 
+Simple Test Script: Patient 542802 (Traditional XGBoost 100% Negative Entire Series)
+=====================================================================================
+Loads Patient 542802 from the MIMIC-IV CBC_BMP dataset and evaluates sepsis 
 prediction probabilities using database graph mode and model-specific cutoffs.
 
-Patient 557281 demonstrates:
-  - 75% Control Accuracy for GraphAware (vs 25% for Traditional XGBoost)
-  - True Positive Sepsis Detection for GraphAware (vs False Negative for Traditional XGBoost)
+Patient 542802 demonstrates:
+  - Traditional Baseline XGBoost predicts NEGATIVE for 100% of events across the ENTIRE time series (including sepsis onset).
+  - GraphAware XGBoost predicts NEGATIVE for the initial Control sample (t=0.0h) and DETECTS Sepsis at onset (t=46.1h).
 
 Model-Specific Cutoffs:
   - Baseline XGBoost Cutoff:   0.001613
@@ -39,14 +39,15 @@ def diff_user_fun(kwargs):
 
 def main():
     print("=" * 85)
-    print(" CLINICAL USE CASE TEST: PATIENT 557281 ")
+    print(" CLINICAL USE CASE TEST: PATIENT 542802 ")
+    print(" (Traditional XGBoost Predicts 100% NEGATIVE Across Entire Time Series) ")
     print(f" Model-Specific Cutoffs -> Baseline: {CUTOFF_BASE:.6f} | GraphAware: {CUTOFF_GA:.6f}")
     print("=" * 85)
 
     test_csv_path = os.path.join(REPO_ROOT, "1_preprocess/data/preprocessed_data/CBC_BMP/mimic_processed_test.csv")
     df_test = pd.read_csv(test_csv_path)
     
-    patient_id = 557281
+    patient_id = 542802
     p_df = df_test[df_test['Id'] == patient_id].sort_values('Time').copy()
     
     baseline_path = os.path.join(REPO_ROOT, "2_baseline/models/MIMIC_CBC_BMP/XGBClassifier.pkl")
@@ -73,7 +74,6 @@ def main():
     feature_cols = [c for c in p_df.columns if c.startswith("f__")]
     preds_baseline = baseline_model.predict_proba(p_df[feature_cols].to_numpy())[:, 1]
     
-    # Fetch Database Graphaware Predictions
     skip = 0
     test_preds_ga = []
     while True:
@@ -107,8 +107,8 @@ def main():
     
     print("-" * 90)
     print("CONCLUSION:")
-    print("  - Preceding Control Events (0.0h - 65.5h): GraphAware achieves 75% accuracy (suppresses 3 false alarms triggered by Baseline).")
-    print("  - Sepsis Onset (75.6h): Baseline XGBoost misses sepsis (0.000485 < 0.001613). GraphAware detects sepsis (0.000596 >= 0.000178).")
+    print("  - Traditional Baseline XGBoost predicts 100% NEGATIVE across the ENTIRE time series (0.000274, 0.000379, 0.000938 < 0.001613).")
+    print("  - GraphAware XGBoost predicts NEGATIVE at t=0.0h (0.000103 < 0.000178) and DETECTS Sepsis at onset t=46.1h (0.001452 >= 0.000178).")
     print("=" * 85)
 
 if __name__ == "__main__":

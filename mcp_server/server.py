@@ -558,6 +558,7 @@ def find_divergent_patient_trajectories(
 
             base_missed_sepsis = (b_s_hits == 0)
             ga_detected_sepsis = (g_s_hits >= 1)
+            baseline_100pct_negative = (sorted_df['base_pos'].sum() == 0)
 
             # Require GraphAware to be accurate on Control events (ga_c_acc >= 0.50) AND detect Sepsis
             # AND Baseline must either miss sepsis or trigger more control false alarms
@@ -584,20 +585,21 @@ def find_divergent_patient_trajectories(
                     "subject_id": str(sorted_df['subject_id'].iloc[0]),
                     "hadm_id": str(sorted_df['hadm_id'].iloc[0]),
                     "total_events": len(sorted_df),
+                    "baseline_entire_series_100pct_negative": bool(baseline_100pct_negative),
                     "graphaware_control_accuracy": f"{ga_c_acc*100:.1f}% ({n_c - g_c_fps}/{n_c} correct)",
                     "baseline_control_accuracy": f"{base_c_acc*100:.1f}% ({n_c - b_c_fps}/{n_c} correct)",
-                    "divergence_type": "Baseline Missed Sepsis" if base_missed_sepsis else "Baseline High False Alarms",
+                    "divergence_type": "Baseline Entirely Negative (Missed Sepsis)" if baseline_100pct_negative else ("Baseline Missed Sepsis" if base_missed_sepsis else "Baseline High False Alarms"),
+                    "baseline_strictly_neg_raw": baseline_100pct_negative,
                     "ga_control_acc_raw": ga_c_acc,
-                    "base_missed_sepsis_raw": base_missed_sepsis,
                     "events": events_summary
                 })
 
-        # Sort candidates: Prioritize Baseline Sepsis Misses first, then highest GraphAware Control accuracy
-        divergent_candidates.sort(key=lambda x: (x['base_missed_sepsis_raw'], x['ga_control_acc_raw']), reverse=True)
+        # Sort candidates: Prioritize Baseline 100% negative across entire series first, then highest GraphAware Control accuracy
+        divergent_candidates.sort(key=lambda x: (x['baseline_strictly_neg_raw'], x['ga_control_acc_raw']), reverse=True)
 
         for case in divergent_candidates:
+            case.pop('baseline_strictly_neg_raw', None)
             case.pop('ga_control_acc_raw', None)
-            case.pop('base_missed_sepsis_raw', None)
 
         final_cases = divergent_candidates[:max_candidates]
 
