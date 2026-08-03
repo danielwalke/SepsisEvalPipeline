@@ -542,10 +542,209 @@ def find_divergent_patient_trajectories(
         return {
             "status": "success",
             "selected_panel": selected_panel,
-            "decision_cutoff": cutoff,
+            "decision_cutoff": cutoff_base,
             "total_divergent_cases_found": len(divergent_cases),
             "cases": divergent_cases
         }
+
+
+@mcp.tool()
+def evaluate_patient_traditional_xgboost(
+    patient_id: int,
+    selected_panel: str = "MIMIC_CBC_BMP"
+) -> Dict[str, Any]:
+    """
+    Evaluates the time series trajectory of a specific patient ID using ONLY the Traditional Baseline XGBoost model 
+    and its model-specific optimal decision cutoff threshold.
+
+    Args:
+        patient_id: Internal Patient ID (e.g. 166147, 335764, 702).
+        selected_panel: Panel name (e.g. 'MIMIC_CBC_BMP', 'MIMIC_CBC').
+    """
+    with contextlib.redirect_stdout(sys.stderr):
+        app_mod = _load_inference_app()
+        get_sample_datasets = app_mod.get_sample_datasets
+        get_default_cutoff = app_mod.get_default_cutoff
+
+        clean_panel = selected_panel.replace("MIMIC_", "").replace("SBC_", "")
+        sample_datasets = get_sample_datasets(clean_panel)
+        if not sample_datasets:
+            return {"status": "error", "message": f"No sample datasets found for panel '{selected_panel}'"}
+
+        target_key = list(sample_datasets.keys())[0]
+        target_path = sample_datasets[target_key]
+        df_all = pd.read_csv(target_path)
+
+        p_df = df_all[df_all['Id'] == patient_id].sort_values('Time').copy()
+        if len(p_df) == 0:
+            return {"status": "error", "message": f"Patient ID {patient_id} not found in dataset."}
+
+        import joblib
+        baseline_path = os.path.join(BASE_DIR, "2_baseline", "models", clean_panel, "XGBClassifier.pkl")
+        if not os.path.exists(baseline_path):
+            baseline_path = os.path.join(BASE_DIR, "2_baseline", "models", f"MIMIC_{clean_panel}", "XGBClassifier.pkl")
+
+        if not os.path.exists(baseline_path):
+            return {"status": "error", "message": f"Baseline model file not found at {baseline_path}"}
+
+        baseline_model = joblib.load(baseline_path)
+        feature_cols = [c for c in p_df.columns if c.startswith("f__")]
+        preds_base = baseline_model.predict_proba(p_df[feature_cols].to_numpy())[:, 1]
+        p_df['pred_baseline'] = preds_base
+
+        cutoff = get_default_cutoff(selected_panel, target_key) # 0.001613
+        p_df['base_pos'] = p_df['pred_baseline'] >= cutoff
+
+        events = []
+        first_ct = pd.to_datetime(p_df['charttime'].iloc[0])
+        for _, r in p_df.iterrows():
+            ct = pd.to_datetime(r['charttime'])
+            hr = (ct - first_ct).total_seconds() / 3600.0
+            events.append({
+                "hours_elapsed": round(hr, 1),
+                "charttime": str(r['charttime']),
+                "true_label": str(r['y']),
+                "wbc": float(r.get('f__WBC', 0.0)),
+                "platelets": float(r.get('f__PLT', 0.0)),
+                "baseline_probability": round(float(r['pred_baseline']), 6),
+                "predicted_class": "Sepsis" if r['base_pos'] else "Control",
+                "status": "POSITIVE" if r['base_pos'] else "NEGATIVE"
+            })
+
+        return {
+            "status": "success",
+            "model_type": "Traditional Baseline XGBoost",
+            "patient_id": str(patient_id),
+            "subject_id": str(p_df['subject_id'].iloc[0]),
+            "hadm_id": str(p_df['hadm_id'].iloc[0]),
+            "total_events": len(p_df),
+            "model_optimal_cutoff": cutoff,
+            "events": events
+        }
+
+
+@mcp.tool()
+def evaluate_patient_graphaware_xgboost(
+    patient_id: int,
+    selected_panel: str = "MIMIC_CBC_BMP"
+) -> Dict[str, Any]:
+    """
+    Evaluates the time series trajectory of a specific patient ID using ONLY the GraphAware XGBoost framework 
+    and its model-specific optimal decision cutoff threshold.
+
+    Args:
+        patient_id: Internal Patient ID (e.g. 166147, 335764, 702).
+        selected_panel: Panel name (e.g. 'MIMIC_CBC_BMP', 'MIMIC_CBC').
+    """
+    with contextlib.redirect_stdout(sys.stderr):
+        app_mod = _load_inference_app()
+        get_sample_datasets = app_mod.get_sample_datasets
+        run_graphaware_inference = app_mod.run_graphaware_inference
+
+        clean_panel = selected_panel.replace("MIMIC_", "").replace("SBC_", "")
+        sample_datasets = get_sample_datasets(clean_panel)
+        if not sample_datasets:
+            return {"status": "error", "message": f"No sample datasets found for panel '{selected_panel}'"}
+
+        target_key = list(sample_datasets.keys())[0]
+        target_path = sample_datasets[target_key]
+        df_all = pd.read_csv(target_path)
+
+        p_df = df_all[df_all['Id'] == patient_id].sort_values('Time').copy()
+        if len(p_df) == 0:
+            return {"status": "error", "message": f"Patient ID {patient_id} not found in dataset."}
+
+        model_path = os.path.join(BASE_DIR, "6_graphaware", "models", clean_panel, "final_model.xgb")
+        if not os.path.exists(model_path):
+            model_path = os.path.join(BASE_DIR, "6_graphaware", "models", f"MIMIC_{clean_panel}", "final_model.xgb")
+
+        if not os.path.exists(model_path):
+            return {"status": "error", "message": f"GraphAware model file not found at {model_path}"}
+
+        sorted_df, preds_ga, _, _ = run_graphaware_inference(p_df, model_path, selected_panel)
+        sorted_df['pred_graphaware'] = preds_ga
+
+        cutoff = 0.000178 # GraphAware Validation G-Mean ROC Cutoff
+        sorted_df['ga_pos'] = sorted_df['pred_graphaware'] >= cutoff
+
+        events = []
+        first_ct = pd.to_datetime(sorted_df['charttime'].iloc[0])
+        for _, r in sorted_df.iterrows():
+            ct = pd.to_datetime(r['charttime'])
+            hr = (ct - first_ct).total_seconds() / 3600.0
+            events.append({
+                "hours_elapsed": round(hr, 1),
+                "charttime": str(r['charttime']),
+                "true_label": str(r['y']),
+                "wbc": float(r.get('f__WBC', 0.0)),
+                "platelets": float(r.get('f__PLT', 0.0)),
+                "graphaware_probability": round(float(r['pred_graphaware']), 6),
+                "predicted_class": "Sepsis" if r['ga_pos'] else "Control",
+                "status": "POSITIVE" if r['ga_pos'] else "NEGATIVE"
+            })
+
+        return {
+            "status": "success",
+            "model_type": "GraphAware XGBoost Framework",
+            "patient_id": str(patient_id),
+            "subject_id": str(sorted_df['subject_id'].iloc[0]),
+            "hadm_id": str(sorted_df['hadm_id'].iloc[0]),
+            "total_events": len(sorted_df),
+            "model_optimal_cutoff": cutoff,
+            "events": events
+        }
+
+
+@mcp.tool()
+def compare_patient_time_series(
+    patient_id: int,
+    selected_panel: str = "MIMIC_CBC_BMP"
+) -> Dict[str, Any]:
+    """
+    Directly compares the time series trajectory of a specific patient ID between 
+    Traditional Baseline XGBoost and GraphAware XGBoost side-by-side using model-specific cutoffs.
+
+    Args:
+        patient_id: Internal Patient ID (e.g. 166147, 335764, 702).
+        selected_panel: Panel name (e.g. 'MIMIC_CBC_BMP', 'MIMIC_CBC').
+    """
+    base_res = evaluate_patient_traditional_xgboost(patient_id, selected_panel)
+    ga_res = evaluate_patient_graphaware_xgboost(patient_id, selected_panel)
+
+    if base_res.get("status") == "error":
+        return base_res
+    if ga_res.get("status") == "error":
+        return ga_res
+
+    cutoff_base = base_res["model_optimal_cutoff"]
+    cutoff_ga = ga_res["model_optimal_cutoff"]
+
+    events_comparison = []
+    for b_ev, g_ev in zip(base_res["events"], ga_res["events"]):
+        events_comparison.append({
+            "hours_elapsed": b_ev["hours_elapsed"],
+            "charttime": b_ev["charttime"],
+            "true_label": b_ev["true_label"],
+            "wbc": b_ev["wbc"],
+            "platelets": b_ev["platelets"],
+            "baseline_prob": b_ev["baseline_probability"],
+            "baseline_status": b_ev["status"],
+            "graphaware_prob": g_ev["graphaware_probability"],
+            "graphaware_status": g_ev["status"],
+            "prediction_match": b_ev["status"] == g_ev["status"]
+        })
+
+    return {
+        "status": "success",
+        "patient_id": str(patient_id),
+        "subject_id": base_res["subject_id"],
+        "hadm_id": base_res["hadm_id"],
+        "selected_panel": selected_panel,
+        "baseline_cutoff": cutoff_base,
+        "graphaware_cutoff": cutoff_ga,
+        "total_events": len(events_comparison),
+        "events_comparison": events_comparison
+    }
 
 
 if __name__ == "__main__":

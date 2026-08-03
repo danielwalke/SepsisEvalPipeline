@@ -1,0 +1,62 @@
+HOW TO USE MCP (MODEL CONTEXT PROTOCOL) TO FIND DIVERGENT PATIENT SAMPLES
+========================================================================
+
+1. OVERVIEW
+-----------
+We updated the dedicated MCP tool `find_divergent_patient_trajectories` in `mcp_server/server.py` 
+to evaluate patient time series trajectories using model-specific decision cutoffs:
+  - Traditional Baseline XGBoost Cutoff:   0.001613
+  - GraphAware XGBoost Cutoff:             0.000178
+
+This tool allows any MCP client or AI agent to scan the dataset automatically and return structured 
+Divergent Patient Cases (Baseline Sepsis Misses & Baseline False Alarms).
+
+
+2. MCP TOOL FUNCTION SIGNATURE
+------------------------------
+Tool Name: `find_divergent_patient_trajectories`
+
+Parameters:
+  - `selected_panel` (string, default "MIMIC_CBC_BMP"): The lab panel dataset to scan.
+  - `min_events` (integer, default 2): Minimum number of observations per patient time series.
+  - `max_candidates` (integer, default 5): Maximum number of divergent cases to return.
+
+
+3. USING THE MCP TOOL IN PYTHON
+-------------------------------
+```python
+import json
+import sys
+
+# Add mcp_server directory to python path
+sys.path.insert(0, "mcp_server")
+from server import find_divergent_patient_trajectories
+
+# Query MCP tool
+result = find_divergent_patient_trajectories(
+    selected_panel="MIMIC_CBC_BMP",
+    min_events=2,
+    max_candidates=5
+)
+
+print(json.dumps(result, indent=2))
+```
+
+
+4. CALLING VIA MCP JSON-RPC
+---------------------------
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "find_divergent_patient_trajectories",
+    "arguments": {
+      "selected_panel": "MIMIC_CBC_BMP",
+      "min_events": 2,
+      "max_candidates": 5
+    }
+  }
+}
+```

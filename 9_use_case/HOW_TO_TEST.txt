@@ -1,0 +1,64 @@
+HOW TO TEST TRADITIONAL XGBOOST VS. GRAPHAWARE (XGBOOST) MODELS
+================================================================
+
+This guide provides simple Python instructions to test both models using 
+model-specific optimal decision cutoff thresholds derived from validation set G-Mean ROC optimization.
+
+MODEL-SPECIFIC CUTOFF THRESHOLDS (MIMIC_CBC_BMP):
+  - Traditional Baseline XGBoost Cutoff:   0.001613
+  - GraphAware XGBoost Cutoff:             0.000178
+
+
+1. AUTOMATED DATASET SCANNER SCRIPT (Finds all divergent cases)
+--------------------------------------------------------------
+To scan the entire test set automatically and output all divergent patient cases:
+
+    .venv/bin/python 9_use_case/find_divergent_cases.py
+
+
+2. SIMPLE SINGLE-PATIENT TEST SCRIPT
+------------------------------------
+To run a fast test on Patient 166147:
+
+    .venv/bin/python 9_use_case/run_simple_test.py
+
+
+3. SIMPLE PYTHON CODE SNIPPET
+-----------------------------
+```python
+import os
+import sys
+import pandas as pd
+import joblib
+
+sys.path.insert(0, ".")
+sys.path.insert(0, "7_inference")
+
+from app import run_graphaware_inference
+
+# Model-specific decision cutoffs
+CUTOFF_BASELINE = 0.001613
+CUTOFF_GRAPHAWARE = 0.000178
+
+# Load dataset
+df_test = pd.read_csv("1_preprocess/data/preprocessed_data/CBC_BMP/mimic_processed_test.csv")
+patient_df = df_test[df_test["Id"] == 166147].sort_values("Time")
+
+# Load models
+baseline_model = joblib.load("2_baseline/models/MIMIC_CBC_BMP/XGBClassifier.pkl")
+graphaware_model_path = "6_graphaware/models/MIMIC_CBC_BMP/final_model.xgb"
+
+# 1. Traditional XGBoost
+feature_cols = [c for c in patient_df.columns if c.startswith("f__")]
+baseline_probs = baseline_model.predict_proba(patient_df[feature_cols].to_numpy())[:, 1]
+
+# 2. GraphAware XGBoost
+sorted_df, graphaware_probs, _, _ = run_graphaware_inference(patient_df, graphaware_model_path, "MIMIC_CBC_BMP")
+
+# Evaluate Sepsis Onset (t = 76.4h)
+base_status = "POSITIVE" if baseline_probs[-1] >= CUTOFF_BASELINE else "NEGATIVE"
+ga_status = "POSITIVE" if graphaware_probs[-1] >= CUTOFF_GRAPHAWARE else "NEGATIVE"
+
+print(f"Traditional XGBoost: {baseline_probs[-1]:.6f} ({base_status}, Cutoff: {CUTOFF_BASELINE:.6f})")
+print(f"GraphAware XGBoost:  {graphaware_probs[-1]:.6f} ({ga_status}, Cutoff: {CUTOFF_GRAPHAWARE:.6f})")
+```
