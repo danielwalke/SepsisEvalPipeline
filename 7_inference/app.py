@@ -269,58 +269,6 @@ def prepare_panel_features(df_input, panel_name, expected_xgb_feats):
 
 def run_graphaware_inference(df_input, model_path, panel_name):
     """Executes GraphAware feature aggregation and XGBoost inference."""
-    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    clean_panel = panel_name.replace("MIMIC_", "").replace("SBC_", "")
-    db_path = os.path.join(base_dir, "4_db_upload", "sqlite", "sqlite_data", clean_panel, "mimic_sbc_graph.db")
-    if not os.path.exists(db_path):
-        db_path = os.path.join(base_dir, "4_db_upload", "sqlite", "sqlite_data", f"MIMIC_{clean_panel}", "mimic_sbc_graph.db")
-
-    if os.path.exists(db_path) and "Id" in df_input.columns:
-        from connectors.SQLiteConnector import SQLiteConnector
-        model = xgb.Booster()
-        model.load_model(model_path)
-        expected_xgb_feats = model.num_features()
-        df_prep, f_cols = prepare_panel_features(df_input, clean_panel, expected_xgb_feats)
-
-        hops = [0, 1]
-        framework = Framework(
-            user_functions=[diff_user_fun for _ in hops],
-            hops_list=hops,
-            clfs=[None for _ in hops],
-            gpu_idx=None,
-            handle_nan=0.0,
-            attention_configs=[None for _ in hops]
-        )
-        connector = SQLiteConnector(db_path=db_path)
-
-        skip = 0
-        all_preds = []
-        all_feats = []
-        while True:
-            X_batch, y_batch = connector.fetch_data_batch('MIMIC_TEST', '', skip, 10000, framework)
-            if len(y_batch) == 0:
-                break
-            dtest = xgb.DMatrix(X_batch)
-            preds = model.predict(dtest)
-            all_preds.extend(preds)
-            all_feats.append(X_batch)
-            skip += 10000
-        connector.close()
-
-        test_csv_path = os.path.join(base_dir, "1_preprocess", "data", "preprocessed_data", clean_panel, "mimic_processed_test.csv")
-        if not os.path.exists(test_csv_path):
-            test_csv_path = os.path.join(base_dir, "1_preprocess", "data", "preprocessed_data", f"MIMIC_{clean_panel}", "mimic_processed_test.csv")
-
-        if os.path.exists(test_csv_path):
-            full_test_df = pd.read_csv(test_csv_path)
-            full_test_df['pred_ga'] = all_preds[:len(full_test_df)]
-            merged_df = pd.merge(df_prep, full_test_df[['Id', 'charttime', 'pred_ga']], on=['Id', 'charttime'], how='left')
-            if not merged_df['pred_ga'].isna().all():
-                sorted_df = merged_df.sort_values('Time' if 'Time' in merged_df.columns else 'charttime').reset_index(drop=True)
-                preds_prob = sorted_df['pred_ga'].to_numpy()
-                final_feats = np.vstack(all_feats)[:len(sorted_df)] if all_feats else None
-                return sorted_df, preds_prob, final_feats, f_cols
-
     model = xgb.Booster()
     model.load_model(model_path)
     expected_xgb_feats = model.num_features()
@@ -360,7 +308,7 @@ def run_graphaware_inference(df_input, model_path, panel_name):
     # 5. Predict probabilities
     dtest = xgb.DMatrix(final_feats)
     preds_prob = model.predict(dtest)
-
+    
     return sorted_df, preds_prob, final_feats, f_cols
 
 @st.cache_data
