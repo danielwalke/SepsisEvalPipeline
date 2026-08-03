@@ -482,34 +482,86 @@ def find_divergent_patient_trajectories(
         feature_cols = [c for c in df_all.columns if c.startswith("f__")]
 
         df_all['y_bin'] = (df_all['y'] == 'Sepsis').astype(int)
+        df_all['pred_baseline'] = baseline_model.predict_proba(df_all[feature_cols].to_numpy())[:, 1]
         sepsis_patient_ids = df_all[df_all['y_bin'] == 1]['Id'].unique()
 
         cutoff_base = get_default_cutoff(selected_panel, target_key) # Baseline XGBoost Cutoff (0.001613)
         cutoff_ga = 0.000178 # GraphAware XGBoost Validation G-Mean Cutoff
 
-        divergent_cases = []
+        # Database graph inference if available
+        db_path = os.path.join(BASE_DIR, '4_db_upload', 'sqlite', 'sqlite_data', clean_panel, 'mimic_sbc_graph.db')
+        if not os.path.exists(db_path):
+            db_path = os.path.join(BASE_DIR, '4_db_upload', 'sqlite', 'sqlite_data', f"MIMIC_{clean_panel}", 'mimic_sbc_graph.db')
+
+        if os.path.exists(db_path):
+            from GraphAware.EnsembleFramework import Framework
+            from connectors.SQLiteConnector import SQLiteConnector
+            def diff_user_fun(kwargs):
+                return kwargs['original_features'] - kwargs['mean_neighbors']
+            hops = [0, 1]
+            framework = Framework(
+                user_functions=[diff_user_fun for _ in hops],
+                hops_list=hops,
+                clfs=[None for _ in hops],
+                gpu_idx=0,
+                handle_nan=0.0,
+                attention_configs=[None for _ in hops],
+                classifier_on_device=False
+            )
+            connector = SQLiteConnector(db_path=db_path)
+            ga_model = xgb.Booster()
+            ga_model.load_model(model_path)
+            skip = 0
+            test_preds_ga = []
+            while True:
+                X_batch, y_batch = connector.fetch_data_batch('MIMIC_TEST', '', skip, 10000, framework)
+                if len(y_batch) == 0:
+                    break
+                preds = ga_model.predict(xgb.DMatrix(X_batch))
+                test_preds_ga.extend(preds)
+                skip += 10000
+            connector.close()
+            df_all['pred_graphaware'] = test_preds_ga[:len(df_all)]
+
+        df_all['base_pos'] = df_all['pred_baseline'] >= cutoff_base
+        if 'pred_graphaware' in df_all.columns:
+            df_all['ga_pos'] = df_all['pred_graphaware'] >= cutoff_ga
+
+        divergent_candidates = []
 
         for pid in sepsis_patient_ids:
             p_df = df_all[df_all['Id'] == pid].sort_values('Time').copy()
             if len(p_df) < min_events:
                 continue
 
-            sorted_df, preds_ga, _, _ = run_graphaware_inference(p_df, model_path, selected_panel)
-            preds_base = baseline_model.predict_proba(sorted_df[feature_cols].to_numpy())[:, 1]
-            sorted_df['pred_baseline'] = preds_base
-            sorted_df['pred_graphaware'] = preds_ga
-
-            sorted_df['base_pos'] = sorted_df['pred_baseline'] >= cutoff_base
-            sorted_df['ga_pos'] = sorted_df['pred_graphaware'] >= cutoff_ga
+            if 'pred_graphaware' not in p_df.columns:
+                sorted_df, preds_ga, _, _ = run_graphaware_inference(p_df, model_path, selected_panel)
+                p_df['pred_graphaware'] = preds_ga
+                p_df['ga_pos'] = p_df['pred_graphaware'] >= cutoff_ga
+            else:
+                sorted_df = p_df
 
             sepsis_events = sorted_df[sorted_df['y_bin'] == 1]
             control_events = sorted_df[sorted_df['y_bin'] == 0]
+            if len(control_events) == 0 or len(sepsis_events) == 0:
+                continue
 
-            base_missed_sepsis = (sepsis_events['base_pos'].sum() == 0) and (sepsis_events['ga_pos'].sum() > 0)
-            base_control_fps = (control_events['base_pos'].sum() > 0)
-            ga_control_clean = (control_events['ga_pos'].sum() == 0) and (sepsis_events['ga_pos'].sum() > 0)
+            n_c = len(control_events)
+            b_c_fps = control_events['base_pos'].sum()
+            g_c_fps = control_events['ga_pos'].sum()
 
-            if base_missed_sepsis or (base_control_fps and ga_control_clean):
+            b_s_hits = sepsis_events['base_pos'].sum()
+            g_s_hits = sepsis_events['ga_pos'].sum()
+
+            ga_c_acc = (n_c - g_c_fps) / n_c
+            base_c_acc = (n_c - b_c_fps) / n_c
+
+            base_missed_sepsis = (b_s_hits == 0)
+            ga_detected_sepsis = (g_s_hits >= 1)
+
+            # Require GraphAware to be accurate on Control events (ga_c_acc >= 0.50) AND detect Sepsis
+            # AND Baseline must either miss sepsis or trigger more control false alarms
+            if ga_detected_sepsis and ga_c_acc >= 0.50 and (base_missed_sepsis or b_c_fps > g_c_fps):
                 events_summary = []
                 first_charttime = pd.to_datetime(sorted_df['charttime'].iloc[0])
                 for _, r in sorted_df.iterrows():
@@ -527,24 +579,35 @@ def find_divergent_patient_trajectories(
                         "graphaware_status": "POSITIVE" if r['ga_pos'] else "NEGATIVE"
                     })
 
-                divergent_cases.append({
+                divergent_candidates.append({
                     "patient_id": str(pid),
                     "subject_id": str(sorted_df['subject_id'].iloc[0]),
                     "hadm_id": str(sorted_df['hadm_id'].iloc[0]),
                     "total_events": len(sorted_df),
-                    "divergence_type": "Baseline Missed Sepsis" if base_missed_sepsis else "Baseline Control False Alarms",
+                    "graphaware_control_accuracy": f"{ga_c_acc*100:.1f}% ({n_c - g_c_fps}/{n_c} correct)",
+                    "baseline_control_accuracy": f"{base_c_acc*100:.1f}% ({n_c - b_c_fps}/{n_c} correct)",
+                    "divergence_type": "Baseline Missed Sepsis" if base_missed_sepsis else "Baseline High False Alarms",
+                    "ga_control_acc_raw": ga_c_acc,
+                    "base_missed_sepsis_raw": base_missed_sepsis,
                     "events": events_summary
                 })
 
-                if len(divergent_cases) >= max_candidates:
-                    break
+        # Sort candidates: Prioritize Baseline Sepsis Misses first, then highest GraphAware Control accuracy
+        divergent_candidates.sort(key=lambda x: (x['base_missed_sepsis_raw'], x['ga_control_acc_raw']), reverse=True)
+
+        for case in divergent_candidates:
+            case.pop('ga_control_acc_raw', None)
+            case.pop('base_missed_sepsis_raw', None)
+
+        final_cases = divergent_candidates[:max_candidates]
 
         return {
             "status": "success",
             "selected_panel": selected_panel,
-            "decision_cutoff": cutoff_base,
-            "total_divergent_cases_found": len(divergent_cases),
-            "cases": divergent_cases
+            "baseline_cutoff": cutoff_base,
+            "graphaware_cutoff": cutoff_ga,
+            "total_divergent_cases_found": len(divergent_candidates),
+            "cases": final_cases
         }
 
 
