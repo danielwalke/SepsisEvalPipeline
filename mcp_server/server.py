@@ -537,40 +537,10 @@ def find_divergent_patient_trajectories(
         cutoff_base = assets["cutoff_baseline"]
         cutoff_ga = assets["cutoff_graphaware"]
 
-        # Database graph inference if available
-        if assets["db_path"] and os.path.exists(assets["db_path"]):
-            from GraphAware.EnsembleFramework import Framework
-            from connectors.SQLiteConnector import SQLiteConnector
-            def diff_user_fun(kwargs):
-                return kwargs['original_features'] - kwargs['mean_neighbors']
-            hops = [0, 1]
-            framework = Framework(
-                user_functions=[diff_user_fun for _ in hops],
-                hops_list=hops,
-                clfs=[None for _ in hops],
-                gpu_idx=0,
-                handle_nan=0.0,
-                attention_configs=[None for _ in hops],
-                classifier_on_device=False
-            )
-            connector = SQLiteConnector(db_path=assets["db_path"])
-            ga_model = xgb.Booster()
-            ga_model.load_model(assets["ga_model_path"])
-            skip = 0
-            test_preds_ga = []
-            while True:
-                X_batch, y_batch = connector.fetch_data_batch('MIMIC_TEST', '', skip, 10000, framework)
-                if len(y_batch) == 0:
-                    break
-                preds = ga_model.predict(xgb.DMatrix(X_batch))
-                test_preds_ga.extend(preds)
-                skip += 10000
-            connector.close()
-            df_all['pred_graphaware'] = test_preds_ga[:len(df_all)]
+        cutoff_base = assets["cutoff_baseline"]
+        cutoff_ga = assets["cutoff_graphaware"]
 
         df_all['base_pos'] = df_all['pred_baseline'] >= cutoff_base
-        if 'pred_graphaware' in df_all.columns:
-            df_all['ga_pos'] = df_all['pred_graphaware'] >= cutoff_ga
 
         divergent_candidates = []
 
@@ -579,12 +549,10 @@ def find_divergent_patient_trajectories(
             if len(p_df) < min_events:
                 continue
 
-            if 'pred_graphaware' not in p_df.columns:
-                sorted_df, preds_ga, _, _ = run_graphaware_inference(p_df, assets["ga_model_path"], selected_panel)
-                p_df['pred_graphaware'] = preds_ga
-                p_df['ga_pos'] = p_df['pred_graphaware'] >= cutoff_ga
-            else:
-                sorted_df = p_df
+            sorted_df, preds_ga, _, _ = run_graphaware_inference(p_df, assets["ga_model_path"], selected_panel)
+            sorted_df['pred_graphaware'] = preds_ga
+            sorted_df['ga_pos'] = sorted_df['pred_graphaware'] >= cutoff_ga
+            sorted_df['base_pos'] = sorted_df['pred_baseline'] >= cutoff_base
 
             sepsis_events = sorted_df[sorted_df['y_bin'] == 1]
             control_events = sorted_df[sorted_df['y_bin'] == 0]
@@ -755,40 +723,8 @@ def evaluate_patient_graphaware_xgboost(
         if not os.path.exists(assets["ga_model_path"]):
             return {"status": "error", "message": f"GraphAware model file not found at {assets['ga_model_path']}"}
 
-        if assets["db_path"] and os.path.exists(assets["db_path"]):
-            import xgboost as xgb
-            from GraphAware.EnsembleFramework import Framework
-            from connectors.SQLiteConnector import SQLiteConnector
-            def diff_user_fun(kwargs):
-                return kwargs['original_features'] - kwargs['mean_neighbors']
-            hops = [0, 1]
-            framework = Framework(
-                user_functions=[diff_user_fun for _ in hops],
-                hops_list=hops,
-                clfs=[None for _ in hops],
-                gpu_idx=0,
-                handle_nan=0.0,
-                attention_configs=[None for _ in hops],
-                classifier_on_device=False
-            )
-            connector = SQLiteConnector(db_path=assets["db_path"])
-            ga_model = xgb.Booster()
-            ga_model.load_model(assets["ga_model_path"])
-            skip = 0
-            test_preds_ga = []
-            while True:
-                X_batch, y_batch = connector.fetch_data_batch('MIMIC_TEST', '', skip, 10000, framework)
-                if len(y_batch) == 0:
-                    break
-                preds = ga_model.predict(xgb.DMatrix(X_batch))
-                test_preds_ga.extend(preds)
-                skip += 10000
-            connector.close()
-            df_all['pred_graphaware'] = test_preds_ga[:len(df_all)]
-            sorted_df = df_all[df_all['Id'] == patient_id].sort_values('Time').copy()
-        else:
-            sorted_df, preds_ga, _, _ = run_graphaware_inference(p_df, assets["ga_model_path"], selected_panel)
-            sorted_df['pred_graphaware'] = preds_ga
+        sorted_df, preds_ga, _, _ = run_graphaware_inference(p_df, assets["ga_model_path"], selected_panel)
+        sorted_df['pred_graphaware'] = preds_ga
 
         cutoff = assets["cutoff_graphaware"]
         sorted_df['ga_pos'] = sorted_df['pred_graphaware'] >= cutoff
