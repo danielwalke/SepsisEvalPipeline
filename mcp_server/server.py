@@ -433,6 +433,67 @@ def start_dashboard(port: int = 8501, headless: bool = True) -> Dict[str, Any]:
         return {"status": "error", "message": f"Failed to launch Streamlit dashboard: {str(e)}"}
 
 
+def _resolve_panel_assets(selected_panel: str = "MIMIC_CBC_BMP"):
+    """
+    Dynamically resolves asset paths (test dataset CSV, baseline model, 
+    GraphAware model, SQLite graph database, and optimal decision cutoffs) 
+    for any specified laboratory panel name.
+
+    Supports inputs such as:
+      - 'MIMIC_CBC_BMP', 'CBC_BMP'
+      - 'MIMIC_CBC', 'CBC'
+      - 'MIMIC_BMP', 'BMP'
+    """
+    clean_panel = selected_panel.replace("MIMIC_", "").replace("SBC_", "")
+    panel_full_name = f"MIMIC_{clean_panel}"
+
+    # 1. Dataset CSV path
+    csv_path = os.path.join(BASE_DIR, "1_preprocess", "data", "preprocessed_data", clean_panel, "mimic_processed_test.csv")
+    if not os.path.exists(csv_path):
+        csv_path = os.path.join(BASE_DIR, "1_preprocess", "data", "preprocessed_data", panel_full_name, "mimic_processed_test.csv")
+
+    # 2. Baseline Model path
+    baseline_path = os.path.join(BASE_DIR, "2_baseline", "models", panel_full_name, "XGBClassifier.pkl")
+    if not os.path.exists(baseline_path):
+        baseline_path = os.path.join(BASE_DIR, "2_baseline", "models", clean_panel, "XGBClassifier.pkl")
+
+    # 3. GraphAware Model path
+    ga_model_path = os.path.join(BASE_DIR, "6_graphaware", "models", panel_full_name, "final_model.xgb")
+    if not os.path.exists(ga_model_path):
+        ga_model_path = os.path.join(BASE_DIR, "6_graphaware", "models", clean_panel, "final_model.xgb")
+
+    # 4. SQLite Graph DB path
+    db_path = os.path.join(BASE_DIR, "4_db_upload", "sqlite", "sqlite_data", clean_panel, "mimic_sbc_graph.db")
+    if not os.path.exists(db_path):
+        db_path = os.path.join(BASE_DIR, "4_db_upload", "sqlite", "sqlite_data", panel_full_name, "mimic_sbc_graph.db")
+
+    # 5. Optimal Cutoffs per panel (Validation G-Mean ROC optimization)
+    cutoff_baseline_dict = {
+        'CBC_BMP': 0.001613,
+        'CBC': 0.002000,
+        'BMP': 0.002000
+    }
+    cutoff_ga_dict = {
+        'CBC_BMP': 0.000178,
+        'CBC': 0.000200,
+        'BMP': 0.000200
+    }
+
+    cutoff_base = cutoff_baseline_dict.get(clean_panel, 0.001613)
+    cutoff_ga = cutoff_ga_dict.get(clean_panel, 0.000178)
+
+    return {
+        "panel_name": panel_full_name,
+        "clean_panel": clean_panel,
+        "csv_path": csv_path,
+        "baseline_path": baseline_path,
+        "ga_model_path": ga_model_path,
+        "db_path": db_path if os.path.exists(db_path) else None,
+        "cutoff_baseline": cutoff_base,
+        "cutoff_graphaware": cutoff_ga
+    }
+
+
 @mcp.tool()
 def find_divergent_patient_trajectories(
     selected_panel: str = "MIMIC_CBC_BMP",
@@ -440,60 +501,42 @@ def find_divergent_patient_trajectories(
     max_candidates: int = 5
 ) -> Dict[str, Any]:
     """
-    Scans patient time series trajectories in the dataset to find cases where 
-    Traditional XGBoost and GraphAware XGBoost make divergent predictions 
-    (e.g., Traditional XGBoost misses sepsis or triggers false alarms, while GraphAware is accurate).
+    Scans patient time series trajectories in the specified panel dataset to find cases where 
+    Traditional XGBoost and GraphAware XGBoost make divergent predictions.
 
     Args:
-        selected_panel: Panel name (e.g. 'MIMIC_CBC_BMP', 'MIMIC_CBC').
+        selected_panel: Laboratory panel name (e.g. 'MIMIC_CBC_BMP', 'MIMIC_CBC', 'MIMIC_BMP').
         min_events: Minimum number of time series observations per patient (default 2).
         max_candidates: Maximum number of divergent patient trajectory cases to return (default 5).
     """
     with contextlib.redirect_stdout(sys.stderr):
         app_mod = _load_inference_app()
-        get_sample_datasets = app_mod.get_sample_datasets
         run_graphaware_inference = app_mod.run_graphaware_inference
-        get_default_cutoff = app_mod.get_default_cutoff
 
-        clean_panel = selected_panel.replace("MIMIC_", "").replace("SBC_", "")
-        sample_datasets = get_sample_datasets(clean_panel)
-        if not sample_datasets:
-            return {"status": "error", "message": f"No sample datasets found for panel '{selected_panel}'"}
+        assets = _resolve_panel_assets(selected_panel)
+        if not os.path.exists(assets["csv_path"]):
+            return {"status": "error", "message": f"Dataset CSV not found at {assets['csv_path']}"}
 
-        target_key = list(sample_datasets.keys())[0]
-        target_path = sample_datasets[target_key]
-        df_all = pd.read_csv(target_path)
+        df_all = pd.read_csv(assets["csv_path"])
 
         import joblib
         import xgboost as xgb
 
-        model_path = os.path.join(BASE_DIR, "6_graphaware", "models", clean_panel, "final_model.xgb")
-        if not os.path.exists(model_path):
-            model_path = os.path.join(BASE_DIR, "6_graphaware", "models", f"MIMIC_{clean_panel}", "final_model.xgb")
+        if not os.path.exists(assets["ga_model_path"]) or not os.path.exists(assets["baseline_path"]):
+            return {"status": "error", "message": f"Model files not found for panel '{assets['panel_name']}'"}
 
-        baseline_path = os.path.join(BASE_DIR, "2_baseline", "models", clean_panel, "XGBClassifier.pkl")
-        if not os.path.exists(baseline_path):
-            baseline_path = os.path.join(BASE_DIR, "2_baseline", "models", f"MIMIC_{clean_panel}", "XGBClassifier.pkl")
-
-        if not os.path.exists(model_path) or not os.path.exists(baseline_path):
-            return {"status": "error", "message": f"Model files not found for panel '{clean_panel}' (Checked: {model_path}, {baseline_path})"}
-
-        baseline_model = joblib.load(baseline_path)
+        baseline_model = joblib.load(assets["baseline_path"])
         feature_cols = [c for c in df_all.columns if c.startswith("f__")]
 
         df_all['y_bin'] = (df_all['y'] == 'Sepsis').astype(int)
         df_all['pred_baseline'] = baseline_model.predict_proba(df_all[feature_cols].to_numpy())[:, 1]
         sepsis_patient_ids = df_all[df_all['y_bin'] == 1]['Id'].unique()
 
-        cutoff_base = get_default_cutoff(selected_panel, target_key) # Baseline XGBoost Cutoff (0.001613)
-        cutoff_ga = 0.000178 # GraphAware XGBoost Validation G-Mean Cutoff
+        cutoff_base = assets["cutoff_baseline"]
+        cutoff_ga = assets["cutoff_graphaware"]
 
         # Database graph inference if available
-        db_path = os.path.join(BASE_DIR, '4_db_upload', 'sqlite', 'sqlite_data', clean_panel, 'mimic_sbc_graph.db')
-        if not os.path.exists(db_path):
-            db_path = os.path.join(BASE_DIR, '4_db_upload', 'sqlite', 'sqlite_data', f"MIMIC_{clean_panel}", 'mimic_sbc_graph.db')
-
-        if os.path.exists(db_path):
+        if assets["db_path"] and os.path.exists(assets["db_path"]):
             from GraphAware.EnsembleFramework import Framework
             from connectors.SQLiteConnector import SQLiteConnector
             def diff_user_fun(kwargs):
@@ -508,9 +551,9 @@ def find_divergent_patient_trajectories(
                 attention_configs=[None for _ in hops],
                 classifier_on_device=False
             )
-            connector = SQLiteConnector(db_path=db_path)
+            connector = SQLiteConnector(db_path=assets["db_path"])
             ga_model = xgb.Booster()
-            ga_model.load_model(model_path)
+            ga_model.load_model(assets["ga_model_path"])
             skip = 0
             test_preds_ga = []
             while True:
@@ -535,7 +578,7 @@ def find_divergent_patient_trajectories(
                 continue
 
             if 'pred_graphaware' not in p_df.columns:
-                sorted_df, preds_ga, _, _ = run_graphaware_inference(p_df, model_path, selected_panel)
+                sorted_df, preds_ga, _, _ = run_graphaware_inference(p_df, assets["ga_model_path"], selected_panel)
                 p_df['pred_graphaware'] = preds_ga
                 p_df['ga_pos'] = p_df['pred_graphaware'] >= cutoff_ga
             else:
@@ -605,6 +648,7 @@ def find_divergent_patient_trajectories(
 
         return {
             "status": "success",
+            "panel_used": assets["panel_name"],
             "selected_panel": selected_panel,
             "baseline_cutoff": cutoff_base,
             "graphaware_cutoff": cutoff_ga,
@@ -620,44 +664,33 @@ def evaluate_patient_traditional_xgboost(
 ) -> Dict[str, Any]:
     """
     Evaluates the time series trajectory of a specific patient ID using ONLY the Traditional Baseline XGBoost model 
-    and its model-specific optimal decision cutoff threshold.
+    for the specified laboratory panel name.
 
     Args:
-        patient_id: Internal Patient ID (e.g. 166147, 335764, 702).
-        selected_panel: Panel name (e.g. 'MIMIC_CBC_BMP', 'MIMIC_CBC').
+        patient_id: Internal Patient ID (e.g. 542802, 115103, 166147).
+        selected_panel: Laboratory panel name (e.g. 'MIMIC_CBC_BMP', 'MIMIC_CBC', 'MIMIC_BMP').
     """
     with contextlib.redirect_stdout(sys.stderr):
-        app_mod = _load_inference_app()
-        get_sample_datasets = app_mod.get_sample_datasets
-        get_default_cutoff = app_mod.get_default_cutoff
+        assets = _resolve_panel_assets(selected_panel)
+        if not os.path.exists(assets["csv_path"]):
+            return {"status": "error", "message": f"Dataset CSV not found at {assets['csv_path']}"}
 
-        clean_panel = selected_panel.replace("MIMIC_", "").replace("SBC_", "")
-        sample_datasets = get_sample_datasets(clean_panel)
-        if not sample_datasets:
-            return {"status": "error", "message": f"No sample datasets found for panel '{selected_panel}'"}
-
-        target_key = list(sample_datasets.keys())[0]
-        target_path = sample_datasets[target_key]
-        df_all = pd.read_csv(target_path)
+        df_all = pd.read_csv(assets["csv_path"])
 
         p_df = df_all[df_all['Id'] == patient_id].sort_values('Time').copy()
         if len(p_df) == 0:
-            return {"status": "error", "message": f"Patient ID {patient_id} not found in dataset."}
+            return {"status": "error", "message": f"Patient ID {patient_id} not found in panel '{assets['panel_name']}'."}
 
         import joblib
-        baseline_path = os.path.join(BASE_DIR, "2_baseline", "models", clean_panel, "XGBClassifier.pkl")
-        if not os.path.exists(baseline_path):
-            baseline_path = os.path.join(BASE_DIR, "2_baseline", "models", f"MIMIC_{clean_panel}", "XGBClassifier.pkl")
+        if not os.path.exists(assets["baseline_path"]):
+            return {"status": "error", "message": f"Baseline model file not found at {assets['baseline_path']}"}
 
-        if not os.path.exists(baseline_path):
-            return {"status": "error", "message": f"Baseline model file not found at {baseline_path}"}
-
-        baseline_model = joblib.load(baseline_path)
+        baseline_model = joblib.load(assets["baseline_path"])
         feature_cols = [c for c in p_df.columns if c.startswith("f__")]
         preds_base = baseline_model.predict_proba(p_df[feature_cols].to_numpy())[:, 1]
         p_df['pred_baseline'] = preds_base
 
-        cutoff = get_default_cutoff(selected_panel, target_key) # 0.001613
+        cutoff = assets["cutoff_baseline"]
         p_df['base_pos'] = p_df['pred_baseline'] >= cutoff
 
         events = []
@@ -679,6 +712,8 @@ def evaluate_patient_traditional_xgboost(
         return {
             "status": "success",
             "model_type": "Traditional Baseline XGBoost",
+            "panel_used": assets["panel_name"],
+            "selected_panel": selected_panel,
             "patient_id": str(patient_id),
             "subject_id": str(p_df['subject_id'].iloc[0]),
             "hadm_id": str(p_df['hadm_id'].iloc[0]),
@@ -695,42 +730,30 @@ def evaluate_patient_graphaware_xgboost(
 ) -> Dict[str, Any]:
     """
     Evaluates the time series trajectory of a specific patient ID using ONLY the GraphAware XGBoost framework 
-    and its model-specific optimal decision cutoff threshold.
+    for the specified laboratory panel name.
 
     Args:
-        patient_id: Internal Patient ID (e.g. 166147, 335764, 702).
-        selected_panel: Panel name (e.g. 'MIMIC_CBC_BMP', 'MIMIC_CBC').
+        patient_id: Internal Patient ID (e.g. 542802, 115103, 166147).
+        selected_panel: Laboratory panel name (e.g. 'MIMIC_CBC_BMP', 'MIMIC_CBC', 'MIMIC_BMP').
     """
     with contextlib.redirect_stdout(sys.stderr):
         app_mod = _load_inference_app()
-        get_sample_datasets = app_mod.get_sample_datasets
         run_graphaware_inference = app_mod.run_graphaware_inference
 
-        clean_panel = selected_panel.replace("MIMIC_", "").replace("SBC_", "")
-        sample_datasets = get_sample_datasets(clean_panel)
-        if not sample_datasets:
-            return {"status": "error", "message": f"No sample datasets found for panel '{selected_panel}'"}
+        assets = _resolve_panel_assets(selected_panel)
+        if not os.path.exists(assets["csv_path"]):
+            return {"status": "error", "message": f"Dataset CSV not found at {assets['csv_path']}"}
 
-        target_key = list(sample_datasets.keys())[0]
-        target_path = sample_datasets[target_key]
-        df_all = pd.read_csv(target_path)
+        df_all = pd.read_csv(assets["csv_path"])
 
         p_df = df_all[df_all['Id'] == patient_id].sort_values('Time').copy()
         if len(p_df) == 0:
-            return {"status": "error", "message": f"Patient ID {patient_id} not found in dataset."}
+            return {"status": "error", "message": f"Patient ID {patient_id} not found in panel '{assets['panel_name']}'."}
 
-        model_path = os.path.join(BASE_DIR, "6_graphaware", "models", clean_panel, "final_model.xgb")
-        if not os.path.exists(model_path):
-            model_path = os.path.join(BASE_DIR, "6_graphaware", "models", f"MIMIC_{clean_panel}", "final_model.xgb")
+        if not os.path.exists(assets["ga_model_path"]):
+            return {"status": "error", "message": f"GraphAware model file not found at {assets['ga_model_path']}"}
 
-        if not os.path.exists(model_path):
-            return {"status": "error", "message": f"GraphAware model file not found at {model_path}"}
-
-        db_path = os.path.join(BASE_DIR, '4_db_upload', 'sqlite', 'sqlite_data', clean_panel, 'mimic_sbc_graph.db')
-        if not os.path.exists(db_path):
-            db_path = os.path.join(BASE_DIR, '4_db_upload', 'sqlite', 'sqlite_data', f"MIMIC_{clean_panel}", 'mimic_sbc_graph.db')
-
-        if os.path.exists(db_path):
+        if assets["db_path"] and os.path.exists(assets["db_path"]):
             import xgboost as xgb
             from GraphAware.EnsembleFramework import Framework
             from connectors.SQLiteConnector import SQLiteConnector
@@ -746,9 +769,9 @@ def evaluate_patient_graphaware_xgboost(
                 attention_configs=[None for _ in hops],
                 classifier_on_device=False
             )
-            connector = SQLiteConnector(db_path=db_path)
+            connector = SQLiteConnector(db_path=assets["db_path"])
             ga_model = xgb.Booster()
-            ga_model.load_model(model_path)
+            ga_model.load_model(assets["ga_model_path"])
             skip = 0
             test_preds_ga = []
             while True:
@@ -762,10 +785,10 @@ def evaluate_patient_graphaware_xgboost(
             df_all['pred_graphaware'] = test_preds_ga[:len(df_all)]
             sorted_df = df_all[df_all['Id'] == patient_id].sort_values('Time').copy()
         else:
-            sorted_df, preds_ga, _, _ = run_graphaware_inference(p_df, model_path, selected_panel)
+            sorted_df, preds_ga, _, _ = run_graphaware_inference(p_df, assets["ga_model_path"], selected_panel)
             sorted_df['pred_graphaware'] = preds_ga
 
-        cutoff = 0.000178 # GraphAware Validation G-Mean ROC Cutoff
+        cutoff = assets["cutoff_graphaware"]
         sorted_df['ga_pos'] = sorted_df['pred_graphaware'] >= cutoff
 
         events = []
@@ -787,6 +810,8 @@ def evaluate_patient_graphaware_xgboost(
         return {
             "status": "success",
             "model_type": "GraphAware XGBoost Framework",
+            "panel_used": assets["panel_name"],
+            "selected_panel": selected_panel,
             "patient_id": str(patient_id),
             "subject_id": str(sorted_df['subject_id'].iloc[0]),
             "hadm_id": str(sorted_df['hadm_id'].iloc[0]),
@@ -803,11 +828,11 @@ def compare_patient_time_series(
 ) -> Dict[str, Any]:
     """
     Directly compares the time series trajectory of a specific patient ID between 
-    Traditional Baseline XGBoost and GraphAware XGBoost side-by-side using model-specific cutoffs.
+    Traditional Baseline XGBoost and GraphAware XGBoost side-by-side for the specified laboratory panel name.
 
     Args:
-        patient_id: Internal Patient ID (e.g. 166147, 335764, 702).
-        selected_panel: Panel name (e.g. 'MIMIC_CBC_BMP', 'MIMIC_CBC').
+        patient_id: Internal Patient ID (e.g. 542802, 115103, 166147).
+        selected_panel: Laboratory panel name (e.g. 'MIMIC_CBC_BMP', 'MIMIC_CBC', 'MIMIC_BMP').
     """
     base_res = evaluate_patient_traditional_xgboost(patient_id, selected_panel)
     ga_res = evaluate_patient_graphaware_xgboost(patient_id, selected_panel)
@@ -819,6 +844,7 @@ def compare_patient_time_series(
 
     cutoff_base = base_res["model_optimal_cutoff"]
     cutoff_ga = ga_res["model_optimal_cutoff"]
+    panel_used = base_res.get("panel_used", selected_panel)
 
     events_comparison = []
     for b_ev, g_ev in zip(base_res["events"], ga_res["events"]):
@@ -837,10 +863,11 @@ def compare_patient_time_series(
 
     return {
         "status": "success",
+        "panel_used": panel_used,
+        "selected_panel": selected_panel,
         "patient_id": str(patient_id),
         "subject_id": base_res["subject_id"],
         "hadm_id": base_res["hadm_id"],
-        "selected_panel": selected_panel,
         "baseline_cutoff": cutoff_base,
         "graphaware_cutoff": cutoff_ga,
         "total_events": len(events_comparison),
