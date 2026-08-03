@@ -484,7 +484,8 @@ def find_divergent_patient_trajectories(
         df_all['y_bin'] = (df_all['y'] == 'Sepsis').astype(int)
         sepsis_patient_ids = df_all[df_all['y_bin'] == 1]['Id'].unique()
 
-        cutoff = get_default_cutoff(selected_panel, target_key)
+        cutoff_base = get_default_cutoff(selected_panel, target_key) # Baseline XGBoost Cutoff (0.001613)
+        cutoff_ga = 0.000178 # GraphAware XGBoost Validation G-Mean Cutoff
 
         divergent_cases = []
 
@@ -498,8 +499,8 @@ def find_divergent_patient_trajectories(
             sorted_df['pred_baseline'] = preds_base
             sorted_df['pred_graphaware'] = preds_ga
 
-            sorted_df['base_pos'] = sorted_df['pred_baseline'] >= cutoff
-            sorted_df['ga_pos'] = sorted_df['pred_graphaware'] >= cutoff
+            sorted_df['base_pos'] = sorted_df['pred_baseline'] >= cutoff_base
+            sorted_df['ga_pos'] = sorted_df['pred_graphaware'] >= cutoff_ga
 
             sepsis_events = sorted_df[sorted_df['y_bin'] == 1]
             control_events = sorted_df[sorted_df['y_bin'] == 0]
