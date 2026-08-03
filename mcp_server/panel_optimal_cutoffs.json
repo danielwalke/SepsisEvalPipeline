@@ -1,26 +1,26 @@
 {
   "CBC": {
-    "baseline_cutoff": 0.0021173006389290094,
-    "graphaware_cutoff": 0.0007092542364262044,
-    "baseline_gmean": 0.7310575974894727,
-    "graphaware_gmean": 0.516532828105895
+    "baseline_cutoff": 0.01794,
+    "graphaware_cutoff": 0.030634,
+    "baseline_f2": 0.0814,
+    "graphaware_f2": 0.1685
   },
   "CBC_BMP": {
-    "baseline_cutoff": 0.0016127764247357845,
-    "graphaware_cutoff": 0.00017832554294727743,
-    "baseline_gmean": 0.8347588033003707,
-    "graphaware_gmean": 0.4780051053601534
+    "baseline_cutoff": 0.05715,
+    "graphaware_cutoff": 0.032564,
+    "baseline_f2": 0.1840,
+    "graphaware_f2": 0.2389
   },
   "CBC_HIL": {
-    "baseline_cutoff": 0.0015653297305107117,
-    "graphaware_cutoff": 0.0006442748126573861,
-    "baseline_gmean": 0.753765278462004,
-    "graphaware_gmean": 0.5014371395347462
+    "baseline_cutoff": 0.029066,
+    "graphaware_cutoff": 0.03144,
+    "baseline_f2": 0.0858,
+    "graphaware_f2": 0.1451
   },
   "CBC_BMP_HIL": {
-    "baseline_cutoff": 0.0009560137987136841,
-    "graphaware_cutoff": 0.0003477369318716228,
-    "baseline_gmean": 0.8048757095785831,
-    "graphaware_gmean": 0.5040126980107805
+    "baseline_cutoff": 0.073889,
+    "graphaware_cutoff": 0.046365,
+    "baseline_f2": 0.1575,
+    "graphaware_f2": 0.2122
   }
 }
