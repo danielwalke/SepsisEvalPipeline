@@ -101,17 +101,20 @@ class BaseModel:
         
         ## Scaling
         normalize = best_params.pop("normalize", False)            
-        if normalize:
-            scaler, train_X = self.normalize_data(self.data.train_X, self.data.val_X, self.data.test_X)
-        else:
-            train_X= self.data.train_X
-
         ## Retrain with best params
         train_start_time = time.time()
         model = self.ModelClass(**best_params)
-        model.fit(train_X, self.data.train_y)
+        if normalize:
+            from sklearn.pipeline import Pipeline
+            scaler = MinMaxScaler()
+            full_model = Pipeline([('scaler', scaler), ('model', model)])
+            full_model.fit(self.data.train_X, self.data.train_y)
+        else:
+            full_model = model
+            full_model.fit(train_X, self.data.train_y)
         train_end_time = time.time()
-        self.save_model(model, best_params)
+        self.save_model(full_model, best_params)
+        model = full_model
         
         mlflow.log_metric(f"training_time_seconds", train_end_time - train_start_time)
         
@@ -120,7 +123,7 @@ class BaseModel:
             if test_data is None: continue
             for test_data_set in test_data.test_data_containers:
                 test_name, test_X, test_y = test_data_set
-                test_X = scaler.transform(test_X.copy()) if normalize else test_X
+                test_X = test_X.copy()
                 print(f"Evaluating on test dataset: {test_name}")
 
                 inference_test_start_time = time.time()

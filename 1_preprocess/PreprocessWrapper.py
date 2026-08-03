@@ -213,9 +213,10 @@ if __name__ == "__main__":
     else:
         print(f"Could not find {mimic_path}")
     
-    sbc_path = os.path.join(input_dir_path, "sbcdata.csv")
+    sbc_dir = input_dir_path if os.path.exists(os.path.join(input_dir_path, "sbcdata.csv")) else "/app/input"
+    sbc_path = os.path.join(sbc_dir, "sbcdata.csv")
     if os.path.exists(sbc_path):
         print(f"Found {sbc_path}, processing...")
-        process_sbc_data(input_dir_path, feature_input_dir_path, extdata_input_dir_path)
+        process_sbc_data(sbc_dir, feature_input_dir_path, extdata_input_dir_path)
     else:
         print(f"Could not find {sbc_path}")
