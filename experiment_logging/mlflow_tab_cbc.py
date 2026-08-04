@@ -57,12 +57,13 @@ for index, row in runs_df.iterrows():
         model_key = run_name.replace("_SBC", "")
         
     if training_data in datasets and model_key in model_keys:
-        results_dict[training_data][model_key] = {
-            "time": get_val(row, "training_time_seconds"),
-            "sbc_test": get_val(row, "SBC_TEST__AUROC"),
-            "sbc_ext_test": get_val(row, "SBC_EXT_TEST__AUROC"),
-            "mimic_test": get_val(row, "MIMIC_TEST__AUROC")
-        }
+        if not results_dict[training_data][model_key] or pd.isna(results_dict[training_data][model_key].get("sbc_test")):
+            results_dict[training_data][model_key] = {
+                "time": get_val(row, "training_time_seconds"),
+                "sbc_test": get_val(row, "SBC_TEST__AUROC"),
+                "sbc_ext_test": get_val(row, "SBC_EXT_TEST__AUROC"),
+                "mimic_test": get_val(row, "MIMIC_TEST__AUROC")
+            }
 
 def format_metric(value, is_time=False):
     if pd.isna(value) or value == "-":

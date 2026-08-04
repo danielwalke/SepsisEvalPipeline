@@ -1,0 +1,514 @@
+%Version 3.1 December 2024
+% See section 11 of the User Manual for version history
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%                                                                 %%
+%% Please do not use \input{...} to include other tex files.       %%
+%% Submit your LaTeX manuscript as one .tex document.              %%
+%%                                                                 %%
+%% All additional figures and files should be attached             %%
+%% separately and not embedded in the \TeX\ document itself.       %%
+%%                                                                 %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%\documentclass[referee,sn-basic]{sn-jnl}% referee option is meant for double line spacing
+
+%%=======================================================%%
+%% to print line numbers in the margin use lineno option %%
+%%=======================================================%%
+
+%%\documentclass[lineno,pdflatex,sn-basic]{sn-jnl}% Basic Springer Nature Reference Style/Chemistry Reference Style
+
+%%=========================================================================================%%
+%% the documentclass is set to pdflatex as default. You can delete it if not appropriate.  %%
+%%=========================================================================================%%
+
+%%\documentclass[sn-basic]{sn-jnl}% Basic Springer Nature Reference Style/Chemistry Reference Style
+
+%%Note: the following reference styles support Namedate and Numbered referencing. By default the style follows the most common style. To switch between the options you can add or remove Numbered in the optional parenthesis. 
+%%The option is available for: sn-basic.bst, sn-chicago.bst%  
+ 
+%%\documentclass[pdflatex,sn-nature]{sn-jnl}% Style for submissions to Nature Portfolio journals
+%%\documentclass[pdflatex,sn-basic]{sn-jnl}% Basic Springer Nature Reference Style/Chemistry Reference Style
+%%\documentclass[pdflatex,sn-mathphys-num]{sn-jnl}% Math and Physical Sciences Numbered Reference Style
+\documentclass[pdflatex,sn-mathphys-num,lineno]{sn-jnl}
+%%\documentclass[pdflatex,sn-mathphys-ay]{sn-jnl}% Math and Physical Sciences Author Year Reference Style
+%%\documentclass[pdflatex,sn-aps]{sn-jnl}% American Physical Society (APS) Reference Style
+%%\documentclass[pdflatex,sn-vancouver-num]{sn-jnl}% Vancouver Numbered Reference Style
+%%\documentclass[pdflatex,sn-vancouver-ay]{sn-jnl}% Vancouver Author Year Reference Style
+%%\documentclass[pdflatex,sn-apa]{sn-jnl}% APA Reference Style
+%%\documentclass[pdflatex,sn-chicago]{sn-jnl}% Chicago-based Humanities Reference Style
+
+%%%% Standard Packages
+%%<additional latex packages if required can be included here>
+
+\usepackage{graphicx}%
+\usepackage{multirow}%
+\usepackage{amsmath,amssymb,amsfonts}%
+\usepackage{amsthm}%
+\usepackage{mathrsfs}%
+\usepackage[title]{appendix}%
+\usepackage{xcolor}%
+\usepackage{textcomp}%
+\usepackage{manyfoot}%
+\usepackage{booktabs}%
+\usepackage{algorithm}%
+\usepackage{algorithmicx}%
+\usepackage{algpseudocode}%
+\usepackage{listings}%
+\usepackage{makecell}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{booktabs}
+%%%%
+
+%%%%%=============================================================================%%%%
+%%%%  Remarks: This template is provided to aid authors with the preparation
+%%%%  of original research articles intended for submission to journals published 
+%%%%  by Springer Nature. The guidance has been prepared in partnership with 
+%%%%  production teams to conform to Springer Nature technical requirements. 
+%%%%  Editorial and presentation requirements differ among journal portfolios and 
+%%%%  research disciplines. You may find sections in this template are irrelevant 
+%%%%  to your work and are empowered to omit any such section if allowed by the 
+%%%%  journal you intend to submit to. The submission guidelines and policies 
+%%%%  of the journal take precedence. A detailed User Manual is available in the 
+%%%%  template package for technical guidance.
+%%%%%=============================================================================%%%%
+
+%% as per the requirement new theorem styles can be included as shown below
+\theoremstyle{thmstyleone}%
+\newtheorem{theorem}{Theorem}%  meant for continuous numbers
+%%\newtheorem{theorem}{Theorem}[section]% meant for sectionwise numbers
+%% optional argument [theorem] produces theorem numbering sequence instead of independent numbers for Proposition
+\newtheorem{proposition}[theorem]{Proposition}% 
+%%\newtheorem{proposition}{Proposition}% to get separate numbers for theorem and proposition etc.
+
+\theoremstyle{thmstyletwo}%
+\newtheorem{example}{Example}%
+\newtheorem{remark}{Remark}%
+
+\theoremstyle{thmstylethree}%
+\newtheorem{definition}{Definition}%
+
+\raggedbottom
+%%\unnumbered% uncomment this for unnumbered level heads
+
+\begin{document}
+
+\title[GraphFlow]{GraphFlow: End-to-end graph learning workflow exemplified for predicting sepsis}
+
+%%=============================================================%%
+%% GivenName	-> \fnm{Joergen W.}
+%% Particle	-> \spfx{van der} -> surname prefix
+%% FamilyName	-> \sur{Ploeg}
+%% Suffix	-> \sfx{IV}
+%% \author*[1,2]{\fnm{Joergen W.} \spfx{van der} \sur{Ploeg} 
+%%  \sfx{IV}}\email{iauthor@gmail.com}
+%%=============================================================%%
+
+\author*[1,4]{\fnm{Daniel} \sur{Walke}}\email{daniel.walke@isas.de}
+
+\author[2]{\fnm{René} \sur{Staritzbichler}}\email{rene.staritzbichler@klinikum-lippe.de}
+
+\author[2,5]{\fnm{Thorsten} \sur{Kaiser}}\email{thorsten.kaiser@uni-bielefeld.de}
+
+\author[1]{\fnm{Gunter} \sur{Saake}}\email{gunter.saake@ovgu.de}
+
+\author[3]{\fnm{David} \sur{Broneske}}\email{broneske@dzhw.eu}
+\equalcont{Shared last authorship.}
+
+\author[4,5]{\fnm{Robert} \sur{Heyer}}\email{robert.heyer@isas.de}
+\equalcont{Shared last authorship.}
+
+\affil*[1]{\orgname{Otto-von-Guericke University}, \orgaddress{\city{Magdeburg}, \country{Germany}}}
+
+\affil[2]{\orgname{Hospital Lippe}, \orgaddress{\city{Detmold}, \country{Germany}}}
+
+\affil[3]{\orgname{Deutsches Zentrum für Hochschul- und Wissenschaftsforschung (DZHW)}, \orgaddress{\city{Hannover}, \country{Germany}}}
+
+\affil[4]{\orgname{Leibniz-Institut für Analytische Wissenschaften – ISAS – e.V.}, \orgaddress{\city{Dortmund}, \country{Germany}}}
+
+\affil[5]{\orgname{Bielefeld University}, \orgaddress{\city{Bielefeld}, \country{Germany}}}
+
+%%==================================%%
+%% Sample for unstructured abstract %%
+%%==================================%%
+
+\abstract{Sepsis is a life-threatening condition that requires early detection to promptly administer adequate therapy (e.g., antibiotics). While various machine learning models have been proposed to detect sepsis using tabular lab features, recent works increasingly integrate the temporal dynamics of a patient’s journey. This integration is achieved by using graphs to represent irregularly sampled (i.e., unevenly spaced over time), sparse electronic health records and applying graph learning (e.g., GNNs) to predict sepsis. However, there is currently no universal, end-to-end workflow capable of rapidly developing, training, and validating these models across diverse feature sets while remaining highly efficient and explainable. To address this gap, we propose GraphFlow, a highly reproducible, Docker-based workflow encompassing data preprocessing, temporal graph construction, and graph learning. Built upon the MIMIC-IV and SBC datasets, GraphFlow leverages the GraphAware framework with mini-batching to enable memory-efficient training on any hardware. We evaluated the Area Under the Receiver Operating Characteristic Curve (AUROC), training efficiency, and hyperparameter tuning \& inference times across various feature sets. Our results show that GraphFlow achieves remarkable peak classification performance with complete blood counts (CBC) and basic metabolic panels (BMP) (complete blood count: 0.930, complete blood count \& BMP: 0.951), competing or even outperforming state-of-the-art GNNs (complete blood count: 0.936, complete blood count \& BMP: 0.923) and common machine learning baselines (complete blood count: 0.836, complete blood count \& BMP: 0.915). Furthermore, to computationally stress-test the workflow against severe real-world data sparsity, we introduced the highly specific hemolysis–icterus–lipemia index (HIL) \cite{Tian2022}. Under this extreme sample size reduction, GraphFlow demonstrated superior robustness (complete blood count, BMP & HIL: 0.944) compared to GNNs (complete blood count, BMP & HIL: 0.893). Additionally, GraphFlow adheres to open science FAIR principles to maximize the transparency, interoperability, and practical reusability of its underlying models and workflows. We demonstrate the interpretability of GraphFlow models using SHAP values, highlighting their capability to deliver transparent predictions to improve clinical trust. Finally, while we exemplify GraphFlow on the use case of sepsis prediction, it can be used for the prediction of other diseases. }
+
+\keywords{Sepsis, Graphs, Graph learning, Graph workflow}
+
+%%\pacs[JEL Classification]{D8, H51}
+
+%%\pacs[MSC Classification]{35A01, 65L10, 65L12, 65L20, 65L70}
+
+\maketitle
+
+\section{Introduction}\label{sec1}
+
+\subsection{Graph learning improves sepsis predictions}
+Sepsis is among the major causes of death worldwide (i.e., 11 million sepsis-related deaths worldwide in 2017) \cite{Rudd2020-lk}. An early detection of sepsis within the first hours is of utmost importance since rapid treatment (e.g., with antibiotics) is essential to prevent life-threatening consequences such as septic shock and multiple organ failure \cite{Evans2021}. Various previous studies have already developed machine learning models for diagnosing sepsis \cite{9005564,chenzhangtang2021,steinbach2024applying,walke2025sbc}. While some studies used a complete bandwidth of clinical tests and biomarkers, achieving remarkable performance \cite{9005564,chenzhangtang2021}, other studies could already show that a few easily available clinical parameters (e.g., complete blood count information) are enough to achieve good diagnostic performance \cite{steinbach2024applying}. Most of these previous approaches consider electronic health records (EHRs) as static tabular information which misses the connections (e.g., time-based patient journey). To include information from missing connections, we previously proposed to use graphs to represent these irregularly sampled and sparse EHRs \cite{walke2023edges} and train Graph Neural Networks (GNNs) on these graphs to improve the classification performance for sepsis. Additionally, we proposed models that could exploit time series information in a patient journey while making predictions interpretable (i.e., to highlight how specific blood parameters influence the sepsis risk) \cite{walke2025sbc}. We abstracted this model training into a framework, GraphAware, to make it compatible across any graph and showed its competitive performance against state-of-the-art GNNs \cite{walke2026graphaware}.
+
+\subsection{Current gap in training prediction models}
+However, neither of the previous approaches proposed an end-to-end graph-based workflow for the rapid development of new machine learning models trained on various feature sets. Those workflows would not only facilitate validation against new external datasets, but also allow for rapidly retraining new machine learning models as soon as new data becomes available. Finally, such a workflow could accelerate the development of new machine learning models with diverse feature sets tailored for the demands of clinicians. 
+
+\subsection{Criteria for a universal graph learning workflow}
+Such a workflow would have to fulfill a couple of key criteria to prove useful. First, it has to be adaptable to new feature sets. Second, to align with the growing demand for Open Science and FAIR (Findable, Accessible, Interoperable, Reusable) principles \cite{Wilkinson2016}, the workflow must guarantee high reproducibility. It should be deployable on any device, independent of the user's operating system or hardware architecture, effectively overcoming the reproducibility hurdles that currently hamper medical AI. Third, the workflow has to be efficient and should allow training new models even on devices with low working memory to reduce the barriers to use. This efficiency becomes increasingly important in the AI age as GPUs, memory, and hardware in general become increasingly expensive. Furthermore, the framework must guarantee high generalizability on unseen data. Specifically, external generalizability is crucial to ensure the successful application of trained machine learning models across different institutions. Finally, it should make the decisions of the machine learning models transparent, not only for clinicians to increase trust in the models but also for machine learning engineers to question their models' usefulness. 
+
+\subsection{Contributions}
+In this study we propose GraphFlow, an end-to-end graph-based workflow for training new machine learning models for sepsis prediction. Specifically, our contributions are as follows:
+\begin{itemize}
+    \item \textbf{End-to-end pipeline:}We built an end-to-end graph-based workflow utilizing the MIMIC-IV \cite{johnson2023mimic} and SBC \cite{steinbach2024applying} datasets to load patient data, preprocess measurements, construct temporal graph structures, and efficiently query database information for training our machine learning model. To evaluate the external generalizability of our proposed framework, we perform cross-dataset evaluation: training the models on one dataset (e.g., SBC) and testing them on the other (e.g., MIMIC-IV), and vice versa.
+    \item \textbf{Memory-efficient training \& explainability:} The pipeline utilizes the GraphAware framework \cite{walke2026graphaware} with mini-batching to train models with minimal memory requirements while fully enabling prediction explainability to make trained models transparent.
+    \item \textbf{High reproducibility \& FAIR adherence}: The complete pipeline is modularized in Docker containers and utilizes publicly accessible datasets, guaranteeing Findability and Accessibility. By decoupling the workflow from specific operating systems or hardware architectures, we ensure Interoperability and Reusability, effectively overcoming the reproducibility hurdles that currently hamper medical AI \cite{Wilkinson2016}.
+    \item \textbf{Comprehensive baselines:} The workflow integrates common machine learning baselines (Logistic Regression \cite{wright1995logistic}, XGBoost \cite{Chen2016} and Random Forest \cite{Breiman2001}) alongside with state-of-the-art GNNs for comprehensive model comparison. 
+    \item \textbf{Extensibility:} Models with various feature sets can be trained easily by editing a configuration file, and new datasets can be integrated by defining a new preprocessing module.
+\end{itemize}
+
+\section{Background}
+\subsection{Graphs \& irregular time-series information}
+A directed property graph $G = (N, E)$ consists of a set of nodes $N$ connected by a set of edges $E$. The set of nodes $N$ represents the entities in the graph, consisting of a unique identifier $i \in I$ and properties $p_n \in P_N$, which can be expressed formally as $N \subseteq \{(i, p_n) \mid i \in I, p_n \in P_N\}$. The set of edges $E$ represents the directional connections between these entities, where each edge has a starting node $u \in N$, and a target node $v \in N$. Additionally, an edge can also contain additional properties $p_e \in P_E$, and therefore an edge can be formally defined as $E \subseteq \{(u, v, p_e) \mid u, v \in N, p_e \in P_E\}$ \cite{angles2018property}.
+One example is a patient-specific time series graph \cite{walke2023edges}, where nodes represent measured clinical samples (e.g., complete blood count data) and directed edges connect each sample to all subsequent samples from the same patient (Fig. \ref{fig:background}\,A).
+
+
+\subsection{Graph Neural Networks (GNNs)}
+GNNs are deep learning methods to analyze graph-structured data. They are based on the message-passing framework to aggregate information from a node's neighborhood to iteratively update each node's representation. Specifically, the nodes' representations are first transformed  (e.g., by an MLP) into a message, then aggregated by a permutation-invariant aggregation function (e.g., mean), and finally updated as new nodes' representations (Fig. \ref{fig:background}\,B) \cite{Velickovic.22.02.2022}. This transformation, aggregation and update process is repeated iteratively for $k$ layers so that it can integrate information that is $k$-hops away. The final representations can then be used for the prediction (e.g., predicting sepsis). Formally, a single layer can be defined as:
+$$
+\bm{h}_u = \phi \left( \bm{h}_{u-1}, \bigoplus_{v \in \mathcal{N}_u} \psi(\bm{h}_{u-1}, \bm{h}_{v-1}) \right) 
+$$
+where $h_u$ is the current representation of node $u$, $h_u-1$ and $h_{v-1}$ are the representations of node $u$ and $v$ from the previous iteration (at the beginning the nodes' initial features), $\psi : \mathbb{R}^k \times \mathbb{R}^k \to \mathbb{R}^l$ is the message-passing function (e.g., an MLP), $\phi : \mathbb{R}^k \times \mathbb{R}^m \to \mathbb{R}^m$ is the readout function (e.g., an MLP), and $\bigoplus$ is a permutation-invariant aggregation function (e.g., mean) \cite{Velickovic.22.02.2022}.
+
+\subsection{GraphAware \& feature-level interpretability}
+While GNNs provide high classification performance, their feature-level interpretability (i.e., investigating the contribution of individual features to the prediction) is limited \cite{walke2026graphaware}. Therefore, we previously proposed the GraphAware framework, which achieved competitive performance compared to state-of-the-art GNNs while being compatible with post-hoc explainability frameworks like SHAP \cite{NIPS2017_7062, walke2026graphaware}.
+In this framework, first features are aggregated by a permutation-invariant aggregation function (e.g., difference of current features to the mean of neighboring nodes' features) and for each created feature set (e.g., different neighborhoods) separate classifiers are trained. Finally, the predictions of each classifier are aggregated to a final prediction (Fig. \ref{fig:background}\,C) \cite{walke2026graphaware}.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=.75\linewidth]{figures/SBCFlow-Background.drawio (2).png}
+    \caption[\textbf{Overview of analyzing temporal patient-specific graphs.}]{\textbf{Overview of analyzing temporal patient-specific graphs.} (A) Patient trajectories represented as temporal graphs, linking sequential measurements as nodes connected by time-directed edges \cite{walke2023edges}. (B) Neighborhood aggregation and message passing within the GNN architecture to update node representations \cite{Velickovic.22.02.2022}. (C) Feature generation and ensemble classification via the GraphAware framework \cite{walke2026graphaware}, averaging predictions across model variants.}
+    \label{fig:background}
+\end{figure}
+
+\section{Methods}
+\subsection{Overview}
+We propose GraphFlow, an end-to-end graph-based workflow to efficiently analyze irregular time-series data exemplified for predicting sepsis using various lab measurements. This workflow is modularized to ensure quick and easy adoptability to new datasets, reduce complexity, and improve reproducibility of our results. Specifically, we have a module for preprocessing (Section\,\ref{methods:preprocessing}), training baseline machine learning models (Section\,\ref{methods:baseline}), graph construction (Section\,\ref{methods:graph_creation}), database import for the following efficient mini-batch training (Section\,\ref{methods:database_import}), GNN-based mini-batch training (Section\,\ref{methods:gnn}), and GraphAware mini-batch training (Section\,\ref{methods:graphaware}). Additionally, we present an interactive Streamlit dashboard that translates GraphAware's temporal graph aggregations into calibrated sepsis risk predictions, local SHAP explanations, and real-time clinical evaluation metrics (Section \ref{methods:dashboard}). Everything can be deployed via a single Docker Compose script, which builds all Docker services from the individual modules (Section\,\ref{methods:deployment}). We exemplify our pipeline on two datasets (Section\,\ref{methods:datasets}), and evaluate the classification performance (Section\,\ref{methods:evaluation}). Finally, we integrate a Model Context Protocol (MCP) server  \cite{modelcontextprotocol} that provides standardized tools for autonomous Large Language Model (LLM) agents to programmatically orchestrate the pipeline, query experiment metadata, run inference, and generate patient-level explanations (Section\,\ref{methods:mcp}), and list the used hardware for all experiments (Section\,\ref{methods:setup}).
+
+\subsection{Datasets}\label{methods:datasets}
+As datasets for the evaluation, we use the Sepsis Blood Count dataset from Steinbach et al. \cite{steinbach2024applying} and the publicly available MIMIC-IV dataset \cite{johnson2023mimic}. 
+The Sepsis Blood Count dataset is a dataset with complete blood count information from patients from a non-intensive care unit from two German tertiary care centres collected between 2014 and 2021. Data were compiled from two tertiary care centers—the University Hospital Leipzig (internal dataset) and the University Medicine Greifswald (external validation dataset) and contains a total of 1,819,435 CBC measurements across 723,681 patient cases. The Leipzig cohort contains 708,595 cases (1,381,358 CBCs), comprising 1,960 sepsis cases (2,016 sepsis CBCs) and 706,635 control cases (1,379,342 control CBCs). The Greifswald external validation cohort comprises 157,922 cases (438,077 CBCon over 500,000 patients, including and 157,484 control cases (437,629 control CBCs). Besides complete blood count information (red blood cells, white blood cells, hemoglobin, mean corpuscular volume and platelets) it contains information of the patients' age, sex, and the measurement time \cite{steinbach2024applying}. 
+The Mimic-IV \cite{johnson2023mimic} is a publicly available database from the EHRs of the Beth Israel Deaconess Medical Center. It contains information of over 500,000 patients, with information about laboratory tests, diagnoses, treatment orders, and procedures \cite{johnson2023mimic}. In this study, we only focused on sepsis prediction based on different lab parameters.
+
+\subsection{Preprocessing}\label{methods:preprocessing}
+Pre-processing was performed according to Steinbach et al. \cite{steinbach2024applying}. Specifically, we removed duplicated blood samples, incomplete samples, cases from the following sepsis episodes, cases with a SIRS but undiagnosed sepsis, and cases admitted to non-medical intensive care units \cite{steinbach2024applying}. We analyzed the MIMIC-IV dataset \cite{johnson2023mimic}, initially restricting features to complete blood count data to cross-evaluate results against the SBC dataset \cite{steinbach2024applying}, before extending the evaluation on MIMIC-IV to the Basic Metabolic Panel (BMP) and hemolysis–icterus–lipemia (HIL) index. 
+
+The BMP (glucose, calcium, sodium, potassium, chloride, bicarbonate, blood urea nitrogen, and creatinine) is commonly obtained upon emergency department admission and provides key measures of renal function, electrolyte balance, and metabolic status that contribute to the assessment of organ dysfunction in patients with suspected sepsis \cite{Evans2021}. Concurrently, the HIL index is a pre-analytical quality metric generated by many modern clinical chemistry analyzers to detect sample interference \cite{Tian2022}. Although HIL indices are routinely generated during chemistry testing, they are not consistently stored in EHR, often being retained only within laboratory information systems or reported when specimen quality is affected \cite{Tian2022}. Incorporating HIL indices therefore evaluates the model's robustness to realistic patterns of missing laboratory data while also allowing exploration of whether these indices provide additional predictive information beyond standard laboratory tests.
+
+Data processing for the SBC \& MIMIC-IV dataset included filtering for adult patients ($\geq$\,18 years), mapping standardized lab labels, and calculating time-to-ICU admission by joining laboratory timestamps with hospital transfer data. Finally, cases were classified into either Sepsis or Control using ICD codes. We used time-based splits for training, hyperparameter tuning (validation), and model evaluation (final testing on a holdout dataset) for each dataset. 
+
+\subsection{Machine learning baselines}\label{methods:baseline}
+As machine learning baselines, we used a Logistic Regression \cite{wright1995logistic}, XGBoost Classifier \cite{Chen2016}, and a Random Forest \cite{Breiman2001}. For machine learning training we used the scikit-learn \cite{scikit-learn} and XGBoost library \cite{xgboost}, and Hyperopt for hyperparameter tuning \cite{Bergstra2013}. Finally, models are stored with joblib \cite{joblib} and evaluated (see Section\,\ref{methods:evaluation}).
+
+\subsection{Graph creation}\label{methods:graph_creation}
+Graph construction was performed according to Walke et al. \cite{walke2023edges}, utilizing a directed graph structure in which edges point from past measurements to the current measurement. We extended this approach by incorporating the time differences between measurements for individual patients as edge weights. The patient-specific time differences were normalized using a Min-Max Scaler to obtain $\Delta t_{scaled} \in [0, 1]$. The final edge weights were then calculated as $w = 1 - \Delta t_{scaled}$. This ensures that earlier measurements receive lower weights, while measurements closer to the current time step receive higher weights, effectively weighting the feature aggregation to further improve classification performance. Ultimately, this graph structure overcomes the challenge of irregular EHR sampling by fully exploiting available time-series data. By dynamically weighting past connections based on elapsed time, it ensures that the most clinically relevant measurements drive the feature aggregation.
+
+\subsection{Database import}\label{methods:database_import}
+Following graph creation, we load the directed graph into an SQLite database to facilitate the retrieval of relevant subgraphs as mini-batches. We selected SQLite specifically because it has demonstrated the lowest query times for mini-batch training of GNNs \cite{walke2026evaluation}. During data import, the dataset is exported to CSV format, and new nodes and edges are iteratively added based on each row. All nodes are stored in a single table containing their measurement ID, patient ID, ground-truth label, and measurement time. For efficient data retrieval, node features are converted to NumPy arrays and stored as binary large objects (BLOBs). Edges are maintained in an edge list comprising the source node identifier, target node identifier, and an edge weight that represents the normalized time difference between individual lab measurements. To accelerate edge creation and optimize subsequent subgraph retrieval, we index the source and target node identifiers \cite{walke2026evaluation}. Finally, to minimize I/O bottlenecks during BLOB retrieval, the SQLite database is hosted on a local NVMe SSD, with all database interactions handled via the official Python SQLite driver (version 3.40.1).
+
+\subsection{GNN training}\label{methods:gnn}
+To establish a robust baseline with high representational capacity, we trained a GNN. Specifically, we employed Graph Attention Networks v2 (GATv2) \cite{brody2022how}, as its ability to handle edge weights allows for the direct incorporation of time-series differences between lab measurements (see Section \ref{methods:graph_creation}). GATv2 was selected for its dynamic attention mechanism, which overcomes the static attention bottleneck of the standard GAT \cite{gat} and enhances the model's representational expressiveness \cite{brody2022how}. For feature engineering, we applied min-max scaling to all node features (i.e., sample measurements) and integrated sine-cosine positional encodings to preserve the temporal ordering of measurements during permutation-invariant aggregation in the GNN.
+
+Model training leveraged mini-batching directly from an SQLite database, implemented via PyTorch \cite{PyTorch} and PyTorch Geometric \cite{Fey_Lenssen_2019,Fey_2025}. We optimized hyperparameters (i.e., learning rate, weight decay, number of layers, attention heads, hidden dimensionality, and dropout rate) using Hyperopt \cite{Bergstra2013}. Each model was trained for a maximum of 100 epochs. To mitigate overfitting, we applied early stopping with a patience of ten epochs based on validation performance, ultimately restoring the model weights from the best-performing epoch. Finally, the GNN is evaluated on unseen test data (see Section\,\ref{methods:evaluation}).
+
+\subsection{GraphAware training}\label{methods:graphaware}
+The core of our workflow is the GraphAware framework \cite{walke2026graphaware}. However, instead of training separate classifiers for the time-based neighborhood and original features, we concatenate these feature sets and pass them into a single machine learning classifier. Additionally, we extended GraphAware to handle edge weights, allowing us to incorporate time differences directly into the feature aggregation. This incorporation is achieved by scaling the source node features by their corresponding temporal edge weight prior to the permutation-invariant aggregation (e.g., mean aggregation). The incorporation of these time differences successfully improved classification performance on a separate validation dataset. To efficiently evaluate classification performance (see Section \ref{methods:evaluation}) and runtimes (training, hyperparameter tuning, and inference) across our two datasets (see Section \ref{methods:datasets}), we required an algorithm capable of mini-batch training. We selected XGBoost \cite{Chen2016}, as it demonstrated the most promising results in previous work \cite{walke2025sbc} while fully supporting mini-batch updates. Hyperparameters were optimized using Hyperopt \cite{Bergstra2013}. Finally, similar to the GNN, GraphAware is evaluated on unseen test data (see Section\,\ref{methods:evaluation}). For model interpretability, we generated SHAP summary plots \cite{NIPS2017_7062}, aggregating the SHAP values of the original and time-based features into a unified representation for clarity.
+
+\subsection{Dashboard}\label{methods:dashboard}
+To translate this complex end-to-end workflow into actionable, transparent clinical insights, an interactive inference and decision-support dashboard was developed using Streamlit \cite{streamlit} and Plotly \cite{plotly-source_2026}. During inference, the system dynamically ingests laboratory trajectories to construct patient-specific graphs and predict time-point sepsis risk using GraphAware. To handle severe class imbalance, raw predicted probabilities are rescaled, mapping the validation-calibrated decision threshold to a 50\% risk score. While precision-based metrics like AUPRC are avoided for global evaluation due to prevalence-driven disparities \cite{NEURIPS2024_4df3510a}, bedside thresholding optimizes the $F_2$ score ($5 \cdot \frac{\text{Precision} \cdot \text{Recall}}{4 \cdot \text{Precision} + \text{Recall}}$), weighting recall twice as heavily as precision to prioritize early detection over false positives. For interpretability, SHAP TreeExplainer \cite{NIPS2017_7062} attributes predictions to baseline physiology and temporal dynamics. Finally, when ground-truth labels are available, the dashboard evaluates standard clinical metrics (e.g., AUROC, $F_2$, sensitivity, specificity, PPV), ROC curves, and confusion matrices.
+
+\subsection{Evaluation Metrics}\label{methods:evaluation}
+To evaluate model performance, we primarily rely on the Area Under the Receiver Operating Characteristic curve (AUROC). While the Area Under the Precision-Recall Curve (AUPRC) is frequently assumed to be superior for imbalanced medical datasets like our sepsis cohorts, recent theoretical and empirical work by McDermott et al. \cite{NEURIPS2024_4df3510a} refutes this notion. Their findings demonstrate that AUPRC can unduly favor model improvements in subpopulations with more frequent positive labels, heightening algorithmic disparities. Therefore, AUROC serves as a more robust and equitable metric for our framework. All evaluation metrics and execution times (training, hyperparameter tuning, and inference) are logged using MLflow \cite{Zaharia_Accelerating_the_Machine_2018}. Finally, container memory consumption (RAM) is continuously polled from the Docker daemon at two-second intervals to compute and log the peak RAM usage for each active module. 
+
+\subsection{Deployment and Reproducibility}\label{methods:deployment}
+To ensure computational reproducibility and isolate software dependencies, each system module was independently containerized. Specifically, we developed dedicated Dockerfiles for every component, facilitating the seamless construction and execution of isolated Docker environments across different hardware setups. Additionally, further features of the MIMIC-IV dataset can easily be integrated by appending the item IDs to a CSV list, and the utilization of other datasets merely requires adapting the preprocessing module without changing any other downstream module. This modularity allows for easier applicability to datasets from institutions unable to share raw data, and enables extensibility to other clinical targets by optimizing against different labels.
+
+By open-sourcing the GraphFlow codebase on GitHub and Docker containers on DockerHub, and grounding our evaluation in standard datasets (MIMIC-IV \cite{johnson2023mimic} and SBC \cite{steinbach2024applying}), this deployment strategy adheres to the FAIR principles \cite{Wilkinson2016}. To guarantee Findability and Accessibility, all code, container images, and experimental metadata—tracked via MLflow (i.e., hyperparameters, inference times, and AUROC scores) are publicly available. Furthermore, the pipeline persistently stores intermediate artifacts at each discrete step, including preprocessed data, constructed graph representations, and SQLite databases. This containerized architecture ensures Interoperability and Reusability, allowing external researchers in the future to integrate specific pipeline modules, validate the workflow without dependency conflicts, and effectively overcome the reproducibility hurdles that currently plague medical AI.
+
+\subsection{Model Context Protocol Integration}\label{methods:mcp}
+To enable programmatic orchestration (i.e., the automated, code-driven execution and management of complex workflow steps within GraphFlow) and seamless integration with autonomous Large LLM agents, we implemented a custom MCP \cite{modelcontextprotocol} server using FastMCP \cite{fastmcp2024}. The server exposes standardized Remote Procedure Call (RPC) tools (i.e., protocols that allow AI agents to execute functions on the system remotely, e.g., requesting a model evaluation and receiving structured results) without manual terminal interaction. Specifically, the server provides endpoints to:
+\begin{enumerate}
+    \item \textbf{Orchestrate Pipeline Execution:} Inspect available stages and programmatically trigger individual modules or the complete workflow (e.g., running baseline model training or graph construction) with laboratory panel filtering and automated process management.
+    \item \textbf{Query Experiment Metadata:} Retrieve tracked evaluation metrics (such as AUROC, sensitivity, and specificity) alongside hyperparameters and optimal Geometric Mean, Receiver Operating Characteristic (ROC) classification thresholds directly from the MLflow database.
+    \item \textbf{Perform Programmatic Inference and Interpretation:} Execute GraphAware feature aggregation and XGBoost risk scoring (automatically defaulting to evaluation datasets when specific file paths are omitted) and compute $2N$ aggregated local SHAPley Additive exPlanations (SHAP) \cite{NIPS2017_7062} feature contributions (i.e., $N$ baseline laboratory values plus $N$ temporal neighborhood adjustments) for individual patient trajectories.
+    \item \textbf{Manage Dashboard Services:} Programmatically inspect network port availability and launch or restart the interactive background Streamlit User Interface (UI) inference dashboard.
+\end{enumerate}
+By encapsulating execution, evaluation, interpretability, and UI control within structured RPC endpoints, this MCP integration provides an agent-ready framework for reproducible clinical AI deployment.
+
+\subsection{Setup}\label{methods:setup}
+The computational experiments were performed on an Ubuntu workstation equipped with an Intel(R) Core(TM) i9-14900K (32 cores) processor, 62 GB of RAM, 395 GB of disk storage (NVME), and 1x NVIDIA RTX 4000 Ada Generation.
+
+
+\begin{figure}[htbp!]
+    \centering
+    \includegraphics[width=0.95\linewidth]{figures/SBCFlow-Overview.drawio (2).png}
+    \caption{\textbf{Methodological overview of GraphFlow exemplified for predicting sepsis based on complete blood count data (CBC), Basic Metabolic Panel (BMP) and hemolysis–icterus–lipemia (HIL) index.} First, the SBC \cite{steinbach2024applying} and MIMIC-IV \cite{johnson2023mimic} datasets are preprocessed to evaluate baseline performance using Logistic Regression (LR), Random Forest (RF), and XGBoost (XGB). Next, patient journeys are modeled as graphs, utilizing edge weights to capture the time differences between irregularly sampled EHR data. These graphs are stored in SQLite and processed using a state-of-the-art GNN (GATv2) to establish a robust graph-learning baseline for comparison. Subsequently, the revised GraphAware framework is trained with XGBoost to serve as the interpretable machine learning model within GraphFlow. For the SBC dataset, the evaluation relies solely on complete blood count data. For MIMIC-IV, results are first cross-evaluated in combination with the SBC dataset, followed by an evaluation on an extended feature set that appends the BMP and HIL indices. Finally, classification performance (AUROC) and computational efficiency (training, hyperparameter tuning, and inference times) are compared across all approaches.}
+    \label{fig:GraphFlow-overview}
+\end{figure}
+
+\section{Results}\label{results}                                                              
+In this section, we first show the results of our Docker-based workflow GraphFlow with        
+training a sepsis prediction model only on complete blood count data (Section \ref{res:cbc}).   
+Then, we use the MIMIC-IV dataset to compare the results of predictions with complete blood     
+count information with predictions that use additional lab features (Section \ref{res:labs}).   
+Finally, we compare the interpretability mechanisms learned by our GraphAware framework across  
+all trained models (Section \ref{res:interpretability}).                                        
+                                                                                              
+\subsection{Comparison of complete blood count results}\label{res:cbc}                        
+First, we trained GraphFlow on two different datasets (MIMIC-IV \cite{johnson2023mimic} and   
+SBC \cite{steinbach2024applying}) and cross-evaluated their generalizability with each dataset's
+respective test dataset:                                                                        
+\begin{itemize}                                                                               
+    \item MIMIC-IV test dataset (MIMIC-IV Test)                                               
+    \item Internal SBC dataset from Leipzig (SBC Test)                                        
+    \item External SBC dataset from Greifswald (SBC Ext Test)
+\end{itemize}
+
+We could confirm that generally graph learning improves the classification performance (AUROC up to 0.938) compared to baseline machine learning methods (AUROC up to 0.872 for XGBoost). However, graph learning required a significantly higher training time (up to 718\,s) compared to the machine learning baselines (up to 173\,s). While the GNN achieved the highest AUROC on internal evaluation (AUROC up to 0.938) compared to GraphAware (AUROC up to 0.930), GraphAware achieved better generalizability when trained on SBC data and evaluated on MIMIC-IV (AUROC of 0.919) compared to the GNN (AUROC of 0.889). Generally, training on the SBC dataset yielded better generalizability on MIMIC-IV (AUROC up to 0.919) than training on the MIMIC-IV dataset and evaluating it on the SBC dataset (AUROC up to 0.894). This robustness of the SBC training dataset was further confirmed on the external dataset (SBC Ext Test), where the SBC-trained GraphAware model achieved the highest overall external performance (AUROC of 0.903). Finally, among the traditional machine learning baselines, XGBoost performed best overall (AUROC up to 0.879) compared to Random Forest (AUROC up to 0.868) and Logistic Regression (AUROC up to 0.841), while requiring the lowest training times overall (under 3\,s for XGBoost).
+
+\begin{table}[htbp]
+    \centering
+    \caption{\textbf{AUROC performance and required training time of models across different  
+test sets.} Best values in each column per training dataset are in bold.}
+    \label{tab:auroc_results}
+    \small
+    \begin{tabular}{llrrrr}
+        \toprule
+        & & & \multicolumn{3}{c}{\textbf{AUROC}} \\
+        \cmidrule(lr){4-6}
+        \textbf{Training Data} & \textbf{Model} & \thead{Training\\Time} & \thead{SBC\\Test} &
+\thead{SBC Ext\\Test} & \thead{MIMIC-IV\\Test} \\
+        \midrule
+        \multirow{5}{*}{\textbf{SBC}} 
+        & Baseline Logistic Regression   & 2.09\,s  & 0.836 & 0.757 & 0.796 \\
+        & Baseline Random Forest          & 159.22\,s & 0.868 & 0.813 & 0.819 \\
+        & Baseline XGBoost                & \textbf{1.28\,s} & 0.872 & 0.808 & 0.812 \\         
+        & GNN (GATv2)                     & 359.85\,s & \textbf{0.938} & 0.902 & 0.889 \\       
+        & GraphAware (XGBoost)            & 717.69\,s & 0.919 & \textbf{0.903} & \textbf{0.919} 
+\\
+        \midrule
+        \multirow{5}{*}{\textbf{MIMIC-IV}} 
+        & Baseline Logistic Regression   & 2.09\,s   & 0.815 & 0.722 & 0.799 \\
+        & Baseline Random Forest          & 172.92\,s & 0.843 & 0.777 & 0.828 \\
+        & Baseline XGBoost                & \textbf{1.84\,s} & 0.853 & 0.779 & 0.836 \\         
+        & GNN (GATv2)                     & 386.27\,s & \textbf{0.894} & \textbf{0.850} &       
+\textbf{0.936} \\
+        & GraphAware (XGBoost)            & 370.39\,s & 0.855 & 0.829 & 0.930 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Comparison of other lab features}\label{res:labs}
+In this section, we introduced diverse feature sets into our workflow pipeline. Specifically, we evaluated the classification performance (Table \ref{tab:featureset_auroc_mimic}) when we pass:
+\begin{itemize}
+    \item Only complete blood count features
+    \item complete blood count \& BMP features
+    \item complete blood count \& HIL features
+    \item complete blood count, HIL \& BMP features
+\end{itemize}
+
+Generally, the graph learning approaches (GNN \& GraphAware) achieved the highest classification performance (AUROC up to 0.951) compared to machine learning baselines (AUROC up to 0.915). Additionally, GraphAware  (AUROC up to 0.951) achieved the best performance among most feature sets besides the complete blood count only feature set (AUROC: 0.930), in which the GNN (AUROC: 0.936) performed better. For some feature combinations (complete blood count, HIL \& BMP) the classification performance between graph-based approaches (AUROC up to 0.944) is closer to machine learning baselines (AUROC up to 0.915), while for others (complete blood count only) the AUROC for graph-based approaches is much better (AUROC up to 0.936) compared to machine-learning baselines  (AUROC up to 0.836). Generally, the classification performance improves with more features (i.e., complete blood count \& BMP) compared to fewer features (i.e., complete blood count only). However, for the GNN, the performance drops with more features (AUROC for complete blood count only: 0.936; AUROC with additional features less than 0.923).
+Similar to Section \ref{res:cbc}, XGBoost achieved the lowest training times (under 3\,s), and the graph-learning-based approaches (GNN \& GraphAware) required the largest training time (up to 3283\,s) (Fig. \ref{fig:runtimes}). While similar patterns can be observed for hyperparameter tuning during inference, Logistic Regression (0.01\,s) becomes the fastest model, and the GNN (1.49\,s) becomes faster than the Random Forest (1.69\,s) and GraphAware (up to 11\,s) (Fig. \ref{fig:runtimes}).
+
+  \begin{table}[htbp]
+    \centering
+    \small
+    \caption{\textbf{Test AUROC across various feature sets on MIMIC-IV.} Bold values represent the highest classification performance per feature panel. CBC: Complete blood count; BMP: Basic Metabolic Panel; HIL: Hemolysis-icterus-lipemia index; LR: Logistic Regression; RF: Random Forest; XGB: XGBoost; GNN: Graph Neural Network}
+    \label{tab:featureset_auroc_mimic}
+    \begin{tabular}{lrrrr}
+        \toprule
+        \textbf{Model} & \textbf{CBC} & \textbf{CBC\,\&\,BMP} & \textbf{CBC\,\&\,HIL} & \textbf{CBC\,\&\,BMP\,\&\,HIL} \\
+        \midrule
+        Baseline LR & 0.799 & 0.898 & 0.841 & 0.881 \\
+        Baseline RF       & 0.828 & 0.910 & 0.865 & 0.912 \\
+        Baseline XGB              & 0.836 & 0.915 & 0.864 & 0.915 \\
+        GNN (GATv2)                  & \textbf{0.936} & 0.923 & 0.903 & 0.893 \\
+        GraphAware (XGB)         & 0.930 & \textbf{0.951} & \textbf{0.918} & \textbf{0.944} \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Memory consumption across pipeline modules}\label{res:ram_usage}
+We evaluated the memory consumption of each pipeline module to ensure GraphFlow can be executed on resource-constrained hardware. As shown in Table \ref{tab:peak_ram_summary}, preprocessing requires the highest peak RAM (up to 8.22 GiB) due to the in-memory handling of large patient cohorts and complex feature joins. The memory footprint for temporal graph construction and database import scales directly with the number of valid samples, dropping significantly from the complete blood count panel to the heavily restricted complete blood count, BMP \& HIL panel. During the machine learning phase, both the GNN and the GraphAware framework remain highly memory-efficient, requiring a maximum of 2.91 GiB and 3.17 GiB, respectively, which is facilitated by our database-backed mini-batching strategy.
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{\textbf{Peak RAM usage across pipeline modules and feature panels.}.}
+\label{tab:peak_ram_summary}
+\begin{tabular}{lrrrr}
+    \toprule
+    \textbf{Pipeline Module} & \thead{CBC} & \thead{CBC \&\\BMP} & \thead{CBC \&\\HIL} & \thead{CBC \& BMP\\\& HIL} \\
+    \midrule
+    Preprocessing & 3.18 GiB & 8.22 GiB & 6.68 GiB & 6.96 GiB \\
+    Baseline Model Training                & 2.29 GiB & 2.29 GiB & 2.29 GiB & 2.29 GiB \\
+    Temporal Graph Construction            & 2.21 GiB & 0.87 GiB & 0.56 GiB & 0.52 GiB \\
+    Database import (SQLite)            & 1.09 GiB & 0.73 GiB & 0.25 GiB & 0.22 GiB \\
+    GNN Training (GATv2)                   & 2.91 GiB & 2.73 GiB & 2.20 GiB & 2.28 GiB \\
+    GraphAware Framework                   & 3.17 GiB & 1.88 GiB & 1.72 GiB & 1.73 GiB \\
+    \bottomrule
+\end{tabular}
+\end{table}
+
+
+% \begin{table}[htbp]
+% \centering
+% \small
+% \caption{\textbf{Execution runtimes for training, hyperparameter tuning, and inference (i.e., evaluation time on test data) across model architectures and feature panels.} All times are reported in seconds.}
+% \label{tab:execution_runtimes}
+% \begin{tabular}{llrrr}
+%     \toprule
+%     \textbf{Feature Set} & \textbf{Model} & \textbf{Tuning Time (s)} & \textbf{Training Time (s)} & \textbf{Inference Time (s)} \\
+%     \midrule
+%     \multirow{5}{*}{\textbf{CBC}} 
+%     & Baseline Log. Regression & 183.39 & 4.02 & 0.01 \\
+%     & Baseline Random Forest   & 159.22 & 172.92 & 1.91 \\
+%     & Baseline XGBoost         & 2.93   & 1.84 & 0.03 \\
+%     & GNN (GATv2)              & 13396.37 & 386.27 & 2.30 \\
+%     & GraphAware (XGBoost)     & 7794.58 & 373.54 & 13.77 \\
+%     \midrule
+%     \multirow{5}{*}{\textbf{CBC \& BMP}} 
+%     & Baseline Log. Regression & 186.86 & 8.16 & 0.01 \\
+%     & Baseline Random Forest   & 159.22 & 172.92 & 1.64 \\
+%     & Baseline XGBoost         & 2.93   & 1.84 & 0.01 \\
+%     & GNN (GATv2)              & 4952.27 & 96.50 & 1.25 \\
+%     & GraphAware (XGBoost)     & 4220.48 & 200.53 & 9.22 \\
+%     \midrule
+%     \multirow{5}{*}{\textbf{CBC \& HIL}} 
+%     & Baseline Log. Regression & 183.39 & 4.02 & 0.02 \\
+%     & Baseline Random Forest   & 159.22 & 172.92 & 1.73 \\
+%     & Baseline XGBoost         & 2.93   & 1.84 & 0.04 \\
+%     & GNN (GATv2)              & 1613.65 & 51.26 & 1.71 \\
+%     & GraphAware (XGBoost)     & 768.77 & 32.80 & 11.45 \\
+%     \midrule
+%     \multirow{5}{*}{\textbf{CBC \& BMP \& HIL}} 
+%     & Baseline Log. Regression & 183.39 & 4.02 & 0.01 \\
+%     & Baseline Random Forest   & 159.22 & 172.92 & 1.13 \\
+%     & Baseline XGBoost         & 2.93   & 1.84 & 0.04 \\
+%     & GNN (GATv2)              & 893.30 & 16.39 & 1.27 \\
+%     & GraphAware (XGBoost)     & 595.50 & 25.19 & 9.14 \\
+%     \bottomrule
+% \end{tabular}
+% \end{table}
+
+\begin{figure}[htbp!]
+    \centering
+    \includegraphics[width=.9\linewidth]{figures/runtime_vertical_plot.png}
+    \caption{\textbf{Execution time for model training, hyperparameter tuning, and inference (i.e., evaluation time on
+test data) across different ML models.} We plotted runtime on a logarithmic scale (in seconds) for each ML model across 
+all experiments (i.e., among all feature sets: \texttt{CBC}, \texttt{CBC \& BMP}, \texttt{CBC \& HIL}, and \texttt{CBC  
+\& BMP \& HIL}). Bar heights indicate the median execution time, while error caps represent the full spread (minimum to 
+maximum range) across the evaluated feature sets for each model.}
+    \label{fig:runtimes}
+\end{figure}
+
+
+
+\subsection{Interpretability on feature sets}\label{res:interpretability}
+Finally, our GraphFlow framework also generates SHAP summary plots for the GraphAware framework (Fig. \ref{fig:shap_exmaples}). These summary plots can improve the understanding of the underlying ML model and help identify which features are important and how a feature value influences the prediction. The larger a positive SHAP value is, the greater the feature's contribution to the prediction 'Sepsis', while more negative SHAP values contribute toward 'Control'. For example, a high white blood cell (WBC) count is rather associated with the prediction "Sepsis" and a lower value with "Control". Additionally, the magnitude of SHAP values from smallest negative to the largest positive value represents the importance of an individual feature. For example, for our prediction white blood cells, age and sodium concentration were the three most important features, while sex and hemoglobin were the least important ones.
+The discrete vertical banding observed in the SHAP summary plot reflects the shallow tree architecture ($\text{max\_depth} = 1$ decision stumps) selected during hyperparameter tuning. Rather than outputting a continuous risk score curve, the ensemble partitions continuous laboratory values into discrete risk thresholds (e.g., distinct step jumps in Sepsis risk when WBC exceeds $12.0 \times 10^9/\text{L}$).
+
+\begin{figure}[htbp!]
+    \centering
+    \includegraphics[width=1\linewidth]{figures/SHAP_example_cbc_bmp.png}
+    \caption{\textbf{Example GraphAware summary plot of the best model for the analysis of complete blood count \& BMP data based on SHAP \cite{NIPS2017_7062}.} Higher feature values (e.g., higher white blood cells) are represented in red and lower values in blue. The larger a positive SHAP value is, the greater the feature's contribution to the prediction 'Sepsis', while more negative SHAP values contribute toward 'Control'. } 
+    \label{fig:shap_exmaples}
+\end{figure}
+
+\subsection{Clinical case study}\label{res:case_study}
+To demonstrate the real-world clinical utility and explainability of GraphFlow, we evaluated a representative patient trajectory from the MIMIC-IV test cohort using the optimal model configuration (CBC \& BMP panel). Classification decisions were made using the decision threshold calibrated to maximize the $F_2$-score on the validation set ($\tau = \text{0,0326}$). As displayed in our dashboard (Fig.~\ref{fig:case_study}\,A), GraphAware correctly identified the early onset of sepsis for patient [ID: 342990] (predicted risk score above the calibrated threshold), whereas the static XGBoost baseline failed to cross the decision threshold prior to ICU transfer. The temporal graph aggregation implemented in GraphAware captured subtle longitudinal trajectories—specifically marked by a decrease in bicarbonate and an increase of chloride, which provided the decisive feature contributions toward the positive prediction. Local SHAP explanations for this case confirm that while baseline physiological parameters contributed moderately, the time-directed neighborhood features (i.e., aggregated recent measurements) drove the final calibrated score past the operational threshold.
+
+Beyond interactive graphical exploration, the full patient trajectory, model predictions, and SHAP feature contributions can be programmatically queried via our custom MCP server (Fig.~\ref{fig:case_study}\,B). The MCP endpoint returned formatted Markdown trajectory tables and quantitative feature contribution breakdowns directly to an external LLM agent. This case study demonstrates how GraphFlow can seamlessly enable both human-in-the-loop diagnostic verification via interactive dashboards and autonomous model orchestration via standardized agent protocols.
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tabular}{cl}
+    (A) & \raisebox{-0.5\height}{\includegraphics[width=0.75\textwidth]{figures/local_shap_342990.png}} \\[.05ex]
+    (B) & \raisebox{-0.5\height}{\includegraphics[width=0.75\textwidth]{figures/local_shap_442990_mcp.png}}
+  \end{tabular}
+  \caption{Interactive explanations. (A) Local SHAP explanations for the clinical use case with our dashboard. (B) Verbal explanations using our explanations MCP in GraphFlow with the open-weight Gemma4-31b model\cite{gemma2026gemma4technicalreport}.}
+  \label{fig:case_study}
+\end{figure}
+
+\section{Discussion and limitations}\label{discussion}
+In this section, we first discuss the improved classification performance and external generalizability achieved by our time-aware graph learning approach (Section \ref{disc:cbc}). Next, we examine the framework's robustness across diverse feature sets and its resilience to severe clinical data sparsity (Section \ref{disc:other_features}). Finally, we highlight how visualizing feature contributions enhances model interpretability (Section \ref{disc:interpret}) and demonstrate the practical utility of our interactive dashboard and programmatic orchestration tools for real-world clinical deployment (Section \ref{disc:case_mcp}).
+
+\subsection{GraphFlow achieves the highest generalizability when trained on SBC
+data}\label{disc:cbc}
+With GraphFlow, researchers can now efficiently develop and evaluate new models for the prediction of sepsis using diverse feature sets. Our results demonstrate that the implemented graph learning baselines (GNN \& GraphAware) consistently outperform traditional machine learning baselines across the evaluated feature sets, highlighting the value of incorporating time-based information.
+
+Furthermore, our evaluation on the SBC data (SBC Test AUROC: 0.938) shows an improvement over previous prospective studies evaluating this dataset (which reported SBC Test AUROC: 0.900) \cite{walke2023edges}. We attribute this classification performance gain to the additional integration of time differences within the time series of each patient journey. Notably, this integration significantly improved the external generalizability of sepsis prediction on complete blood count data, increasing the external AUROC from 0.834 \cite{walke2023edges} to 0.903 in this study.
+
+We also found that training on the SBC dataset yielded substantially better generalizability (MIMIC-IV Test AUROC: 0.919) compared to training on the MIMIC-IV dataset (SBC Test AUROC: 0.894). This enhanced robustness can likely be explained by the larger number of training samples in SBC (1,015,074 samples) compared to MIMIC-IV (880,100 samples). Finally, while GraphAware achieved a slightly lower classification performance on the internal dataset compared to the GNN (AUROC 0.919 vs. 0.938), it demonstrated superior external generalizability when trained on SBC data (MIMIC-IV Test AUROC 0.919 vs. 0.889).
+
+This external generalizability is particularly important when deploying machine learning models in distinct laboratory institutes. The divergence in external generalizability between the GNN and GraphAware architectures can likely be attributed to their underlying learning paradigms. While deep learning models like GNNs are highly expressive and allow them to achieve peak performance on internal datasets (SBC Test AUROC: 0.938) by learning complex, latent structural representations, their high expressiveness makes them more susceptible to learning institute-specific artifacts (i.e., overfits them on the institute they were trained on), which hinders cross-institute transferability. In contrast, GraphAware's XGBoost provides inherent regularization through boosted tree ensembles, which rely on robust statistical boundaries, resulting in superior transferability when deployed on external datasets (MIMIC-IV Test AUROC: 0.919).
+
+\subsection{GraphFlow achieved the highest performance across most feature sets in MIMIC-IV}\label{disc:other_features}
+Additionally, we demonstrated that GraphFlow is robust across diverse feature sets and that the integration of complementary clinical features (e.g., BMP) can further enhance classification performance, yielding an AUROC of up to 0.951. However, when highly specific feature sets are integrated (e.g., HIL), the classification performance drops for the graph learning-based approaches (AUROC up to 0.944). This deterioration is primarily driven by the lower availability of complete patient samples containing all target features (complete blood count: 880,100 samples vs. complete blood count\,\&BMP\,\&HIL: 115,393 samples). Notably, this reduced sample availability affects the GNN (where AUROC drops to 0.893) much more severely than our GraphAware model (which retains an AUROC of 0.944). This divergence aligns with architectural expectations: deep learning models like GNNs exhibit higher sample complexity and require larger volumes of training data to generalize effectively, whereas the standard machine learning estimators integrated within our GraphAware framework generalize robustly with fewer observations (see Section \ref{disc:cbc}). 
+
+This severe sample reduction accurately reflects routine clinical workflows, where specialized panels like the HIL index are ordered only under specific diagnostic suspicions rather than as universal baseline screens. While restricting the dataset to these specific cases introduces clinical selection bias, it provides a strict methodological stress test of the GraphFlow architecture. This clinically driven data sparsity without imputations exposes the vulnerability of highly complex GNNs, while the ability of our GraphAware ensemble to maintain high predictive stability demonstrates its resilience and practical utility in real-world, resource-constrained environments.
+
+Conversely, while performance dropped for our graph-based approaches and Logistic Regression, the AUROC scores for Random Forest and XGBoost remained relatively stable when adding HIL features to the baseline complete blood count \& BMP configuration (shifting marginally from up to 0.910 to 0.912 in the Random Forest). This resilience indicates that these ensemble models successfully balance the added informational value of the new features against the statistical challenges of a reduced sample size. 
+
+In this study, we explicitly avoided basic imputation techniques (e.g., zero-filling, mean/median substitution, or last-observation-carried-forward) to prevent embedding systemic clinical biases (e.g., the implicit predictive weight of a clinician's decision to order a specific test) and to avoid distorting actual patient phenotypes with generalized statistical averages. Future work will explore the integration of advanced, context-aware imputation methods, such as Multiple Imputation by Chained Equations (MICE) \cite{Azur2011} or time-aware deep learning architectures like BRITS \cite{BRITS}, into the preprocessing module to safely retain incomplete samples and maximize dataset utility. Crucially, because GraphFlow is fully containerized, future researchers are not constrained by our baseline decision to drop incomplete samples. Advanced, time-aware imputation frameworks can be directly embedded into the preprocessing module of GraphFlow, allowing clinicians to retain all samples without requiring downstream modifications to the graph construction or machine learning Docker containers.
+
+While the machine learning baselines underperformed the graph-based architectures in most evaluation scenarios, XGBoost still demonstrated robust baseline capabilities, achieving an AUROC of 0.836 on complete blood count data alone. Furthermore, XGBoost (AUROC: 0.915) outperformed the GNN (AUROC: 0.893) on the most restricted feature set (complete blood count \& BMP \& HIL) while demanding orders of magnitude less computational overhead (e.g., under 3\,s for training on complete blood count data). This performance-to-compute trade-off positions ensemble methods like XGBoost as highly viable candidates in resource-constrained clinical settings where training efficiency and inference latency are prioritized over marginal optimization metrics. Although our database-backed mini-batching already enables highly memory-efficient model training on such hardware, future work could further reduce the peak memory footprint of the preprocessing module by implementing batched data loading or executing feature transformations directly within the database.
+
+
+\subsection{GraphFlow provides model interpretability by visualizing SHAP values}\label{disc:interpret}
+Finally, we demonstrated the interpretability of GraphFlow through GraphAware's compatibility with SHAP values \cite{NIPS2017_7062,walke2026graphaware}. By visualizing the aggregated global importance of features, we improve the transparency of how predictions are derived. For clinical applications, this resulting interpretability is crucial as it not only increases the trustworthiness of the trained machine learning models but also allows clinicians to verify that the model's predictive logic aligns with established physiological mechanisms (e.g., the strong association between elevated white blood cell counts and sepsis). Beyond validating the model's predictive logic, this transparency facilitates the discovery of latent patterns within complex datasets. By highlighting strong associations between specific features and clinical outcomes, such interpretability can generate new hypotheses regarding patient pathophysiology, thereby assisting in the identification of novel biomarkers for challenging diagnoses.
+
+\subsection{Clinical Case Utility, Interactive Visualization, and Workflow Orchestration}\label{disc:case_mcp}
+
+The evaluation of the clinical case study in Section~\ref{res:case_study} underscores the necessity of temporal sensitivity, threshold calibration, intuitive visual interpretability, and programmatic interoperability when deploying graph learning models in critical care environments.
+
+In clinical datasets characterized by low disease prevalence, default classification thresholds ($\tau = 0.50$) are often ill-suited for highly imbalanced prediction tasks such as sepsis detection. By calibrating decision thresholds through $F_2$-score optimization on validation splits, GraphFlow explicitly prioritizes sensitivity over precision. Clinically, this design decision minimizes false negatives to safeguard against delayed antibiotic administration during early sepsis \cite{Evans2021}. As demonstrated in our case study, baseline static models failed to issue an alert because single-timestamp feature vectors could not capture the patient's subtle physiological deterioration over time. In contrast, GraphAware's temporal edge weighting successfully aggregated recent longitudinal trajectories (such as progressive shifts in white blood cell counts and electrolyte balances), elevating the predicted risk score beyond the operational threshold ($\tau$). Furthermore, coupling these predictions with local SHAP explanations enables clinicians to distinguish baseline risk factors from acute temporal changes, establishing the transparency required to build clinical trust in medical AI recommendations.
+
+Interactive web dashboards play a crucial role in translating these complex graph-based predictions into bedside clinical utility. By rendering real-time risk trajectories, calibrated decision boundaries, and local SHAP feature contributions, the interactive dashboard provides essential visual auditability for practicing physicians. This human-in-the-loop review mechanism allows clinicians to rapidly contextualize model predictions against longitudinal physiological trends, ensuring that model outputs align with clinical judgment before initiating high-stakes medical interventions.
+
+To complement visual exploration and streamline pipeline operations, we integrated a standardized MCP server into our GraphFlow framework. Rather than assuming immediate integration into fully automated hospital environments, MCP acts as a bridge between containerized Docker services and programmatic research workflows. A primary objective behind modularizing GraphFlow into Docker containers was to enable the rapid development and retraining of models across diverse clinical feature sets. The integration of MCP further accelerates this process by exposing standardized RPC tools directly to LLM agents. Automated agents can programmatically trigger data preprocessing, execute model retraining on new laboratory panels, inspect MLflow experiment metadata, and perform programmatic inference with structured SHAP explanations without requiring manual terminal commands or interface navigation. By combining an interactive visual dashboard with an MCP-compliant interface, GraphFlow delivers a versatile framework that supports both immediate human-in-the-loop clinical verification and streamlined, reproducible AI workflow orchestration.
+
+\section{Conclusion and future directions}\label{sec13}
+In this study, we introduced GraphFlow, which establishes a robust and highly adaptable foundation for advancing medical AI in real-world, resource-constrained clinical environments. By effectively modeling irregularly sampled EHRs as graphs, achieving time-series analysis capabilities comparable to state-of-the-art GNNs, and providing highly interpretable machine learning models, GraphFlow successfully unites highly accurate predictions with transparent decision-making. "Additionally, the integrated dashboard and MCP server streamline model retraining, provide intuitive risk visualizations, and enable natural language interaction with patient data and predictions. While the current implementation successfully overcomes major reproducibility and generalizability hurdles in sepsis prediction, its containerized, modular architecture is explicitly built to be easily extended and adapted over time. Moving forward, researchers can readily expand this framework to address new methodological challenges and broader clinical applications across the following key areas:
+\begin{itemize}
+    \item \textbf{Further diseases}: Finally, other studies can investigate further diseases or conditions (e.g., thrombosis or diabetes). Similar to the introduction of new datasets by developing a new Docker container for pre-processing, other studies can use a different label as the prediction target.
+    \item \textbf{Further datasets}: Similar to extending feature sets, it is only necessary to customize the preprocessing Docker module and swap the Docker container in the workflow pipeline. Future researchers can easily integrate further datasets like AmsterdamUMCdb \cite{Thoral2021} and HiRID \cite{faltys2021hirid}, including time-series information of any length.
+    \item \textbf{Further feature sets}: In the future, other feature sets (e.g., other lab panels, features extracted from image or textual data) could be integrated into the training to further improve the performance. For extending the feature sets, it is only necessary to customize the pre-processing Docker module (e.g., by reading more features from a CSV input or integrating foundation models to extract textual or image information).    
+    
+\end{itemize}
+
+
+
+
+
+\backmatter
+
+\bmhead{Supplementary information}
+
+\section*{Declarations}
+\begin{itemize}
+\item Funding: This research was funded by the German Research Foundation (DFG) under the project ‘Optimizing graph databases focusing on data processing and integration of machine learning for large clinical and biological datasets’ [project number 463414123; grant numbers HE 8077/2-1, SA 465/53-1]. All authors acknowledge the support by the “Ministerium für Kultur und Wissenschaft des Landes Nordrhein-Westfalen”.
+
+\item Acknowledgements: The authors acknowledge the de.NBI Cloud (Bielefeld site) for providing access to the hosted open-source Large Language Model API endpoints used for computational inference in this work. This work was supported by the de.NBI Cloud within the German Network for Bioinformatics Infrastructure (de.NBI) and ELIXIR-DE.
+\item Conflict of interest/Competing interests. The authors declare no competing interests. 
+\item Ethics approval and consent to participate. Not applicable.
+\item Consent for publication
+\item Data availability. Datasets are publicly available under https://physionet.org/content/mimiciv/3.1/ (MIMIC-IV) and under https://github.com/ampel-leipzig/sbcdata/tree/main (SBC dataset). Docker images are available under https://hub.docker.com/repositories/dwalkeiti.
+\item Code availability. The code is open-source available under https://github.com/danielwalke/SepsisEvalPipeline.
+\item Author contribution
+\end{itemize}
+
+
+\bibliography{sn-bibliography}% common bib file
+%% if required, the content of .bbl file can be included here once bbl is generated
+%%\input sn-article.bbl
+
+\end{document}
