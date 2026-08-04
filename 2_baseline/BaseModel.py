@@ -30,6 +30,9 @@ class BaseModel:
                             filemode='a',
                             level=logging.INFO, format='%(asctime)s - %(message)s')
         self.logger = logging.getLogger(__name__)
+        if mlflow.active_run():
+            mlflow.end_run()
+            
         tracking_uri = os.getenv("MLFLOW_TRACKING_URI")
         if not tracking_uri:
             # Check if mlflow-server hostname resolves, else use localhost
@@ -95,13 +98,17 @@ class BaseModel:
     def save_model(self, trained_model, best_params):
         exp_name = f"{self.data.name}_{self.feature_set_name}"
         os.makedirs(f"2_baseline/models/{exp_name}", exist_ok=True)
-        try:
-            os.makedirs(f"/app/models/{exp_name}", exist_ok=True)
-        except Exception:
-            pass
         model_path = f"2_baseline/models/{exp_name}/{self.ModelClass.__name__}.pkl"
-        with open(model_path, 'wb') as f:            
-            pickle.dump(trained_model, f)
+        try:
+            with open(model_path, 'wb') as f:            
+                pickle.dump(trained_model, f)
+        except PermissionError:
+            fallback_dir = f"/tmp/models/{exp_name}"
+            os.makedirs(fallback_dir, exist_ok=True)
+            model_path = f"{fallback_dir}/{self.ModelClass.__name__}.pkl"
+            with open(model_path, 'wb') as f:
+                pickle.dump(trained_model, f)
+            print(f"Saved to fallback path {model_path} due to permission limits.")
         try:
             mlflow.log_artifact(model_path, artifact_path="models")
         except Exception as e:
@@ -118,51 +125,54 @@ class BaseModel:
 
     
     def log_scores(self, best_params, *test_datasets, seed = None):
-        exp_name = f"{self.data.name}_{self.feature_set_name}"
-
-        if seed is None:
-            seed = self.seed
-        
-        ## Scaling
-        normalize = best_params.pop("normalize", False)            
-        ## Retrain with best params
-        train_start_time = time.time()
         try:
-            model = self.ModelClass(**best_params, n_jobs=10)
-        except TypeError:
-            model = self.ModelClass(**best_params)
-        if normalize:
-            from sklearn.pipeline import Pipeline
-            scaler = MinMaxScaler()
-            full_model = Pipeline([('scaler', scaler), ('model', model)])
-            full_model.fit(self.data.train_X, self.data.train_y)
-        else:
-            full_model = model
-            full_model.fit(self.data.train_X, self.data.train_y)
-        train_end_time = time.time()
-        self.save_model(full_model, best_params)
-        model = full_model
-        
-        mlflow.log_metric(f"training_time_seconds", train_end_time - train_start_time)
-        
-        ## Inference and Scoring
-        for test_data in test_datasets:
-            if test_data is None: continue
-            for test_data_set in test_data.test_data_containers:
-                test_name, test_X, test_y = test_data_set
-                test_X = test_X.copy()
-                print(f"Evaluating on test dataset: {test_name}")
+            exp_name = f"{self.data.name}_{self.feature_set_name}"
 
-                inference_test_start_time = time.time()
-                if self.metric_pred_proba:
-                    test_preds = model.predict_proba(test_X)[:, 1]
-                else:
-                    test_preds = model.predict(test_X)
-                score = self.metric(test_y, test_preds)
-                inference_test_end_time = time.time()
-                mlflow.log_metric(f"{test_name}__inference_time_seconds", inference_test_end_time - inference_test_start_time)
-                mlflow.log_metric(f"{test_name}__AUROC", score)
-                print(f"Test Score on {test_name}: {score} with inference time {inference_test_end_time - inference_test_start_time} seconds")
+            if seed is None:
+                seed = self.seed
+            
+            ## Scaling
+            normalize = best_params.pop("normalize", False)            
+            ## Retrain with best params
+            train_start_time = time.time()
+            try:
+                model = self.ModelClass(**best_params, n_jobs=10)
+            except TypeError:
+                model = self.ModelClass(**best_params)
+            if normalize:
+                from sklearn.pipeline import Pipeline
+                scaler = MinMaxScaler()
+                full_model = Pipeline([('scaler', scaler), ('model', model)])
+                full_model.fit(self.data.train_X, self.data.train_y)
+            else:
+                full_model = model
+                full_model.fit(self.data.train_X, self.data.train_y)
+            train_end_time = time.time()
+            self.save_model(full_model, best_params)
+            model = full_model
+            
+            mlflow.log_metric(f"training_time_seconds", train_end_time - train_start_time)
+            
+            ## Inference and Scoring
+            for test_data in test_datasets:
+                if test_data is None: continue
+                for test_data_set in test_data.test_data_containers:
+                    test_name, test_X, test_y = test_data_set
+                    test_X = test_X.copy()
+                    print(f"Evaluating on test dataset: {test_name}")
 
-        mlflow.end_run()
-        return score
+                    inference_test_start_time = time.time()
+                    if self.metric_pred_proba:
+                        test_preds = model.predict_proba(test_X)[:, 1]
+                    else:
+                        test_preds = model.predict(test_X)
+                    score = self.metric(test_y, test_preds)
+                    inference_test_end_time = time.time()
+                    mlflow.log_metric(f"{test_name}__inference_time_seconds", inference_test_end_time - inference_test_start_time)
+                    mlflow.log_metric(f"{test_name}__AUROC", score)
+                    print(f"Test Score on {test_name}: {score} with inference time {inference_test_end_time - inference_test_start_time} seconds")
+
+            return score
+        finally:
+            if mlflow.active_run():
+                mlflow.end_run()
