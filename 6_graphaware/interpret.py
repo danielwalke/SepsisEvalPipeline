@@ -23,7 +23,8 @@ IMPORT COMMENT: Diff to sex is not zero across the same patient because of the w
 """
 def interpret_and_visualize():
     config = configparser.ConfigParser()
-    config.read('/app/config/config.ini')
+    config_paths = ['/app/config/config.ini', os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'config.ini')), 'config.ini']
+    config.read(config_paths)
     feature_set_name = config['PANEL']['panel_name']
     include_sbc = config['PANEL'].getboolean('include_sbc', fallback=False)
     db = "sqlite"
