@@ -83,10 +83,17 @@ def process_and_upload_split(conn, csv_dir, cursor, split_label, file_prefix):
 
 if __name__ == "__main__":
     config = configparser.ConfigParser()
-    config.read('/app/config/config.ini')
+    config_paths = ['/app/config/config.ini', os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'config.ini')), 'config.ini']
+    config.read(config_paths)
     panel_name = config['PANEL']["panel_name"]
-    csv_dir = f"/app/csv_data/{panel_name}"
-    db_dir = f"/app/db/{panel_name}"
+
+    def resolve_path(app_path, local_fallback):
+        if os.path.exists('/app') and os.access('/app', os.W_OK):
+            return app_path
+        return os.path.abspath(local_fallback)
+
+    csv_dir = resolve_path(f"/app/csv_data/{panel_name}", f"3_graph_construction/data/{panel_name}")
+    db_dir = resolve_path(f"/app/db/{panel_name}", f"4_db_upload/sqlite/db/{panel_name}")
     db_path = f"{db_dir}/mimic_sbc_graph.db"
     os.makedirs(db_dir, exist_ok=True)
     
