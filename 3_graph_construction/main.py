@@ -147,18 +147,12 @@ class GraphPreprocesser:
 
 if __name__ == "__main__":
     config = configparser.ConfigParser()
-    config_paths = ['/app/config/config.ini', os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'config.ini')), 'config.ini']
-    config.read(config_paths)
+    config.read('/app/config/config.ini')
     panel_name = config["PANEL"]["panel_name"]
 
-    def resolve_path(app_path, local_fallback):
-        if os.path.exists('/app') and os.access('/app', os.W_OK):
-            return app_path
-        return os.path.abspath(local_fallback)
-
-    data_input_dir = resolve_path(f"/app/input/{panel_name}", f"1_preprocess/data/preprocessed_data/{panel_name}")
-    data_output_dir = resolve_path(f"/app/output/{panel_name}", f"3_graph_construction/data/{panel_name}")
-    metrics_dir = resolve_path(f"/app/metrics/{panel_name}", f"3_graph_construction/metrics/{panel_name}")
+    data_input_dir = f"/app/input/{panel_name}"
+    data_output_dir = f"/app/output/{panel_name}"
+    metrics_dir = f"/app/metrics/{panel_name}"
     
     os.makedirs(metrics_dir, exist_ok=True)
     os.makedirs(data_output_dir, exist_ok=True)

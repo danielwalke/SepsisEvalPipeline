@@ -11,14 +11,11 @@ class SQLiteConnector:
         Reads the database path from the environment variable if not provided.
         """
         config = configparser.ConfigParser()
-        config_paths = ['/app/config/config.ini', os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'config.ini')), 'config.ini']
-        config.read(config_paths)
+        cfg_path = '/app/config/config.ini' if os.path.exists('/app/config/config.ini') else os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'config.ini'))
+        config.read(cfg_path)
         panel_name = config['PANEL']["panel_name"] if 'PANEL' in config else "CBC"
         if db_path is None:
-            if os.path.exists('/app') and os.access('/app', os.W_OK):
-                db_path = f"/app/db/{panel_name}/mimic_sbc_graph.db"
-            else:
-                db_path = os.path.abspath(f"4_db_upload/sqlite/db/{panel_name}/mimic_sbc_graph.db")
+            db_path = f"/app/db/{panel_name}/mimic_sbc_graph.db"
         
         # timeout=60.0 ensures concurrent workers wait instead of immediately locking out
         self.conn = sqlite3.connect(db_path, timeout=60.0)

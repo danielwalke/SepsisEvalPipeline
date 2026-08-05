@@ -8,19 +8,13 @@ from SbcData import SbcData
 import configparser
 
 config = configparser.ConfigParser()
-config_paths = ['/app/config/config.ini', os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'config.ini')), 'config.ini']
-config.read(config_paths)
-
-def resolve_path(app_path, local_fallback):
-    if os.path.exists('/app') and os.access('/app', os.W_OK):
-        return app_path
-    return os.path.abspath(local_fallback)
+config.read('/app/config/config.ini')
 
 if __name__ == "__main__":
     include_sbc = config['PANEL'].getboolean('include_sbc', fallback=False)
     panel_name = config['PANEL']["panel_name"]
 
-    input_dir = resolve_path(f"/app/input/{panel_name}", f"1_preprocess/data/preprocessed_data/{panel_name}")
+    input_dir = f"/app/input/{panel_name}"
     os.makedirs(input_dir, exist_ok=True)
     metric = roc_auc_score
     maximize_metric = True
