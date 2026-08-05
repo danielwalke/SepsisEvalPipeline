@@ -10,10 +10,14 @@ class SQLiteConnector:
     def __init__(self, db_path=None):
         # timeout=60 ensures workers don't immediately lock out if database is busy
         config = configparser.ConfigParser()
-        config.read('/app/config/config.ini')
+        config_paths = ['/app/config/config.ini', os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'config.ini')), 'config.ini']
+        config.read(config_paths)
         panel_name = config['PANEL']["panel_name"]
         if db_path is None:
-            db_path = db_path = f"/app/db/{panel_name}/mimic_sbc_graph.db"
+            if os.path.exists('/app') and os.access('/app', os.W_OK):
+                db_path = f"/app/db/{panel_name}/mimic_sbc_graph.db"
+            else:
+                db_path = os.path.abspath(f"4_db_upload/sqlite/db/{panel_name}/mimic_sbc_graph.db")
         self.conn = sqlite3.connect(db_path, timeout=60.0)
         self.cursor = self.conn.cursor()
         self.cursor.execute("PRAGMA journal_mode = WAL;")
