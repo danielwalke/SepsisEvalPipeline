@@ -24,7 +24,7 @@ from sklearn.metrics import (
     roc_auc_score, roc_curve, confusion_matrix,
     precision_score, recall_score, f1_score, fbeta_score, accuracy_score
 )
-from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp import FastMCP, Context
 
 
 # Initialize FastMCP Server
@@ -54,7 +54,7 @@ def list_pipeline_steps() -> Dict[str, Any]:
 
 
 @mcp.tool()
-def run_pipeline_step(step_name: str, selected_panel: Optional[str] = None) -> Dict[str, Any]:
+async def run_pipeline_step(step_name: str, selected_panel: Optional[str] = None, ctx: Optional[Context] = None) -> Dict[str, Any]:
     """
     Executes a specific pipeline step or all steps starting from step 2.
 
@@ -91,7 +91,12 @@ def run_pipeline_step(step_name: str, selected_panel: Optional[str] = None) -> D
     if not os.path.exists(python_bin):
         python_bin = "python3"
 
-    for step in steps_to_run:
+    total_steps = len(steps_to_run)
+    for idx, step in enumerate(steps_to_run):
+        if ctx:
+            await ctx.info(f"Executing step {idx + 1}/{total_steps}: {step}")
+            await ctx.report_progress(idx, total_steps)
+
         step_info = PIPELINE_STEPS[step]
         script_path = os.path.join(BASE_DIR, step_info["script"])
         if not os.path.exists(script_path):
@@ -122,6 +127,9 @@ def run_pipeline_step(step_name: str, selected_panel: Optional[str] = None) -> D
         except Exception as e:
             results.append({"step": step, "status": "error", "message": str(e)})
             break
+
+    if ctx:
+        await ctx.report_progress(total_steps, total_steps)
 
     return {"status": "completed", "executed_steps": results}
 
