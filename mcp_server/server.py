@@ -60,7 +60,7 @@ def run_pipeline_step(step_name: str, selected_panel: Optional[str] = None) -> D
 
     Args:
         step_name: One of '2_baseline', '3_graph_construction', '4_db_upload', '5_gnn_training', '6_graphaware', or 'all_steps'.
-        selected_panel: Optional panel filter (e.g., 'MIMIC_CBC', 'MIMIC_CBC_BMP', 'SBC_CBC').
+        selected_panel: Optional panel filter (e.g., 'CBC', 'CBC_BMP', 'CBC_BMP_HIL', 'HIL').
     """
     if step_name == "all_steps":
         steps_to_run = list(PIPELINE_STEPS.keys())
@@ -68,6 +68,23 @@ def run_pipeline_step(step_name: str, selected_panel: Optional[str] = None) -> D
         steps_to_run = [step_name]
     else:
         return {"status": "error", "message": f"Invalid step_name '{step_name}'. Valid options: {list(PIPELINE_STEPS.keys()) + ['all_steps']}"}
+
+    if selected_panel:
+        clean_panel = selected_panel
+        for prefix in ["MIMIC_", "SBC_"]:
+            if clean_panel.startswith(prefix):
+                clean_panel = clean_panel[len(prefix):]
+        
+        config_path = os.path.join(BASE_DIR, "config.ini")
+        if os.path.exists(config_path):
+            import configparser
+            config = configparser.ConfigParser()
+            config.read(config_path)
+            if "PANEL" not in config:
+                config["PANEL"] = {}
+            config["PANEL"]["panel_name"] = clean_panel
+            with open(config_path, "w") as f:
+                config.write(f)
 
     results = []
     python_bin = os.path.join(BASE_DIR, ".venv", "bin", "python")
@@ -82,8 +99,6 @@ def run_pipeline_step(step_name: str, selected_panel: Optional[str] = None) -> D
             continue
 
         cmd = [python_bin, script_path]
-        if selected_panel:
-            cmd.extend(["--panel", selected_panel])
 
         try:
             res = subprocess.run(cmd, cwd=BASE_DIR, capture_output=True, text=True, timeout=1200)
