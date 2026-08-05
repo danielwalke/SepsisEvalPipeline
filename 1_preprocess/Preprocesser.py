@@ -23,8 +23,9 @@ class Preprocesser:
         self.features = [AGE_COLUMN_NAME, SEX_COLUMN_NAME]
         self.append_user_features()
         self.config = configparser.ConfigParser()
-        files_read = self.config.read('/app/config/config.ini')
-        self.nan_handler_type = self.config['PREPROCESSING'].get('imputation', 'drop')
+        config_paths = ['/app/config/config.ini', os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'config.ini')), 'config.ini']
+        files_read = self.config.read(config_paths)
+        self.nan_handler_type = self.config['PREPROCESSING'].get('imputation', 'drop') if 'PREPROCESSING' in self.config else 'drop'
         assert self.nan_handler_type in nan_handlers, f"nan_handler_type must be one of {nan_handlers}"
         
         

@@ -7,7 +7,8 @@ import configparser
 class PreprocessWrapper:
     def __init__(self, feature_input_dir_path, extdata_input_dir_path, sbc_data=None, mimic_data=None, print_logs=False):
         self.config = configparser.ConfigParser()
-        self.config.read('/app/config/config.ini')
+        config_paths = ['/app/config/config.ini', os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'config.ini')), 'config.ini']
+        self.config.read(config_paths)
         self.include_sbc = self.config['PANEL'].getboolean('include_sbc', fallback=False)
         self.feature_input_dir_path = feature_input_dir_path
         self.extdata_input_dir_path = extdata_input_dir_path
