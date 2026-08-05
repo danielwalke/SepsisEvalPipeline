@@ -69,4 +69,7 @@ echo "--- STEPS 5 & 6: DB STARTUP & TRAINING ---"
 docker compose -f ./5_gnn_training/docker/docker-compose.yml up --build
 docker compose -f ./6_graphaware/docker/docker-compose.yml up --build
 
+echo "--- STEP 10: LEAD-TIME EVALUATION ---"
+./10_leadtime_evaluation/run_eval.sh
+
 echo "--- PIPELINE COMPLETE ---"
