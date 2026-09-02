@@ -26,8 +26,11 @@ class BaseModel:
         
         self.feature_set_name = getattr(data, "feature_set_name", self.config['PANEL'].get('panel_name', 'CBC') if 'PANEL' in self.config else 'CBC')
         
-        log_path = "2_baseline/training_logs.log" if os.path.exists("2_baseline") else "/app/output/training_logs.log"
-        logging.basicConfig(filename=log_path,
+        # "2_baseline" only exists as a subdirectory when run from the repo root
+        # (host venv / mcp_server); in the docker-compose container the WORKDIR
+        # is /app itself, with /app/output bind-mounted to that same host path.
+        self.output_base = "2_baseline" if os.path.exists("2_baseline") else "/app/output"
+        logging.basicConfig(filename=f"{self.output_base}/training_logs.log",
                             filemode='a',
                             level=logging.INFO, format='%(asctime)s - %(message)s')
         self.logger = logging.getLogger(__name__)
@@ -98,8 +101,8 @@ class BaseModel:
 
     def save_model(self, trained_model, best_params):
         exp_name = f"{self.data.name}_{self.feature_set_name}"
-        os.makedirs(f"2_baseline/models/{exp_name}", exist_ok=True)
-        model_path = f"2_baseline/models/{exp_name}/{self.ModelClass.__name__}.pkl"
+        os.makedirs(f"{self.output_base}/models/{exp_name}", exist_ok=True)
+        model_path = f"{self.output_base}/models/{exp_name}/{self.ModelClass.__name__}.pkl"
         try:
             with open(model_path, 'wb') as f:            
                 pickle.dump(trained_model, f)
