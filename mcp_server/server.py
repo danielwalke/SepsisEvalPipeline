@@ -34,79 +34,146 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MLFLOW_DB_PATH = os.path.join(BASE_DIR, "mlflow_data", "mlflow.db")
 CUTOFFS_PATH = os.path.join(BASE_DIR, "7_inference", "optimal_cutoffs.json")
 
+# Every step runs via its docker-compose service (not the host venv) so the pipeline is
+# OS-independent and reuses the exact same containers/paths/permissions already set up in
+# docker-compose.yml. "is_done" detects whether a panel already has this step's output, so
+# run_pipeline_step only (re)trains what's actually missing for the requested panel.
 PIPELINE_STEPS = {
-    "2_baseline": {"script": "2_baseline/main.py", "desc": "Train baseline ML models (Logistic Regression, Random Forest, XGBoost)"},
-    "3_graph_construction": {"script": "3_graph_construction/main.py", "desc": "Construct temporal patient graphs from preprocessed lab data"},
-    "4_db_upload": {"script": "4_db_upload/sqlite/upload_to_sqlite.py", "desc": "Upload graph nodes, edges, and features to SQLite database"},
-    "5_gnn_training": {"script": "5_gnn_training/main.py", "desc": "Train PyTorch Geometric GNN models"},
-    "6_graphaware": {"script": "6_graphaware/main.py", "desc": "Train GraphFlow 1-hop spatial neighborhood feature XGBoost models & log metrics to MLflow"},
+    "0_mimic_preprocess": {
+        "service": "mimic-preprocessor-and-sbc-extractor",
+        "desc": "Extract MIMIC-IV lab data (and SBC dataset) for the selected panel",
+        "is_done": lambda panel: os.path.exists(
+            os.path.join(BASE_DIR, "0_mimic_preprocess", "preprocessed_file", panel, "mimic_processed.csv")
+        ),
+    },
+    "1_preprocess": {
+        "service": "1-datapreprocess",
+        "desc": "Normalize, split, and filter lab data into train/val/test sets",
+        "is_done": lambda panel: os.path.exists(
+            os.path.join(BASE_DIR, "1_preprocess", "data", "preprocessed_data", panel, "mimic_processed_test.csv")
+        ),
+    },
+    "2_baseline": {
+        "service": "2-baseline",
+        "desc": "Train baseline ML models (Logistic Regression, Random Forest, XGBoost)",
+        "is_done": lambda panel: os.path.exists(
+            os.path.join(BASE_DIR, "2_baseline", "models", f"MIMIC_{panel}", "XGBClassifier.pkl")
+        ),
+    },
+    "3_graph_construction": {
+        "service": "3-graph-construction",
+        "desc": "Construct temporal patient graphs from preprocessed lab data",
+        "is_done": lambda panel: (
+            os.path.isdir(os.path.join(BASE_DIR, "3_graph_construction", "data", panel))
+            and len(os.listdir(os.path.join(BASE_DIR, "3_graph_construction", "data", panel))) > 0
+        ),
+    },
+    "4_db_upload": {
+        "service": "4-db-upload",
+        "desc": "Upload graph nodes, edges, and features to SQLite database",
+        "is_done": lambda panel: os.path.exists(
+            os.path.join(BASE_DIR, "4_db_upload", "sqlite", "sqlite_data", panel, "mimic_sbc_graph.db")
+        ),
+    },
+    "5_gnn_training": {
+        "service": "5-gnn-training",
+        "desc": "Train PyTorch Geometric GNN models",
+        "is_done": lambda panel: os.path.exists(
+            os.path.join(BASE_DIR, "5_gnn_training", "checkpoints", f"MIMIC_{panel}", "best_model.pth")
+        ),
+    },
+    "6_graphaware": {
+        "service": "6-graphaware",
+        "desc": "Train GraphFlow 1-hop spatial neighborhood feature XGBoost models & log metrics to MLflow",
+        "is_done": lambda panel: os.path.exists(
+            os.path.join(BASE_DIR, "6_graphaware", "models", f"MIMIC_{panel}", "final_model.xgb")
+        ),
+    },
 }
+STEP_ORDER = list(PIPELINE_STEPS.keys())
 
 
 @mcp.tool()
 def list_pipeline_steps() -> Dict[str, Any]:
-    """Lists all available pipeline steps (Steps 2 to 7), their descriptions, and execution scripts."""
+    """Lists all available pipeline steps (Steps 0 to 6), their descriptions, and docker-compose services."""
     return {
-        "pipeline_steps": PIPELINE_STEPS,
-        "step_1_note": "Step 1 (Data Preprocessing) is performed independently per user dataset under 1_preprocess/",
+        "pipeline_steps": {k: {"service": v["service"], "desc": v["desc"]} for k, v in PIPELINE_STEPS.items()},
         "inference_dashboard_step": "Step 7 (GraphFlow Streamlit Dashboard) runs via 7_inference/app.py or Docker container on port 8501."
     }
 
 
 @mcp.tool()
-async def run_pipeline_step(step_name: str, selected_panel: Optional[str] = None, ctx: Optional[Context] = None) -> Dict[str, Any]:
+async def run_pipeline_step(
+    step_name: str,
+    selected_panel: str,
+    force_retrain: bool = False,
+    ctx: Optional[Context] = None
+) -> Dict[str, Any]:
     """
-    Executes a specific pipeline step or all steps starting from step 2.
+    Trains/builds a lab panel through docker-compose, from raw MIMIC extraction through the
+    requested step. Automatically runs any earlier steps (0_mimic_preprocess through the
+    target) whose output doesn't exist yet for this panel, and skips steps that are already
+    trained - so calling this always ends with the target step trained for the given panel,
+    without redoing work that's already done.
+
+    Each step runs as its own docker-compose service (e.g. `docker compose up --build
+    2-baseline`), matching how the pipeline runs standalone - not the host Python
+    environment - so this works the same regardless of host OS or installed packages.
 
     Args:
-        step_name: One of '2_baseline', '3_graph_construction', '4_db_upload', '5_gnn_training', '6_graphaware', or 'all_steps'.
-        selected_panel: Optional panel filter (e.g., 'CBC', 'CBC_BMP', 'CBC_BMP_HIL', 'HIL').
+        step_name: One of '0_mimic_preprocess', '1_preprocess', '2_baseline',
+            '3_graph_construction', '4_db_upload', '5_gnn_training', '6_graphaware', or
+            'all_steps' (runs through 6_graphaware).
+        selected_panel: Panel name (e.g. 'CBC', 'CBC_BMP', 'CBC_BMP_HIL', 'HIL').
+        force_retrain: If True, re-run every step through the target even if it's already
+            trained for this panel (default False: skip steps that already have output).
     """
     if step_name == "all_steps":
-        steps_to_run = list(PIPELINE_STEPS.keys())
+        target_idx = len(STEP_ORDER) - 1
     elif step_name in PIPELINE_STEPS:
-        steps_to_run = [step_name]
+        target_idx = STEP_ORDER.index(step_name)
     else:
-        return {"status": "error", "message": f"Invalid step_name '{step_name}'. Valid options: {list(PIPELINE_STEPS.keys()) + ['all_steps']}"}
+        return {"status": "error", "message": f"Invalid step_name '{step_name}'. Valid options: {STEP_ORDER + ['all_steps']}"}
 
-    if selected_panel:
-        clean_panel = selected_panel
-        for prefix in ["MIMIC_", "SBC_"]:
-            if clean_panel.startswith(prefix):
-                clean_panel = clean_panel[len(prefix):]
-        
-        config_path = os.path.join(BASE_DIR, "config.ini")
-        if os.path.exists(config_path):
-            import configparser
-            config = configparser.ConfigParser()
-            config.read(config_path)
-            if "PANEL" not in config:
-                config["PANEL"] = {}
-            config["PANEL"]["panel_name"] = clean_panel
-            with open(config_path, "w") as f:
-                config.write(f)
+    clean_panel = selected_panel
+    for prefix in ["MIMIC_", "SBC_"]:
+        if clean_panel.startswith(prefix):
+            clean_panel = clean_panel[len(prefix):]
 
+    config_path = os.path.join(BASE_DIR, "config.ini")
+    import configparser
+    config = configparser.ConfigParser()
+    config.read(config_path)
+    if "PANEL" not in config:
+        config["PANEL"] = {}
+    config["PANEL"]["panel_name"] = clean_panel
+    with open(config_path, "w") as f:
+        config.write(f)
+
+    steps_to_check = STEP_ORDER[:target_idx + 1]
     results = []
-    python_bin = os.path.join(BASE_DIR, ".venv", "bin", "python")
-    if not os.path.exists(python_bin):
-        python_bin = "python3"
+    total_steps = len(steps_to_check)
+    docker_env = {**os.environ, "HOST_UID": str(os.getuid()), "HOST_GID": str(os.getgid())}
 
-    total_steps = len(steps_to_run)
-    for idx, step in enumerate(steps_to_run):
-        if ctx:
-            await ctx.info(f"Executing step {idx + 1}/{total_steps}: {step}")
-            await ctx.report_progress(idx, total_steps)
-
+    for idx, step in enumerate(steps_to_check):
         step_info = PIPELINE_STEPS[step]
-        script_path = os.path.join(BASE_DIR, step_info["script"])
-        if not os.path.exists(script_path):
-            results.append({"step": step, "status": "error", "message": f"Script not found: {script_path}"})
+
+        if not force_retrain and step_info["is_done"](clean_panel):
+            results.append({
+                "step": step,
+                "status": "already_trained",
+                "message": f"Output already exists for panel '{clean_panel}'; skipped. Pass force_retrain=True to redo it."
+            })
             continue
 
-        cmd = [python_bin, script_path]
+        if ctx:
+            await ctx.info(f"Running step {idx + 1}/{total_steps}: {step} ({step_info['service']}) for panel '{clean_panel}'")
+            await ctx.report_progress(idx, total_steps)
+
+        cmd = ["docker", "compose", "up", "--build", step_info["service"]]
 
         try:
-            res = subprocess.run(cmd, cwd=BASE_DIR, capture_output=True, text=True, timeout=1200)
+            res = subprocess.run(cmd, cwd=BASE_DIR, capture_output=True, text=True, timeout=14400, env=docker_env)
             if res.returncode == 0:
                 results.append({
                     "step": step,
@@ -118,11 +185,11 @@ async def run_pipeline_step(step_name: str, selected_panel: Optional[str] = None
                     "step": step,
                     "status": "failed",
                     "returncode": res.returncode,
-                    "error_snippet": res.stderr[-500:] if res.stderr else res.stdout[-500:]
+                    "error_snippet": res.stderr[-1500:] if res.stderr else res.stdout[-1500:]
                 })
                 break
         except subprocess.TimeoutExpired:
-            results.append({"step": step, "status": "timeout", "message": "Execution timed out after 1200s"})
+            results.append({"step": step, "status": "timeout", "message": f"docker compose up --build {step_info['service']} did not complete within 14400s"})
             break
         except Exception as e:
             results.append({"step": step, "status": "error", "message": str(e)})
@@ -131,7 +198,7 @@ async def run_pipeline_step(step_name: str, selected_panel: Optional[str] = None
     if ctx:
         await ctx.report_progress(total_steps, total_steps)
 
-    return {"status": "completed", "executed_steps": results}
+    return {"status": "completed", "panel": clean_panel, "executed_steps": results}
 
 
 @mcp.tool()
