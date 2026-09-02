@@ -28,6 +28,7 @@ services:
       - ./0_mimic_preprocess/preprocessed_file:/app/output
       - ./0_mimic_preprocess/features:/app/features
       - ./config.ini:/app/config/config.ini
+      - ./panel_name_to_feature_codes.py:/app/panel_name_to_feature_codes.py:ro
     command: ["https://github.com/ampel-leipzig/sbcdata/raw/main/inst/extdata/sbcdata.csv.zip", "/app/output"]
 
   1-datapreprocess:
