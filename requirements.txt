@@ -1,0 +1,29 @@
+# Consolidated host-venv requirements for the MCP server (mcp_server/server.py,
+# mcp_client.py) and everything it dispatches from the host venv without Docker:
+# run_pipeline_step (2_baseline, 3_graph_construction, 4_db_upload, 5_gnn_training,
+# 6_graphaware) and 7_inference/app.py (loaded in-process for inference/SHAP tools).
+#
+# Per-stage requirements.txt files pin conflicting versions (they normally run in
+# isolated Docker images); where they conflict, the newer/looser constraint is used
+# here since a single shared venv can only hold one version per package.
+--extra-index-url https://download.pytorch.org/whl/cu130
+pandas==2.3.3
+numpy>=2.0.0
+tqdm==4.67.1
+scikit-learn==1.7.2
+hyperopt==0.2.7
+mlflow==3.10.1
+xgboost==3.3.0
+torch==2.9.0+cu130
+torch-geometric
+neo4j
+matplotlib
+shap==0.51.0
+configparser==6.0.1
+setuptools<82
+streamlit>=1.35.0
+plotly>=5.20.0
+openpyxl
+mcp<2
+python-dotenv
+openai
