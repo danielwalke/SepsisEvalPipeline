@@ -26,7 +26,8 @@ class BaseModel:
         
         self.feature_set_name = getattr(data, "feature_set_name", self.config['PANEL'].get('panel_name', 'CBC') if 'PANEL' in self.config else 'CBC')
         
-        logging.basicConfig(filename='2_baseline/training_logs.log',
+        log_path = "2_baseline/training_logs.log" if os.path.exists("2_baseline") else "/app/output/training_logs.log"
+        logging.basicConfig(filename=log_path,
                             filemode='a',
                             level=logging.INFO, format='%(asctime)s - %(message)s')
         self.logger = logging.getLogger(__name__)
