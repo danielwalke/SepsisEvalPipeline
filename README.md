@@ -80,9 +80,10 @@ SepsisEvalPipeline/
 ## Pipeline Execution Steps
 
 ### 0. MIMIC-IV Preprocessing (`0_mimic_preprocess/`)
-- REQUIRED: 0_mimic_preprocess/extdata
+- **Prerequisite**: MIMIC-IV requires a free [PhysioNet credentialed-access account](https://physionet.org/content/mimiciv/) ([documentation](https://mimic.mit.edu/docs/iv/)). Download the `hosp` module and place its CSVs under `./mimic/hosp/` in the repo root (e.g. `./mimic/hosp/labevents.csv`, `./mimic/hosp/d_labitems.csv`, ...) - `docker-compose.yml` mounts `./mimic` as `/app/input`. If this data is missing, `docker compose up` (and `pipeline.sh`) will fail fast with a message pointing back here instead of running.
+- `0_mimic_preprocess/extdata/icumap.csv` is a small curated lookup table tracked in the repo; `0_mimic_preprocess/extdata/d_labitems.csv` is raw MIMIC-IV content and is instead copied in automatically from `./mimic/hosp/d_labitems.csv` at container startup - no manual setup needed for either.
 - Preprocesses MIMIC-IV clinical data according to Steinbach et al. criteria.
-- Maps raw lab item IDs to standardized lab codes using `panel_name_to_feature_codes.py`.
+- Maps raw lab item IDs to standardized lab codes using `panel_name_to_feature_codes.py` (also run automatically inside the container).
 - **Output**: Preprocessed dataset files under `0_mimic_preprocess/preprocessed_file/`.
 
 ### 1. Pre-processing (`1_preprocess/`)
