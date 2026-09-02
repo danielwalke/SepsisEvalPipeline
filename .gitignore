@@ -37,7 +37,10 @@ mlflow_data/mlflow.db
 # Ignore raw datasets & preprocessed data CSVs
 data/raw_data/
 data/graph_data/
-0_mimic_preprocess/extdata/
+# d_labitems.csv is raw MIMIC-IV content (PhysioNet data use agreement) -
+# it's copied in automatically from the mounted mimic/ dataset, never committed.
+# Other files under extdata/ (e.g. icumap.csv) are curated project assets and are tracked.
+0_mimic_preprocess/extdata/d_labitems.csv
 0_mimic_preprocess/preprocessed_file/
 1_preprocess/data/
 3_graph_construction/data/
@@ -51,6 +54,8 @@ notes_evaluation/graph_data/
 *.tsv
 *.[Cc][Ss][Vv]
 *.parquet
+# ...except curated project assets (not raw/generated data)
+!0_mimic_preprocess/extdata/icumap.csv
 
 # Python cache & logs
 __pycache__/
