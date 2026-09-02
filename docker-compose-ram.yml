@@ -89,10 +89,11 @@ services:
           - mlflow-server
 
   mimic-preprocessor-and-sbc-extractor:
-    build: 
+    build:
       context: ./0_mimic_preprocess
     environment:
       - PYTHONUNBUFFERED=1
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     volumes:
       - ./mimic:/app/input
       - ./0_mimic_preprocess/preprocessed_file:/app/output
@@ -102,11 +103,12 @@ services:
     command: ["https://github.com/ampel-leipzig/sbcdata/raw/main/inst/extdata/sbcdata.csv.zip", "/app/output"]
 
   1-datapreprocess:
-    build: 
+    build:
       context: ./1_preprocess
     depends_on:
       mimic-preprocessor-and-sbc-extractor:
         condition: service_completed_successfully
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     volumes:
       - ./0_mimic_preprocess/preprocessed_file:/app/input
       - ./0_mimic_preprocess/features:/app/features
