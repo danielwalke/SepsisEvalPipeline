@@ -80,6 +80,7 @@ SepsisEvalPipeline/
 ## Pipeline Execution Steps
 
 ### 0. MIMIC-IV Preprocessing (`0_mimic_preprocess/`)
+- REQUIRED: 0_mimic_preprocess/extdata
 - Preprocesses MIMIC-IV clinical data according to Steinbach et al. criteria.
 - Maps raw lab item IDs to standardized lab codes using `panel_name_to_feature_codes.py`.
 - **Output**: Preprocessed dataset files under `0_mimic_preprocess/preprocessed_file/`.
