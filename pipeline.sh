@@ -1,7 +1,7 @@
-!/bin/bash
+#!/bin/bash
 set -e
 
-python -m 0_mimic_preprocess.panel_name_to_feature_codes
+python panel_name_to_feature_codes.py
 
 docker build ./0_mimic_preprocess/. -t mimic-preprocessor
 
