@@ -206,8 +206,8 @@ The repository includes a **FastMCP Server** ([mcp_server/server.py](file:///hom
 
 | MCP Tool Name | Description |
 | :--- | :--- |
-| `list_pipeline_steps` | Returns all pipeline steps (Steps 2 to 7) and their script paths. |
-| `run_pipeline_step` | Programmatically executes a specific pipeline step or all steps sequentially. |
+| `list_pipeline_steps` | Returns all pipeline steps (Steps 0 to 6) and their docker-compose services. |
+| `run_pipeline_step` | Trains/builds a panel through `docker compose up --build <service>` per step, from MIMIC extraction (Step 0) through the requested step (or `all_steps`, through Step 6). Automatically runs any earlier steps whose output doesn't exist yet for the panel, and skips steps already trained for it (set `force_retrain=True` to redo them). OS-independent - runs each step in its own container, not the host Python environment. |
 | `get_mlflow_experiment_results` | Queries MLflow SQLite DB for past experiment metrics and hyperparameters. |
 | `get_optimal_cutoffs` | Fetches pre-calculated optimal $F_2$ score ($\beta=2$) classification cutoffs. |
 | `run_graphflow_inference` | Runs GraphFlow 1-hop spatial neighborhood inference on sample datasets. |
