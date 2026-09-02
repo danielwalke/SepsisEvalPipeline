@@ -38,6 +38,16 @@ class PreprocessWrapper:
                     f"and {count_cbc(self.mimic.get_sepsis_data())} CBCs"
                 )
         if self.include_sbc and sbc_data is not None:
+            required_features = Preprocesser(feature_input_dir_path, extdata_input_dir_path, pd.DataFrame()).features
+            missing_features = [f for f in required_features if f not in sbc_data.columns]
+            if missing_features:
+                print(
+                    f"SBC dataset does not measure {missing_features}; the selected panel includes labs "
+                    "SBC was never collected for. Skipping SBC processing for this run."
+                )
+                self.include_sbc = False
+
+        if self.include_sbc and sbc_data is not None:
             sbc_training_data = sbc_data.query(
                 "Center == 'Leipzig' & Set == 'Training'"
             )
