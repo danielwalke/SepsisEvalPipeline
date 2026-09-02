@@ -1,4 +1,16 @@
 services:
+  init-dirs:
+    image: busybox:latest
+    volumes:
+      - ./0_mimic_preprocess/preprocessed_file:/data/0_mimic_preprocess/preprocessed_file
+      - ./0_mimic_preprocess/features:/data/0_mimic_preprocess/features
+      - ./1_preprocess/data/preprocessed_data:/data/1_preprocess/data/preprocessed_data
+      - ./2_baseline/models:/data/2_baseline/models
+      - ./3_graph_construction/data:/data/3_graph_construction/data
+      - ./3_graph_construction/metrics:/data/3_graph_construction/metrics
+      - ./4_db_upload/sqlite/sqlite_data:/data/4_db_upload/sqlite/sqlite_data
+    command: ["chown", "-R", "${HOST_UID:-1000}:${HOST_GID:-1000}", "/data"]
+
   mlflow-server:
     image: ghcr.io/mlflow/mlflow:latest
     container_name: mlflow_container
@@ -21,6 +33,9 @@ services:
   mimic-preprocessor-and-sbc-extractor:
     build:
       context: ./0_mimic_preprocess
+    depends_on:
+      init-dirs:
+        condition: service_completed_successfully
     environment:
       - PYTHONUNBUFFERED=1
     user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
@@ -39,6 +54,8 @@ services:
     depends_on:
       mimic-preprocessor-and-sbc-extractor:
         condition: service_completed_successfully
+      init-dirs:
+        condition: service_completed_successfully
     user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     volumes:
       - ./0_mimic_preprocess/preprocessed_file:/app/input
@@ -48,15 +65,18 @@ services:
       - ./config.ini:/app/config/config.ini
 
   2-baseline:
-    build: 
+    build:
       context: ./2_baseline
     depends_on:
       1-datapreprocess:
         condition: service_completed_successfully
       mlflow-server:
         condition: service_started
+      init-dirs:
+        condition: service_completed_successfully
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     volumes:
       - ./1_preprocess/data/preprocessed_data:/app/input
       - ./2_baseline:/app/output
@@ -67,12 +87,14 @@ services:
       - mlflow-network
 
   3-graph-construction:
-    build: 
+    build:
       context: ./3_graph_construction
     depends_on:
       1-datapreprocess:
         condition: service_completed_successfully
-    user: "${HOST_UID:-1000}:${HOST_GID:-1000}" 
+      init-dirs:
+        condition: service_completed_successfully
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     volumes:
       - ./1_preprocess/data/preprocessed_data:/app/input
       - ./3_graph_construction/data:/app/output
@@ -86,7 +108,9 @@ services:
     depends_on:
       3-graph-construction:
         condition: service_completed_successfully
-    user: "${HOST_UID:-1000}:${HOST_GID:-1000}" 
+      init-dirs:
+        condition: service_completed_successfully
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     volumes:
       - "./3_graph_construction/data:/app/csv_data:ro"
       - "./4_db_upload/sqlite/sqlite_data:/app/db"
