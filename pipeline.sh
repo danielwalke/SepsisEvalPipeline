@@ -20,11 +20,15 @@ mkdir -p "$R_PREPROCESS_DIR"
 mkdir -p "$PRE_PROCESS_DIR"
 mkdir -p "$GRAPH_CONSTRUCTION_DIR"
 mkdir -p "$METRICS_DIR"
+mkdir -p "${PWD}/0_mimic_preprocess/extdata"
 
 docker run --rm \
   -v "${PWD}/mimic:/app/input" \
   -v "${R_PREPROCESS_DIR}:/app/output" \
   -v "${PWD}/0_mimic_preprocess/features:/app/features" \
+  -v "${PWD}/0_mimic_preprocess/extdata:/app/extdata" \
+  -v "${PWD}/config.ini:/app/config/config.ini" \
+  -v "${PWD}/panel_name_to_feature_codes.py:/app/panel_name_to_feature_codes.py:ro" \
   mimic-preprocessor
 
 ls -l "$R_PREPROCESS_DIR"
