@@ -34,6 +34,22 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MLFLOW_DB_PATH = os.path.join(BASE_DIR, "mlflow_data", "mlflow.db")
 CUTOFFS_PATH = os.path.join(BASE_DIR, "7_inference", "optimal_cutoffs.json")
 
+def _sqlite_table_has_rows(db_path: str, table: str) -> bool:
+    """4_db_upload/sqlite/main.py commits after each split, so an interrupted run can leave
+    a valid-but-near-empty db file - check actual row count, not just file existence."""
+    if not os.path.exists(db_path):
+        return False
+    try:
+        conn = sqlite3.connect(db_path)
+        try:
+            cur = conn.execute(f"SELECT COUNT(*) FROM {table}")
+            return cur.fetchone()[0] > 0
+        finally:
+            conn.close()
+    except sqlite3.Error:
+        return False
+
+
 # Every step runs via its docker-compose service (not the host venv) so the pipeline is
 # OS-independent and reuses the exact same containers/paths/permissions already set up in
 # docker-compose.yml. "is_done" detects whether a panel already has this step's output, so
@@ -64,15 +80,19 @@ PIPELINE_STEPS = {
         "service": "3-graph-construction",
         "desc": "Construct temporal patient graphs from preprocessed lab data",
         "is_done": lambda panel: (
-            os.path.isdir(os.path.join(BASE_DIR, "3_graph_construction", "data", panel))
-            and len(os.listdir(os.path.join(BASE_DIR, "3_graph_construction", "data", panel))) > 0
+            # main.py writes this metrics CSV exactly once, only after every mimic (and sbc,
+            # if applicable) split has fully processed - unlike files under data/{panel}/,
+            # which are written incrementally throughout the run and so exist even if the
+            # step was interrupted partway through.
+            os.path.exists(os.path.join(BASE_DIR, "3_graph_construction", "metrics", panel, f"{panel}.csv"))
         ),
     },
     "4_db_upload": {
         "service": "4-db-upload",
         "desc": "Upload graph nodes, edges, and features to SQLite database",
-        "is_done": lambda panel: os.path.exists(
-            os.path.join(BASE_DIR, "4_db_upload", "sqlite", "sqlite_data", panel, "mimic_sbc_graph.db")
+        "is_done": lambda panel: _sqlite_table_has_rows(
+            os.path.join(BASE_DIR, "4_db_upload", "sqlite", "sqlite_data", panel, "mimic_sbc_graph.db"),
+            "MIMIC_TRAIN_nodes"
         ),
     },
     "5_gnn_training": {
@@ -155,6 +175,16 @@ async def run_pipeline_step(
     total_steps = len(steps_to_check)
     docker_env = {**os.environ, "HOST_UID": str(os.getuid()), "HOST_GID": str(os.getgid())}
 
+    # Ensure the shared, non-panel-specific services are ready once up front. Each step
+    # below is run with --no-deps: this loop is already the correct sequencer (it only
+    # reaches step N after confirming/running 0..N-1), and letting `docker compose up`
+    # resolve depends_on itself would re-run already-completed upstream steps every time -
+    # e.g. up --build 4-db-upload would re-trigger the ~1.5h 3-graph-construction step even
+    # when it's already done, since compose doesn't persist "completed successfully" across
+    # separate `up` invocations the way a single multi-service `up` would.
+    subprocess.run(["docker", "compose", "up", "--build", "init-dirs"], cwd=BASE_DIR, capture_output=True, text=True, timeout=120, env=docker_env)
+    subprocess.run(["docker", "compose", "up", "-d", "mlflow-server"], cwd=BASE_DIR, capture_output=True, text=True, timeout=120, env=docker_env)
+
     for idx, step in enumerate(steps_to_check):
         step_info = PIPELINE_STEPS[step]
 
@@ -170,11 +200,23 @@ async def run_pipeline_step(
             await ctx.info(f"Running step {idx + 1}/{total_steps}: {step} ({step_info['service']}) for panel '{clean_panel}'")
             await ctx.report_progress(idx, total_steps)
 
-        cmd = ["docker", "compose", "up", "--build", step_info["service"]]
+        cmd = ["docker", "compose", "up", "--build", "--no-deps", step_info["service"]]
 
         try:
             res = subprocess.run(cmd, cwd=BASE_DIR, capture_output=True, text=True, timeout=14400, env=docker_env)
-            if res.returncode == 0:
+
+            # `docker compose up <service>`'s own exit code does not reliably reflect the
+            # container's exit code on this compose version - it can return 0 even when the
+            # container itself crashed. Ask docker directly for the real exit code instead.
+            container_exit_code = res.returncode
+            id_res = subprocess.run(["docker", "compose", "ps", "-a", "-q", step_info["service"]], cwd=BASE_DIR, capture_output=True, text=True)
+            container_id = id_res.stdout.strip().split("\n")[0] if id_res.stdout.strip() else None
+            if container_id:
+                inspect_res = subprocess.run(["docker", "inspect", container_id, "--format", "{{.State.ExitCode}}"], capture_output=True, text=True)
+                if inspect_res.returncode == 0 and inspect_res.stdout.strip().lstrip("-").isdigit():
+                    container_exit_code = int(inspect_res.stdout.strip())
+
+            if container_exit_code == 0:
                 results.append({
                     "step": step,
                     "status": "success",
@@ -184,7 +226,7 @@ async def run_pipeline_step(
                 results.append({
                     "step": step,
                     "status": "failed",
-                    "returncode": res.returncode,
+                    "returncode": container_exit_code,
                     "error_snippet": res.stderr[-1500:] if res.stderr else res.stdout[-1500:]
                 })
                 break
