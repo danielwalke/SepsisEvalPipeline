@@ -22,6 +22,16 @@ fi
 mkdir -p /app/extdata
 cp /app/input/hosp/d_labitems.csv /app/extdata/d_labitems.csv
 
+# Standardize CBC lab names to the abbreviations the rest of the pipeline
+# expects (e.g. process_files.R's HGB unit conversion, 7_inference/app.py's
+# feature lists). itemid 51250 (MCV) already matches and needs no rule.
+sed -i \
+  -e 's/^51222,Hemoglobin,/51222,HGB,/' \
+  -e 's/^51301,White Blood Cells,/51301,WBC,/' \
+  -e 's/^51279,Red Blood Cells,/51279,RBC,/' \
+  -e 's/^51265,Platelet Count,/51265,PLT,/' \
+  /app/extdata/d_labitems.csv
+
 PANEL_CONFIG_PATH=/app/config/config.ini \
 PANEL_FEATURES_DIR=/app/features \
 PANEL_WRITE_ENV=0 \
