@@ -320,11 +320,12 @@ Or pass flags explicitly:
 
 ### Installation
 
-1. **Clone the repository**:
+1. **Clone the repository** (with its `6_graphaware/GraphAware` submodule - Step 6 fails with `ModuleNotFoundError: No module named 'GraphAware.EnsembleFramework'` if this is skipped):
    ```bash
-   git clone https://github.com/danielwalke/SepsisEvalPipeline.git
+   git clone --recurse-submodules https://github.com/danielwalke/SepsisEvalPipeline.git
    cd SepsisEvalPipeline
    ```
+   If already cloned without `--recurse-submodules`, run `git submodule update --init --recursive` instead.
 
 2. **Set up Virtual Environment**:
    ```bash
