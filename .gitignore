@@ -30,6 +30,11 @@ trained_models
 *.sqlite3
 mlflow.db
 mlflow_data/mlflow.db
+# The only real tracking store is mlflow_data/mlflow.db, served by the mlflow-server
+# container. mlflow_data/mlruns/ is mlflow's local-file-store fallback when no tracking URI
+# is configured - a stale copy of it was previously committed by accident and confused a
+# fresh session into reporting month-old, disconnected data as current results.
+mlflow_data/mlruns/
 4_db_upload/sqlite/sqlite_data
 4_db_upload/neo4j_data
 4_db_upload/neo4j/neo4j_data
