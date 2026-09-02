@@ -19,7 +19,8 @@ services:
     volumes:
       - ./mlflow_data:/mlflow
     command: >
-      sh -c 'mlflow server
+      sh -c 'python3 /mlflow/fix_artifact_locations.py &&
+      mlflow server
       --host 0.0.0.0
       --allowed-hosts "*"
       --backend-store-uri sqlite:////mlflow/mlflow.db
