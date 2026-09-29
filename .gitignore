@@ -77,3 +77,4 @@ __pycache__/
 !**/requirements.txt
 2_baseline/training_logs.log
 tests/
+.claude/
