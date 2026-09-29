@@ -9,6 +9,10 @@
 .env
 .env.*
 
+# Ignore manuscript drafts & LaTeX source files
+*manuscript*
+*.tex
+
 # Ignore model checkpoints & model weights
 *.pth
 *.pt
