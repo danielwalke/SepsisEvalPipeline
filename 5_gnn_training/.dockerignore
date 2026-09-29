@@ -1,0 +1,6 @@
+checkpoints/
+db/
+0_mimic_preprocess/
+__pycache__/
+*.pyc
+*.log

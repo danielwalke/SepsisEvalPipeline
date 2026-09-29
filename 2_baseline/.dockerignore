@@ -1,0 +1,6 @@
+models/
+input/
+output/
+__pycache__/
+*.pyc
+*.log

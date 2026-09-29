@@ -19,6 +19,11 @@ It features time-decay temporal patient graph construction ($w = 1 - \Delta t_{\
 
 - [Key Features](#key-features)
 - [Directory & Pipeline Overview](#directory--pipeline-overview)
+- [Container Architecture & Docker Hub Deployment](#container-architecture--docker-hub-deployment)
+  - [Published Docker Images (`dwalkeiti/...`)](#published-docker-images-dwalkeiti)
+  - [Deployment Modes (Remote vs. Local Build)](#deployment-modes-remote-vs-local-build)
+  - [Data Flow & Container Volume Bindings](#data-flow--container-volume-bindings)
+  - [Standalone Step Execution (`docker run`)](#standalone-step-execution-docker-run)
 - [Pipeline Execution Steps](#pipeline-execution-steps)
 - [Runtime Profiling & Benchmarking](#runtime-profiling--benchmarking)
 - [Environment Setup & Configuration (`.env`)](#environment-setup--configuration-env)
@@ -72,12 +77,191 @@ SepsisEvalPipeline/
 ├── figures/                    # Publication-grade figures (runtime benchmarks, global SHAP attributions)
 ├── mcp_server/                 # FastMCP Server providing RPC tools for pipeline & LLM access
 ├── mcp_client.py               # OpenAI-compatible MCP Client script for LLM agent execution
+├── docker-compose.remote.yml   # Zero-build deployment via remote Docker Hub images (dwalkeiti)
+├── docker-compose.yml          # Core Docker Compose orchestration (hybrid local-build / tagged)
+├── docker-compose-mcp.remote.yml # Zero-build deployment for MCP + MLflow using remote images
 ├── docker-compose-mcp.yml      # Docker Compose config for full MCP + MLflow service stack
-├── docker-compose.yml          # Core Docker Compose orchestration
 ├── docker-compose-ram.yml      # Low-RAM memory optimized Docker Compose configuration
 ├── pipeline.sh                 # Sequential bash wrapper script for steps 2 to 6
 ├── config.ini                  # Global system configuration (paths, panels, hyperparameters)
 └── .env                        # Local environment variables (LLM credentials, HOST_UID, HOST_GID)
+```
+
+---
+
+## Container Architecture & Docker Hub Deployment
+
+All computational components of the SepsisEvalPipeline are packaged into self-contained, reproducible, multi-platform Docker container images hosted publicly on [Docker Hub under `dwalkeiti`](https://hub.docker.com/u/dwalkeiti). New users and institutional collaborators can immediately deploy and run the entire pipeline without installing complex local Python environments, PyTorch versions, R compilers, or CUDA dependencies.
+
+### Published Docker Images (`dwalkeiti/...`)
+
+| Step | Container Image | Description | Base / Environment | Default Ports | Recommended Hardware |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **0** | `dwalkeiti/sepsisevalpipeline-mimic-preprocessor-and-sbc-extractor:latest`<br>`dwalkeiti/sepsisevalpipeline-0-mimic-preprocess:latest` | MIMIC-IV clinical cohort extraction & Steinbach criterion mapping | R 4.4.0 (`rocker/r-ver`) + data.table | — | CPU (8 GB RAM) |
+| **1** | `dwalkeiti/sepsisevalpipeline-1-datapreprocess:latest` | Panel feature filtering, normalization, imputation, train/val/test splitting | Python 3.14-slim | — | CPU (8 GB RAM) |
+| **2** | `dwalkeiti/sepsisevalpipeline-2-baseline:latest` | Classical baseline training: Logistic Regression, Random Forest, XGBoost | Python 3.14-slim + scikit-learn | — | CPU (8 GB RAM) |
+| **3** | `dwalkeiti/sepsisevalpipeline-3-graph-construction:latest` | Temporal patient graph generation with exponential time-decay weights | Python 3.14-slim + PyTorch cu130 | — | CPU / GPU (16 GB RAM) |
+| **4** | `dwalkeiti/sepsisevalpipeline-4-db-upload:latest` | High-throughput SQLite BLOB node feature encoding & indexed edge tables | Python 3.10-slim + sqlite3 | — | CPU (4 GB RAM) |
+| **5** | `dwalkeiti/sepsisevalpipeline-5-gnn-training:latest` | PyTorch Geometric `GATv2` mini-batch training with attention edge weighting | PyTorch 2.2.2 CUDA 12.1 runtime | — | NVIDIA GPU (16GB VRAM, 32GB RAM) |
+| **6** | `dwalkeiti/sepsisevalpipeline-6-graphaware:latest` | GraphAware 1-hop spatial neighborhood aggregation + XGBoost + $2N$ SHAP | Python 3.11-slim + PyTorch cu130 | — | NVIDIA GPU / CPU (16 GB RAM) |
+| **7** | `dwalkeiti/sepsisevalpipeline-7-graphflow-inference:latest` | Streamlit interactive clinical inference dashboard & local SHAP explorer | Python 3.11-slim + Streamlit | `8501:8501` | CPU (8 GB RAM) |
+| **MCP** | `dwalkeiti/sepsisevalpipeline-mcp-server:latest` | FastMCP server providing standardized RPC tools for AI LLM agents | Python 3.11-slim + FastMCP | Stdio / RPC | CPU (4 GB RAM) |
+| **MLflow** | `ghcr.io/mlflow/mlflow:latest` | Centralized experiment tracking server with SQLite backend & artifact store | Python 3 | `5000:5000` | CPU (2 GB RAM) |
+
+---
+
+### Deployment Modes (Remote vs. Local Build)
+
+#### Mode 1: Remote-First Deployment (Recommended for New Users)
+Using `docker-compose.remote.yml`, you do not need to compile or build any Dockerfiles locally. Docker automatically pulls the verified pre-built images from Docker Hub:
+
+```bash
+# 1. Pull all pipeline container images
+docker compose -f docker-compose.remote.yml pull
+
+# 2. Run the complete pipeline end-to-end
+docker compose -f docker-compose.remote.yml up
+
+# Or run individual steps sequentially:
+docker compose -f docker-compose.remote.yml up 1-datapreprocess
+docker compose -f docker-compose.remote.yml up 2-baseline
+docker compose -f docker-compose.remote.yml up 3-graph-construction
+docker compose -f docker-compose.remote.yml up 4-db-upload
+docker compose -f docker-compose.remote.yml up 5-gnn-training
+docker compose -f docker-compose.remote.yml up 6-graphaware
+
+# Launch the Streamlit Dashboard and MLflow Tracking Server in the background:
+docker compose -f docker-compose.remote.yml up -d mlflow-server 7-graphflow-inference
+```
+
+#### Mode 2: Hybrid / Local Development (`docker-compose.yml`)
+If you modify code, Dockerfiles, or pipeline dependencies, use `docker-compose.yml`. Each service specifies both `image: dwalkeiti/...` and a local `build:` context:
+
+```bash
+# Rebuild any modified local containers and start execution
+docker compose up --build
+
+# Pull remote images if not building locally
+docker compose pull
+```
+
+#### Mode 3: Low-RAM Memory Profiling (`docker-compose-ram.yml`)
+For resource-constrained workstations or memory profiling, `docker-compose-ram.yml` automatically mounts a background `docker:cli` tracker container that logs peak resident memory per container into `peak_ram.txt`:
+
+```bash
+docker compose -f docker-compose-ram.yml up
+```
+
+#### Mode 4: Remote MCP Server & AI Agent Stack (`docker-compose-mcp.remote.yml`)
+To deploy MLflow, Streamlit, and the FastMCP Server using remote images for external AI clients:
+
+```bash
+docker compose -f docker-compose-mcp.remote.yml up -d
+```
+
+---
+
+### Data Flow & Container Volume Bindings
+
+The pipeline uses explicit host volume mounts to pass artifacts between container steps while preserving host file ownership through `${HOST_UID}` and `${HOST_GID}`:
+
+```mermaid
+flowchart TD
+    subgraph S0["Step 0: MIMIC Preprocessing"]
+        C0["dwalkeiti/...-mimic-preprocessor"]
+    end
+    subgraph S1["Step 1: Data Preprocess"]
+        C1["dwalkeiti/...-1-datapreprocess"]
+    end
+    subgraph S2["Step 2: Baselines"]
+        C2["dwalkeiti/...-2-baseline"]
+    end
+    subgraph S3["Step 3: Graph Construction"]
+        C3["dwalkeiti/...-3-graph-construction"]
+    end
+    subgraph S4["Step 4: Database Upload"]
+        C4["dwalkeiti/...-4-db-upload"]
+    end
+    subgraph S5["Step 5: GNN Training"]
+        C5["dwalkeiti/...-5-gnn-training"]
+    end
+    subgraph S6["Step 6: GraphAware & SHAP"]
+        C6["dwalkeiti/...-6-graphaware"]
+    end
+    subgraph S7["Step 7: Dashboard"]
+        C7["dwalkeiti/...-7-graphflow-inference"]
+    end
+
+    RAW["./mimic (Raw MIMIC-IV)"] -->|"/app/input"| C0
+    C0 -->|"/app/output"| DIR0["0_mimic_preprocess/preprocessed_file/"]
+    DIR0 -->|"/app/input"| C1
+    C1 -->|"/app/output"| DIR1["1_preprocess/data/preprocessed_data/"]
+    DIR1 -->|"/app/input"| C2
+    DIR1 -->|"/app/input"| C3
+    C3 -->|"/app/output"| DIR3["3_graph_construction/data/"]
+    DIR3 -->|"/app/csv_data"| C4
+    C4 -->|"/app/db"| DB["4_db_upload/sqlite/sqlite_data/"]
+    DB -->|"/app/db"| C5
+    DB -->|"/app/db"| C6
+    C2 -->|Log Metrics| ML["MLflow Server (Port 5000)"]
+    C5 -->|Log Metrics| ML
+    C6 -->|Log Metrics| ML
+    C6 -->|Models & SHAP| DIR6["6_graphaware/models/"]
+    DIR6 --> C7
+    C7 --> UI["Web Browser (Port 8501)"]
+```
+
+---
+
+### Standalone Step Execution (`docker run`)
+
+Each container can also be executed independently via standard `docker run`. Below are concrete command templates:
+
+#### Step 1: Preprocessing Standalone
+```bash
+docker run --rm \
+  --user $(id -u):$(id -g) \
+  -v "${PWD}/0_mimic_preprocess/preprocessed_file:/app/input" \
+  -v "${PWD}/0_mimic_preprocess/features:/app/features" \
+  -v "${PWD}/0_mimic_preprocess/extdata:/app/extdata" \
+  -v "${PWD}/1_preprocess/data/preprocessed_data:/app/output" \
+  -v "${PWD}/config.ini:/app/config/config.ini:ro" \
+  dwalkeiti/sepsisevalpipeline-1-datapreprocess:latest
+```
+
+#### Step 3: Graph Construction Standalone
+```bash
+docker run --rm \
+  --user $(id -u):$(id -g) \
+  -v "${PWD}/1_preprocess/data/preprocessed_data:/app/input" \
+  -v "${PWD}/3_graph_construction/data:/app/output" \
+  -v "${PWD}/3_graph_construction/metrics:/app/metrics" \
+  -v "${PWD}/config.ini:/app/config/config.ini:ro" \
+  dwalkeiti/sepsisevalpipeline-3-graph-construction:latest
+```
+
+#### Step 4: Database Upload Standalone
+```bash
+docker run --rm \
+  --user $(id -u):$(id -g) \
+  -v "${PWD}/3_graph_construction/data:/app/csv_data:ro" \
+  -v "${PWD}/4_db_upload/sqlite/sqlite_data:/app/db" \
+  -v "${PWD}/config.ini:/app/config/config.ini:ro" \
+  -e CSV_DIR=/app/csv_data \
+  -e DB_PATH=/app/db/mimic_sbc_graph.db \
+  dwalkeiti/sepsisevalpipeline-4-db-upload:latest
+```
+
+#### Step 7: Streamlit Dashboard Standalone
+```bash
+docker run --rm -d \
+  -p 8501:8501 \
+  --name graphflow_inference_app \
+  --user $(id -u):$(id -g) \
+  -v "${PWD}:/app" \
+  -e PYTHONUNBUFFERED=1 \
+  -e MPLCONFIGDIR=/tmp/matplotlib \
+  dwalkeiti/sepsisevalpipeline-7-graphflow-inference:latest
 ```
 
 ---
@@ -376,14 +560,24 @@ Or pass flags explicitly:
 
 ### Docker Compose Quickstart
 
-Launch MLflow tracking, inference, and the MCP server using Docker Compose:
+#### Option A: Zero-Build Remote Quickstart (Docker Hub)
+Launch the MLflow tracking UI, the Streamlit Inference Dashboard, and the FastMCP server immediately without building any images locally:
 
 ```bash
-docker-compose -f docker-compose-mcp.yml up -d
+# Pull and start services in detached mode
+docker compose -f docker-compose-mcp.remote.yml up -d
+```
+
+#### Option B: Local Build Quickstart
+Build and launch using local Dockerfiles:
+
+```bash
+docker compose -f docker-compose-mcp.yml up -d
 ```
 
 - **MLflow Tracking UI**: `http://localhost:5000`
 - **GraphFlow Dashboard**: `http://localhost:8501`
+- **FastMCP Server**: Running on container `mcp_pipeline_server`
 
 ---
 

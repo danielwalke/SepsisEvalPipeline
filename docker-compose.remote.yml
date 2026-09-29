@@ -1,4 +1,16 @@
 services:
+  init-dirs:
+    image: busybox:latest
+    volumes:
+      - ./0_mimic_preprocess/preprocessed_file:/data/0_mimic_preprocess/preprocessed_file
+      - ./0_mimic_preprocess/features:/data/0_mimic_preprocess/features
+      - ./1_preprocess/data/preprocessed_data:/data/1_preprocess/data/preprocessed_data
+      - ./2_baseline/models:/data/2_baseline/models
+      - ./3_graph_construction/data:/data/3_graph_construction/data
+      - ./3_graph_construction/metrics:/data/3_graph_construction/metrics
+      - ./4_db_upload/sqlite/sqlite_data:/data/4_db_upload/sqlite/sqlite_data
+    command: ["chown", "-R", "${HOST_UID:-1000}:${HOST_GID:-1000}", "/data"]
+
   mlflow-server:
     image: ghcr.io/mlflow/mlflow:latest
     container_name: mlflow_container
@@ -7,25 +19,62 @@ services:
     volumes:
       - ./mlflow_data:/mlflow
     command: >
-      sh -c 'mlflow server 
-      --host 0.0.0.0 
-      --allowed-hosts "*" 
-      --backend-store-uri sqlite:////mlflow/mlflow.db 
-      --serve-artifacts 
-      --default-artifact-root /mlflow/artifacts'
+      sh -c 'python3 /mlflow/fix_artifact_locations.py &&
+      mlflow server
+      --host 0.0.0.0
+      --allowed-hosts "*"
+      --backend-store-uri sqlite:////mlflow/mlflow.db
+      --serve-artifacts
+      --artifacts-destination /mlflow/artifacts'
     networks:
       mlflow-network:
         aliases:
           - mlflow-server
+
+  mimic-preprocessor-and-sbc-extractor:
+    image: dwalkeiti/sepsisevalpipeline-mimic-preprocessor-and-sbc-extractor:latest
+    depends_on:
+      init-dirs:
+        condition: service_completed_successfully
+    environment:
+      - PYTHONUNBUFFERED=1
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    volumes:
+      - ./mimic:/app/input
+      - ./0_mimic_preprocess/preprocessed_file:/app/output
+      - ./0_mimic_preprocess/features:/app/features
+      - ./0_mimic_preprocess/extdata:/app/extdata
+      - ./config.ini:/app/config/config.ini
+      - ./panel_name_to_feature_codes.py:/app/panel_name_to_feature_codes.py:ro
+    command: ["https://github.com/ampel-leipzig/sbcdata/raw/main/inst/extdata/sbcdata.csv.zip", "/app/output"]
+
+  1-datapreprocess:
+    image: dwalkeiti/sepsisevalpipeline-1-datapreprocess:latest
+    depends_on:
+      mimic-preprocessor-and-sbc-extractor:
+        condition: service_completed_successfully
+      init-dirs:
+        condition: service_completed_successfully
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    volumes:
+      - ./0_mimic_preprocess/preprocessed_file:/app/input
+      - ./0_mimic_preprocess/features:/app/features
+      - ./0_mimic_preprocess/extdata:/app/extdata
+      - ./1_preprocess/data/preprocessed_data:/app/output
+      - ./config.ini:/app/config/config.ini
+
   2-baseline:
     image: dwalkeiti/sepsisevalpipeline-2-baseline:latest
-    build: 
-      context: ./2_baseline
     depends_on:
+      1-datapreprocess:
+        condition: service_completed_successfully
       mlflow-server:
         condition: service_started
+      init-dirs:
+        condition: service_completed_successfully
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     volumes:
       - ./1_preprocess/data/preprocessed_data:/app/input
       - ./2_baseline:/app/output
@@ -37,9 +86,12 @@ services:
 
   3-graph-construction:
     image: dwalkeiti/sepsisevalpipeline-3-graph-construction:latest
-    build: 
-      context: ./3_graph_construction
-    user: "${HOST_UID:-1000}:${HOST_GID:-1000}" 
+    depends_on:
+      1-datapreprocess:
+        condition: service_completed_successfully
+      init-dirs:
+        condition: service_completed_successfully
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     volumes:
       - ./1_preprocess/data/preprocessed_data:/app/input
       - ./3_graph_construction/data:/app/output
@@ -48,13 +100,12 @@ services:
 
   4-db-upload:
     image: dwalkeiti/sepsisevalpipeline-4-db-upload:latest
-    build:
-      context: ./4_db_upload/sqlite
-      dockerfile: Dockerfile
     depends_on:
       3-graph-construction:
         condition: service_completed_successfully
-    user: "${HOST_UID:-1000}:${HOST_GID:-1000}" 
+      init-dirs:
+        condition: service_completed_successfully
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     volumes:
       - "./3_graph_construction/data:/app/csv_data:ro"
       - "./4_db_upload/sqlite/sqlite_data:/app/db"
@@ -62,18 +113,15 @@ services:
     environment:
       CSV_DIR: /app/csv_data
       DB_PATH: /app/db/mimic_sbc_graph.db
-      
+
   5-gnn-training:
     image: dwalkeiti/sepsisevalpipeline-5-gnn-training:latest
-    build:
-      context: ./5_gnn_training
-      dockerfile: docker/Dockerfile
     depends_on:
       4-db-upload:
         condition: service_completed_successfully
       mlflow-server:
         condition: service_started
-    user: "${HOST_UID:-1000}:${HOST_GID:-1000}" 
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     shm_size: "32gb"
     deploy:
       resources:
@@ -93,15 +141,12 @@ services:
 
   6-graphaware:
     image: dwalkeiti/sepsisevalpipeline-6-graphaware:latest
-    build:
-      context: ./6_graphaware
-      dockerfile: docker/Dockerfile
     depends_on:
       5-gnn-training:
         condition: service_completed_successfully
       mlflow-server:
         condition: service_started
-    user: "${HOST_UID:-1000}:${HOST_GID:-1000}" 
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     deploy:
       resources:
         reservations:
@@ -123,9 +168,6 @@ services:
 
   7-graphflow-inference:
     image: dwalkeiti/sepsisevalpipeline-7-graphflow-inference:latest
-    build:
-      context: .
-      dockerfile: 7_inference/Dockerfile
     container_name: graphflow_inference_app
     ports:
       - "8501:8501"
@@ -141,25 +183,6 @@ services:
     networks:
       - default
 
-  mcp-server:
-    image: dwalkeiti/sepsisevalpipeline-mcp-server:latest
-    build:
-      context: .
-      dockerfile: mcp_server/Dockerfile
-    container_name: mcp_pipeline_server
-    depends_on:
-      7-graphflow-inference:
-        condition: service_started
-      mlflow-server:
-        condition: service_started
-    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
-    volumes:
-      - .:/app
-    environment:
-      - PYTHONUNBUFFERED=1
-    networks:
-      - default
-      - mlflow-network
 networks:
   default:
     driver: bridge

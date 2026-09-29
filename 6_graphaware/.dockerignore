@@ -1,0 +1,7 @@
+models/
+db/
+0_mimic_preprocess/
+figures/
+__pycache__/
+*.pyc
+*.log

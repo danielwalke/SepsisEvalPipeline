@@ -1,0 +1,40 @@
+# Git and IDE
+.git
+.gitignore
+.gitmodules
+.claude
+.idea
+.vscode
+
+# Python virtual environments and caches
+.venv
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Sensitive and heavy clinical data (PhysioNet credentialed access)
+mimic/
+0_mimic_preprocess/preprocessed_file/
+0_mimic_preprocess/extdata/d_labitems.csv
+1_preprocess/data/
+
+# Intermediate graph data and databases
+3_graph_construction/data/
+3_graph_construction/metrics/
+4_db_upload/sqlite/sqlite_data/
+4_db_upload/neo4j/neo4j_data/
+mlflow_data/
+*.db
+*.sqlite*
+
+# Checkpoints and models (mounted at runtime)
+2_baseline/models/
+5_gnn_training/checkpoints/
+6_graphaware/models/
+
+# Logs and environment files
+*.log
+.env
