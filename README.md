@@ -20,6 +20,7 @@ It features time-decay temporal patient graph construction ($w = 1 - \Delta t_{\
 - [Key Features](#key-features)
 - [Directory & Pipeline Overview](#directory--pipeline-overview)
 - [Pipeline Execution Steps](#pipeline-execution-steps)
+- [Runtime Profiling & Benchmarking](#runtime-profiling--benchmarking)
 - [Environment Setup & Configuration (`.env`)](#environment-setup--configuration-env)
 - [Interactive Dashboard Visualizations & Interpretability](#interactive-dashboard-visualizations--interpretability)
 - [Model Context Protocol (MCP) & AI Integration](#model-context-protocol-mcp--ai-integration)
@@ -37,17 +38,16 @@ It features time-decay temporal patient graph construction ($w = 1 - \Delta t_{\
 
 - **End-to-End Containerized Pipeline**: Fully modular architecture built on Docker containers for preprocessing, graph construction, database upload, model training, and explainable inference.
 - **FAIR Principles & Open Science**: Decoupled, OS-independent Docker workflow ensuring Findability, Accessibility, Interoperability, and Reusability across institutions.
-- **Dynamic Laboratory Panel Support**: Evaluates complete blood counts (`CBC`), basic metabolic panels (`BMP`), and coagulation panels (`COAG`), and readily extends to arbitrary new panel combinations via configuration.
-<!-- Original bullet, retained for reference:
-- **Dynamic Laboratory Panel & Sparsity Support**: Evaluates complete blood counts (`CBC`), basic metabolic panels (`BMP`), and pre-analytical quality indices (`HIL`), enabling stress-testing under real-world clinical data sparsity.
--->
+- **Dynamic Laboratory Panel Support**: Flexible evaluation across standard and composite lab panels: Complete Blood Count (`CBC`), Basic Metabolic Panel (`BMP`), Coagulation (`COAG`), combinations (`CBC_BMP`, `CBC_COAG`, `CBC_BMP_COAG`), C-Reactive Protein (`CRP`), and Creatinine (`CREATININE`).
 - **Time-Decay Temporal Patient Graphs**: Constructs patient-centric graph representations where edge weights reflect normalized time differences ($w = 1 - \Delta t_{\text{scaled}}$) between laboratory observations.
 - **Memory-Efficient Graph Storage & Mini-Batching**: High-performance SQLite BLOB node feature storage and indexed edge list querying for low-RAM mini-batch training on standard hardware.
 - **Diverse Machine Learning & Graph Suite**:
   - **Baseline ML**: Logistic Regression, Random Forest, XGBoost.
   - **Graph Neural Networks**: PyTorch Geometric Graph Attention Networks v2 (`GATv2`) with dynamic attention and edge-weight support.
   - **GraphAware**: 1-hop spatial neighborhood feature aggregation paired with XGBoost for fast, scalable graph learning.
-- **Explainable AI ($2N$ SHAP Values)**: Computes aggregated local SHAP values ($\text{SHAP}_{\text{orig}} + \text{SHAP}_{\text{delta\_mean}}$) per feature to deliver clinically interpretable explanations.
+- **Explainable AI ($2N$ Aggregated SHAP Values)**: Computes aggregated local and global SHAP values ($\text{SHAP}_{\text{orig}} + \text{SHAP}_{\text{delta\_mean}}$) per feature to deliver clinically interpretable explanations with publication-ready summary visualizations.
+- **Publication-Grade Runtime Profiling**: Dedicated benchmarking scripts (`experiment_logging/plot_runtime_vertical.py`) providing vertically stacked log-scale comparisons of hyperparameter tuning, model training, and inference latencies.
+- **Reproducibility & Deterministic Optimization**: Fixed random seeds (`np.random.default_rng(seed)`) and proper `space_eval` indexing ensure fully deterministic Bayesian hyperparameter searches across runs.
 - **Cross-Dataset Generalizability**: Multi-center validation pipeline evaluating model transferability across distinct hospital cohorts (e.g., MIMIC-IV and SBC internal/external hospital cohorts).
 - **F₂ Score (β=2) Cutoff Optimization**: Pre-computed optimal $F_2$ score classification cutoffs tailored per laboratory panel.
 - **Model Context Protocol (MCP) Server & Client**: Standardized FastMCP server interface paired with an OpenAI-compatible MCP Client for LLM agent integration.
@@ -68,6 +68,8 @@ SepsisEvalPipeline/
 ├── 6_graphaware/               # Step 6: GraphAware 1-hop spatial neighborhood XGBoost & SHAP
 ├── 7_inference/                # Step 7: Streamlit dashboard app & optimal F₂ score cutoffs
 ├── 8_example_use_cases/        # Step 8: Jupyter notebooks & programmatic usage examples
+├── experiment_logging/         # Publication runtime profiling & vertical benchmark plotting
+├── figures/                    # Publication-grade figures (runtime benchmarks, global SHAP attributions)
 ├── mcp_server/                 # FastMCP Server providing RPC tools for pipeline & LLM access
 ├── mcp_client.py               # OpenAI-compatible MCP Client script for LLM agent execution
 ├── docker-compose-mcp.yml      # Docker Compose config for full MCP + MLflow service stack
@@ -110,15 +112,35 @@ SepsisEvalPipeline/
 
 ### 5. GNN Training (`5_gnn_training/`)
 - Fetches mini-batches from the graph database and trains Graph Attention Networks v2 (`GATv2`) with edge weight support via PyTorch Geometric.
+- Incorporates deterministic Bayesian hyperparameter search via `ModelTuning.py` with seeded random state (`default_rng(seed)`).
 - **Output**: Trained model checkpoints in `5_gnn_training/checkpoints/` and MLflow metric logs.
 
-### 6. GraphAware Training (`6_graphaware/`)
+### 6. GraphAware Training & Global Interpretability (`6_graphaware/`)
 - Extracts 1-hop spatial neighborhood features using time-decay weighted mean aggregations.
-- Trains an XGBoost classifier on aggregated neighborhood features and calculates $2N$ aggregated SHAP feature attributions.
-- **Output**: Trained GraphAware models in `6_graphaware/models/` and SHAP summary plots.
+- Deterministically tunes XGBoost hyperparameters using Hyperopt TPE with `np.random.default_rng(42)` and `space_eval()` mapping.
+- Computes $2N$ aggregated and raw SHAP feature attributions on internal validation and multi-center test cohorts (`interpret.py`).
+- Generates publication-grade global summary plots (`shap_aggregated_<cohort>.png`) with stripped technical prefixes (`Total: `, `f__`) and bold clinical labels.
+- Automatically syncs publication plots to `figures/`.
+- **Output**: Trained GraphAware models in `6_graphaware/models/`, optimal parameters in `6_graphaware/hyperparameters/`, and SHAP plots in `6_graphaware/figures/` and `figures/`.
 
 ### 7. Interactive Inference & Dashboard (`7_inference/`)
 - Interactive Streamlit dashboard (`app.py`) providing real-time sepsis risk prediction, calibrated probability percentage, ROC/AUROC curves, and local SHAP explanation breakdowns.
+
+---
+
+## Runtime Profiling & Benchmarking
+
+The pipeline includes a dedicated benchmarking and visualization suite in `experiment_logging/plot_runtime_vertical.py` to evaluate computational efficiency across standard machine learning baselines, deep Graph Attention Networks (`GATv2`), and spatial GraphAware models.
+
+- **3-Panel Vertical Benchmark**:
+  1. **Hyperparameter Tuning Runtime (seconds, $\log_{10}$ scale)**: Automated search across model parameter spaces.
+  2. **Model Training Runtime (seconds, $\log_{10}$ scale)**: End-to-end model fitting on full hospital training cohorts.
+  3. **Inference Latency (seconds, $\log_{10}$ scale)**: Single-batch evaluation speed on held-out test cohorts.
+- **Publication Plot Generation**:
+  ```bash
+  python experiment_logging/plot_runtime_vertical.py
+  ```
+  Generates `figures/runtime_vertical_plot.png` (and syncs to `runtime_vertical_plot.png`) with annotated median timings and publication hatchings.
 
 ---
 
@@ -198,6 +220,17 @@ The Streamlit inference application provides three dedicated analytical views:
   1. **Original Feature SHAP** ($\mathbf{X}_{\text{orig}}$): Contribution of the patient's current static laboratory values.
   2. **Time-Based $\Delta$ Mean SHAP** ($\mathbf{X}_{\text{orig}} - \boldsymbol{\mu}_{\text{neighbors}}$): Contribution of the patient's temporal trend relative to their historical 1-hop spatial neighborhood.
 - **Detailed Attribution Breakdown Table**: Quantifies the exact raw values, time-based delta mean values, individual SHAP values, and risk impact directions for clinical auditability.
+
+---
+
+### 4. Global Feature Contributions & Aggregated SHAP Beeswarm Plots
+
+![Aggregated Global SHAP Summary Plot](figures/shap_aggregated_MIMIC_TEST.png)
+
+**Explanation**:
+- **Aggregated Attribution**: Sums the static measurement impact ($\text{SHAP}_{\text{orig}}$) with the dynamic temporal neighborhood trajectory ($\text{SHAP}_{\Delta\text{mean}}$) for each laboratory analyte across all patients in the evaluation cohort.
+- **Biomarker Impact Ranking**: Features are sorted vertically by overall contribution magnitude, revealing key sepsis drivers (e.g., elevated `WBC`, advancing `Age`, low `Bicarbonate`, and electrolyte imbalances).
+- **Directional Effects**: Color indicates feature value (red = high, blue = low). Horizontal position reveals whether the value increases ($\text{SHAP} > 0$) or decreases ($\text{SHAP} < 0$) predicted sepsis probability.
 
 ---
 
