@@ -72,6 +72,15 @@ HIL_INDICES = {
     "I (Blood)": 50947
 }
 
+CREATININE = {
+    "Creatinine": 50912
+}
+
+CRP ={
+    "crp": 50889
+}
+
+
 panel_name_to_feature_codes = {
     "CBC": [CBC[lab] for lab in CBC],
     "EXTCBC": [EXTCBC[lab] for lab in EXTCBC],
@@ -81,7 +90,9 @@ panel_name_to_feature_codes = {
     "LIVER": [LIVER_PANEL[lab] for lab in LIVER_PANEL],
     "COAG": [COAGULATION[lab] for lab in COAGULATION],
     "KIDNEY": [KIDNEY_FUNCTION[lab] for lab in KIDNEY_FUNCTION],
-    "HIL": [HIL_INDICES[lab] for lab in HIL_INDICES]
+    "HIL": [HIL_INDICES[lab] for lab in HIL_INDICES],
+    "CRP": [CRP[lab] for lab in CRP],
+    "CREATININE": [CREATININE[lab] for lab in CREATININE]
 }
 
 def write_feature_codes_to_csv(panel_name, features_dir="0_mimic_preprocess/features"):

@@ -4,7 +4,7 @@ import numpy as np
 import scipy.sparse as sp
 from functools import wraps
 from sklearn.metrics import roc_auc_score
-from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
+from hyperopt import fmin, tpe, hp, STATUS_OK, Trials, space_eval
 from GraphDataloader import GraphDataLoader
 
 def timeit(func):
@@ -174,9 +174,18 @@ class XGBoostManager:
             return {'loss': -auroc, 'status': STATUS_OK}
 
         trials = Trials()
-        best_params = fmin(fn=objective, space=space, algo=tpe.suggest, max_evals=max_evals, trials=trials, verbose=1)
+        # Fixed rstate: without it, fmin's internal TPE search uses a fresh, unseeded
+        # random generator on every call, so re-running the "same" tuning on identical
+        # data yields a genuinely different explored trial sequence and a different
+        # winning hyperparameter combination each time.
+        best_params = fmin(fn=objective, space=space, algo=tpe.suggest, max_evals=max_evals, trials=trials, verbose=1, rstate=np.random.default_rng(42))
+        # hp.choice params in `best_params` are indices into their choice list (e.g. the
+        # index 0/1/2 for max_depth's [2, 3, 4]), not the chosen values themselves -
+        # space_eval() maps them back to the real values that were actually evaluated
+        # during the search.
+        best_params = space_eval(space, best_params)
         num_trees = int(best_params.get('n_estimators', 150))
-        
+
         final_params = {
             "objective": "binary:logistic",
             "scale_pos_weight": 1,
@@ -188,6 +197,7 @@ class XGBoostManager:
             "gamma": float(best_params['gamma']),
             "alpha": float(best_params['alpha']),
             "reg_lambda": float(best_params['lambda']),
+            "n_estimators": num_trees,
             "random_state": 42,
             "booster": 'gbtree',
         }

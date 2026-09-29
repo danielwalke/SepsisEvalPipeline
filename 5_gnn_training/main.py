@@ -133,7 +133,7 @@ if __name__ == '__main__':
         hyperparam_tuning_start_time = time.time()
         
         model_tuning = ModelTuning(device=device, model_evaluation=model_evaluation, pos_weight= pos_weight)
-        best_hyperparams = model_tuning.eval_hyperparameters(space, train_loader, val_loader, in_channels=in_channels, out_channels=out_channels, max_evals=20, verbosity=True)
+        best_hyperparams = model_tuning.eval_hyperparameters(space, train_loader, val_loader, in_channels=in_channels, out_channels=out_channels, max_evals=20, verbosity=True, seed=int(config['RANDOM']['seed']))
         hyperparam_tuning_end_time = time.time()        
         
         # best_hyperparams = {

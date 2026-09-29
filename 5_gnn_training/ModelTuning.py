@@ -1,4 +1,5 @@
 from hyperopt import fmin, tpe, STATUS_OK, Trials, space_eval
+import numpy as np
 import torch
 from ModelEvaluation import ModelEvaluation
 from ModelTraining import ModelTraining
@@ -13,8 +14,7 @@ class ModelTuning:
         self.model_evaluation = model_evaluation
         self.pos_weight = pos_weight
         
-    def eval_hyperparameters(self, space, train_loader, val_loader, in_channels, out_channels, max_evals=20, verbosity=True):
-        ## TODO seed init
+    def eval_hyperparameters(self, space, train_loader, val_loader, in_channels, out_channels, max_evals=20, verbosity=True, seed=42):
         def objective(params):
             lr = float(params['lr'])
             weight_decay = float(params['weight_decay'])
@@ -64,7 +64,8 @@ class ModelTuning:
             algo=tpe.suggest,
             max_evals=max_evals,
             trials=trials,
-            verbose=verbosity
+            verbose=verbosity,
+            rstate=np.random.default_rng(seed)
         )
 
         best_hyperparams = space_eval(space, best_indices)

@@ -45,6 +45,7 @@ class GraphPreprocesser:
 
         edge_index = np.asarray([np.asarray(source_edge_index), np.asarray(target_edge_index)])
         edge_index = torch.tensor(edge_index)
+        print(edge_index)
         edge_weight = torch.tensor(edge_weights)
         return edge_index, edge_weight
     
@@ -52,8 +53,11 @@ class GraphPreprocesser:
         if os.path.exists(edge_path):
             print(f"Edges file {edge_path} already exists. Skipping edge writing.")
             edges_df = pd.read_csv(edge_path)
+
             source_edge = edges_df["source"].values
             target_edge = edges_df["target"].values
+            print(source_edge)
+            print(target_edge)
             edge_index = torch.tensor(np.array([source_edge, target_edge]))
             return edge_index
 

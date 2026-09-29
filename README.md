@@ -37,7 +37,10 @@ It features time-decay temporal patient graph construction ($w = 1 - \Delta t_{\
 
 - **End-to-End Containerized Pipeline**: Fully modular architecture built on Docker containers for preprocessing, graph construction, database upload, model training, and explainable inference.
 - **FAIR Principles & Open Science**: Decoupled, OS-independent Docker workflow ensuring Findability, Accessibility, Interoperability, and Reusability across institutions.
+- **Dynamic Laboratory Panel Support**: Evaluates complete blood counts (`CBC`), basic metabolic panels (`BMP`), and coagulation panels (`COAG`), and readily extends to arbitrary new panel combinations via configuration.
+<!-- Original bullet, retained for reference:
 - **Dynamic Laboratory Panel & Sparsity Support**: Evaluates complete blood counts (`CBC`), basic metabolic panels (`BMP`), and pre-analytical quality indices (`HIL`), enabling stress-testing under real-world clinical data sparsity.
+-->
 - **Time-Decay Temporal Patient Graphs**: Constructs patient-centric graph representations where edge weights reflect normalized time differences ($w = 1 - \Delta t_{\text{scaled}}$) between laboratory observations.
 - **Memory-Efficient Graph Storage & Mini-Batching**: High-performance SQLite BLOB node feature storage and indexed edge list querying for low-RAM mini-batch training on standard hardware.
 - **Diverse Machine Learning & Graph Suite**:
