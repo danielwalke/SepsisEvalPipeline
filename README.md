@@ -102,7 +102,7 @@ All computational components of the SepsisEvalPipeline are packaged into self-co
 | **2** | `dwalkeiti/sepsisevalpipeline-2-baseline:latest` | Classical baseline training: Logistic Regression, Random Forest, XGBoost | Python 3.14-slim + scikit-learn | — | CPU (8 GB RAM) |
 | **3** | `dwalkeiti/sepsisevalpipeline-3-graph-construction:latest` | Temporal patient graph generation with exponential time-decay weights | Python 3.14-slim + PyTorch cu130 | — | CPU / GPU (16 GB RAM) |
 | **4** | `dwalkeiti/sepsisevalpipeline-4-db-upload:latest` | High-throughput SQLite BLOB node feature encoding & indexed edge tables | Python 3.10-slim + sqlite3 | — | CPU (4 GB RAM) |
-| **5** | `dwalkeiti/sepsisevalpipeline-5-gnn-training:latest` | PyTorch Geometric `GATv2` mini-batch training with attention edge weighting | PyTorch 2.2.2 CUDA 12.1 runtime | — | NVIDIA GPU (16GB VRAM, 32GB RAM) |
+| **5** | `dwalkeiti/sepsisevalpipeline-5-gnn-training:latest` | PyTorch Geometric `GATv2` mini-batch training with attention edge weighting | PyTorch 2.2.2 CUDA 12.1 runtime | — | NVIDIA GPU (16GB VRAM, 16GB RAM) |
 | **6** | `dwalkeiti/sepsisevalpipeline-6-graphaware:latest` | GraphAware 1-hop spatial neighborhood aggregation + XGBoost + $2N$ SHAP | Python 3.11-slim + PyTorch cu130 | — | NVIDIA GPU / CPU (16 GB RAM) |
 | **7** | `dwalkeiti/sepsisevalpipeline-7-graphflow-inference:latest` | Streamlit interactive clinical inference dashboard & local SHAP explorer | Python 3.11-slim + Streamlit | `8501:8501` | CPU (8 GB RAM) |
 | **MCP** | `dwalkeiti/sepsisevalpipeline-mcp-server:latest` | FastMCP server providing standardized RPC tools for AI LLM agents | Python 3.11-slim + FastMCP | Stdio / RPC | CPU (4 GB RAM) |
